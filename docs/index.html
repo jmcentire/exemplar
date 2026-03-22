@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exemplar - Governed Code Review</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --text-dim: #8b949e;
+    --accent: #58a6ff;
+    --accent-dim: #1f6feb;
+    --green: #3fb950;
+    --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Menlo', monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.6; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .container { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* Hero */
+  .hero { padding: 5rem 0 3rem; text-align: center; border-bottom: 1px solid var(--border); }
+  .hero h1 { font-family: var(--mono); font-size: 3rem; color: #f0f6fc; letter-spacing: -0.02em; }
+  .hero p { color: var(--text-dim); font-size: 1.15rem; margin-top: 0.75rem; }
+
+  /* Sections */
+  section { padding: 3rem 0; border-bottom: 1px solid var(--border); }
+  section:last-child { border-bottom: none; }
+  h2 { font-family: var(--mono); font-size: 1.4rem; color: var(--accent); margin-bottom: 1.25rem; }
+  h2::before { content: '// '; color: var(--text-dim); }
+
+  /* What */
+  .what p { font-size: 1.05rem; max-width: 720px; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; text-align: center; }
+  .stat .num { font-family: var(--mono); font-size: 2rem; color: var(--green); font-weight: 700; }
+  .stat .label { color: var(--text-dim); font-size: 0.85rem; margin-top: 0.25rem; }
+
+  /* Stack grid */
+  .stack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; }
+  .stack-item { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.85rem 1rem; }
+  .stack-item strong { font-family: var(--mono); color: #f0f6fc; font-size: 0.9rem; }
+  .stack-item span { display: block; color: var(--text-dim); font-size: 0.85rem; margin-top: 0.2rem; }
+
+  /* Architecture */
+  .arch pre { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; overflow-x: auto;
+    font-family: var(--mono); font-size: 0.85rem; color: var(--text); line-height: 1.7; }
+
+  /* Components table */
+  .comp-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .comp-table th { text-align: left; color: var(--text-dim); font-weight: 600; padding: 0.6rem 0.75rem; border-bottom: 2px solid var(--border); }
+  .comp-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); }
+  .comp-table td:first-child { font-family: var(--mono); color: var(--accent); white-space: nowrap; }
+
+  /* Code blocks */
+  .get-started pre { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1rem 1.25rem;
+    font-family: var(--mono); font-size: 0.85rem; color: var(--green); overflow-x: auto; line-height: 1.8; }
+  .get-started pre span { color: var(--text-dim); }
+
+  /* Links */
+  .links ul { list-style: none; }
+  .links li { margin-bottom: 0.5rem; }
+  .links li::before { content: '> '; font-family: var(--mono); color: var(--text-dim); }
+
+  /* Footer */
+  footer { padding: 2rem 0; text-align: center; color: var(--text-dim); font-size: 0.85rem; }
+
+  /* Mobile */
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 2rem; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .stack-grid { grid-template-columns: 1fr; }
+    .comp-table { font-size: 0.8rem; }
+    .comp-table td, .comp-table th { padding: 0.4rem 0.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="hero">
+    <h1>Exemplar</h1>
+    <p>Governed code review &mdash; reference implementation for the FOSS governance stack</p>
+  </div>
+
+  <section class="what">
+    <h2>What</h2>
+    <p>Exemplar is a CLI and MCP tool that accepts pull request diffs, routes them through multi-stage analysis (security, correctness, style, architecture), and produces verified review reports with full audit trails. Every stage is governed by the FOSS governance stack &mdash; not as a demo, but as the product itself. The governance IS the architecture.</p>
+  </section>
+
+  <section>
+    <h2>The Stack</h2>
+    <div class="stack-grid">
+      <div class="stack-item"><strong>Constrain</strong><span>Specification before code &mdash; interviews, boundaries, artifacts</span></div>
+      <div class="stack-item"><strong>Pact</strong><span>Contract-first decomposition, typed interfaces, hidden tests</span></div>
+      <div class="stack-item"><strong>Baton</strong><span>Circuit orchestration &mdash; routing, breakers, taint analysis</span></div>
+      <div class="stack-item"><strong>Sentinel</strong><span>Production monitoring &amp; error attribution via PACT keys</span></div>
+      <div class="stack-item"><strong>Ledger</strong><span>Schema registry with field-level data classification</span></div>
+      <div class="stack-item"><strong>Arbiter</strong><span>Six-factor trust scoring and conflict resolution</span></div>
+      <div class="stack-item"><strong>Chronicler</strong><span>Event collection and story assembly from stage boundaries</span></div>
+      <div class="stack-item"><strong>Stigmergy</strong><span>Organizational pattern discovery via ART neural networks</span></div>
+      <div class="stack-item"><strong>Apprentice</strong><span>Adaptive model distillation &mdash; shadow to autonomous</span></div>
+      <div class="stack-item"><strong>Kindex</strong><span>Persistent knowledge graph across sessions</span></div>
+      <div class="stack-item"><strong>Cartographer</strong><span>Stack adoption &mdash; scan existing codebases, draft artifacts</span></div>
+      <div class="stack-item"><strong>Agent-Safe</strong><span>Authorization policy language &mdash; 2us eval, Ed25519, Merkle</span></div>
+      <div class="stack-item"><strong>Signet-Eval</strong><span>Preflight red lines and contingency plans, HMAC-signed</span></div>
+      <div class="stack-item"><strong>Signet</strong><span>Sovereign agent identity &mdash; encrypted vault, ZK proofs</span></div>
+      <div class="stack-item"><strong>Tessera</strong><span>Self-validating documents &mdash; SHA-256 chain, Ed25519</span></div>
+      <div class="stack-item"><strong>BlindDB</strong><span>Client-side encryption &mdash; server stores opaque blobs</span></div>
+      <div class="stack-item"><strong>HermesP2P</strong><span>Decentralized agent messaging &mdash; ephemeral by design</span></div>
+    </div>
+  </section>
+
+  <section class="arch">
+    <h2>Architecture</h2>
+    <pre>PR Diff --> Intake --> Circuit (Baton) --> [Security, Correctness, Style, Architecture]
+                                                 |  each stage
+                                             Reviewer Agent (Agent-Safe scoped)
+                                                 |
+                                             Assessment (Arbiter trust-scored)
+                                                 |
+                                             Chronicler event --> Stigmergy signal
+                                                 |
+                                        Merge assessments --> Tessera-sealed report</pre>
+  </section>
+
+  <section>
+    <h2>Numbers</h2>
+    <div class="stats">
+      <div class="stat"><div class="num">11</div><div class="label">components</div></div>
+      <div class="stat"><div class="num">1979</div><div class="label">tests</div></div>
+      <div class="stat"><div class="num">95</div><div class="label">functions</div></div>
+      <div class="stat"><div class="num">235</div><div class="label">types</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Components</h2>
+    <table class="comp-table">
+      <thead><tr><th>Component</th><th>Governance Pattern</th></tr></thead>
+      <tbody>
+        <tr><td>schemas</td><td>Pact + Ledger &mdash; frozen models, field classifications, StrEnums</td></tr>
+        <tr><td>config</td><td>Constrain &mdash; YAML validation, fail-fast, constraint boundaries</td></tr>
+        <tr><td>intake</td><td>Ledger &mdash; diff parsing, field-level classification</td></tr>
+        <tr><td>circuit</td><td>Baton &mdash; stage routing, circuit breaker, parallel execution</td></tr>
+        <tr><td>reviewers</td><td>Agent-Safe + Signet &mdash; policy-scoped analysis, credentials</td></tr>
+        <tr><td>assessor</td><td>Arbiter &mdash; trust-weighted merge, conflict resolution</td></tr>
+        <tr><td>reporter</td><td>Tessera &mdash; deterministic output, hash-chain seal</td></tr>
+        <tr><td>chronicle</td><td>Chronicler &mdash; stage-boundary events, correlation keys</td></tr>
+        <tr><td>learner</td><td>Apprentice + Stigmergy &mdash; shadow comparison, pattern recording</td></tr>
+        <tr><td>cli</td><td>Pact + Kindex + Cartographer &mdash; PACT keys, history, adoption</td></tr>
+        <tr><td>mcp_server</td><td>MCP tools &mdash; exemplar_review, exemplar_trust, exemplar_history</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="get-started">
+    <h2>Get Started</h2>
+    <pre><span># clone</span>
+git clone https://github.com/jmcentire/exemplar.git
+cd exemplar
+
+<span># install</span>
+pip install -e .
+
+<span># run tests</span>
+pytest</pre>
+  </section>
+
+  <section class="links">
+    <h2>Links</h2>
+    <ul>
+      <li><a href="https://github.com/jmcentire/exemplar">GitHub Repository</a></li>
+      <li><a href="https://github.com/jmcentire/exemplar/blob/main/ECOSYSTEM.md">ECOSYSTEM.md</a> &mdash; full governance stack documentation</li>
+      <li><a href="https://github.com/jmcentire/exemplar/blob/main/task.md">task.md</a> &mdash; project specification</li>
+    </ul>
+  </section>
+
+  <footer>Built by Jeremy McEntire. Constrained, decomposed, implemented, verified, governed.</footer>
+
+</div>
+
+</body>
+</html>
