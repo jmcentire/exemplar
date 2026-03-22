@@ -1,0 +1,908 @@
+{
+  "component_id": "cli",
+  "name": "CLI Entry Point",
+  "description": "Argparse-based CLI providing four subcommands (review, trust, history, adopt) as a thin transport layer over shared core modules. Manages async event loop lifecycle, maps pipeline results to process exit codes (0=pass, 1=warn, 2=block, 3=error), emits Chronicler events at stage boundaries, and embeds PACT keys for Sentinel attribution. All business logic is delegated to intake, circuit, assessor, reporter, chronicle, and learner modules — the CLI never inspects findings, computes scores, or formats reports directly.",
+  "version": 1,
+  "types": [
+    {
+      "name": "CliExitCode",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ],
+      "inner_types": [],
+      "description": "CLI process exit codes mapping to review outcomes.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "SubcommandName",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "review",
+        "trust",
+        "history",
+        "adopt"
+      ],
+      "inner_types": [],
+      "description": "Valid CLI subcommand identifiers used as dispatch keys.",
+      "owner_component": ""
+    },
+    {
+      "name": "CliArgs",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "subcommand",
+          "type_ref": "SubcommandName",
+          "required": true,
+          "default": "",
+          "description": "Which subcommand was invoked",
+          "validators": []
+        },
+        {
+          "name": "diff_file",
+          "type_ref": "FilePath",
+          "required": false,
+          "default": "",
+          "description": "Path to diff file (review subcommand only)",
+          "validators": []
+        },
+        {
+          "name": "config_path",
+          "type_ref": "FilePath",
+          "required": false,
+          "default": "",
+          "description": "Override path to YAML config file. Defaults to XDG config or cwd/.exemplar.yml",
+          "validators": []
+        },
+        {
+          "name": "output_format",
+          "type_ref": "OutputFormat",
+          "required": false,
+          "default": "json",
+          "description": "Report output format. Only used by review subcommand.",
+          "validators": []
+        },
+        {
+          "name": "query",
+          "type_ref": "str",
+          "required": false,
+          "default": "",
+          "description": "Search term for history subcommand",
+          "validators": []
+        },
+        {
+          "name": "debug",
+          "type_ref": "bool",
+          "required": false,
+          "default": "false",
+          "description": "Enable verbose diagnostic output to stderr",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Parsed and validated CLI arguments after argparse processing. Frozen Pydantic model wrapping argparse.Namespace fields into typed structure.",
+      "owner_component": ""
+    },
+    {
+      "name": "FilePath",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1,max=4096",
+              "error_message": "File path must be between 1 and 4096 characters"
+            },
+            {
+              "kind": "regex",
+              "expression": "^[^\\x00]+$",
+              "error_message": "File path must not contain null bytes"
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A validated filesystem path string. Must be non-empty when required and contain only valid path characters.",
+      "owner_component": ""
+    },
+    {
+      "name": "OutputFormat",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "json",
+        "md",
+        "github"
+      ],
+      "inner_types": [],
+      "description": "Supported report output formats.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "CliResult",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "exit_code",
+          "type_ref": "CliExitCode",
+          "required": true,
+          "default": "",
+          "description": "Semantic exit code to return from process",
+          "validators": []
+        },
+        {
+          "name": "stdout_output",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Formatted output to write to stdout. Empty string means no output.",
+          "validators": []
+        },
+        {
+          "name": "stderr_output",
+          "type_ref": "str",
+          "required": false,
+          "default": "",
+          "description": "Diagnostic or error messages to write to stderr. Empty string means no diagnostics.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Internal result from a subcommand handler before exit code mapping. Carries both the output text and the semantic exit code.",
+      "owner_component": ""
+    },
+    {
+      "name": "SubcommandDispatchTable",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "handlers",
+          "type_ref": "dict",
+          "required": true,
+          "default": "",
+          "description": "Mapping of SubcommandName -> async callable(CliArgs) -> CliResult",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Maps SubcommandName to its async handler function. Used by main() for dispatch. The handler signature is async (CliArgs) -> CliResult.",
+      "owner_component": ""
+    },
+    {
+      "name": "PactKey",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "namespace",
+          "type_ref": "str",
+          "required": true,
+          "default": "EXEMPLAR.CLI",
+          "description": "Module-level PACT namespace, always 'EXEMPLAR.CLI'",
+          "validators": [
+            {
+              "kind": "regex",
+              "expression": "^EXEMPLAR\\.CLI$",
+              "error_message": "CLI PACT namespace must be 'EXEMPLAR.CLI'"
+            }
+          ]
+        },
+        {
+          "name": "function_key",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Per-function PACT key, e.g. 'EXEMPLAR.CLI.handle_review'",
+          "validators": [
+            {
+              "kind": "regex",
+              "expression": "^EXEMPLAR\\.CLI\\.[a-z_]+$",
+              "error_message": "PACT function key must follow EXEMPLAR.CLI.<function_name> pattern"
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "PACT attribution key embedded in public methods for Sentinel tracing.",
+      "owner_component": ""
+    }
+  ],
+  "functions": [
+    {
+      "name": "build_parser",
+      "description": "Constructs the argparse.ArgumentParser with all four subcommands (review, trust, history, adopt) and their respective arguments. Pure function with no side effects. The review subcommand accepts a positional diff-file arg plus --config and --format options. The trust subcommand has no additional args. The history subcommand accepts an optional --query flag. The adopt subcommand has no additional args. A global --debug flag is added to the parent parser.",
+      "inputs": [],
+      "output_type": "any",
+      "error_cases": [],
+      "preconditions": [],
+      "postconditions": [
+        "Returned parser has exactly 4 subcommands: review, trust, history, adopt",
+        "review subcommand has positional 'diff_file' argument",
+        "review subcommand has --config optional argument",
+        "review subcommand has --format optional argument with choices ['json', 'md', 'github']",
+        "history subcommand has --query optional argument",
+        "Parent parser has --debug flag defaulting to False",
+        "Parser prog name is 'exemplar'"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "parse_and_validate_args",
+      "description": "Parses raw argv using the argparse parser and converts the resulting Namespace into a validated CliArgs struct. Validates that required arguments for each subcommand are present (e.g., diff_file for review). Returns structured, typed args or raises on invalid input.",
+      "inputs": [
+        {
+          "name": "parser",
+          "type_ref": "any",
+          "required": true,
+          "default": "",
+          "description": "ArgumentParser instance from build_parser()",
+          "validators": []
+        },
+        {
+          "name": "argv",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "Raw command-line arguments. If empty list, triggers help display.",
+          "validators": []
+        }
+      ],
+      "output_type": "CliArgs",
+      "error_cases": [
+        {
+          "name": "no_subcommand",
+          "condition": "No subcommand provided in argv",
+          "error_type": "SystemExit",
+          "error_data": {
+            "exit_code": "3",
+            "detail": "argparse prints usage to stderr and raises SystemExit(2) which is caught and remapped to exit code 3"
+          }
+        },
+        {
+          "name": "unknown_argument",
+          "condition": "Unrecognized argument passed",
+          "error_type": "SystemExit",
+          "error_data": {
+            "exit_code": "3"
+          }
+        },
+        {
+          "name": "missing_diff_file",
+          "condition": "review subcommand invoked without diff-file positional argument",
+          "error_type": "SystemExit",
+          "error_data": {
+            "exit_code": "3"
+          }
+        }
+      ],
+      "preconditions": [
+        "parser is a fully constructed ArgumentParser from build_parser()"
+      ],
+      "postconditions": [
+        "Returned CliArgs has a valid subcommand",
+        "If subcommand is 'review', diff_file is non-empty",
+        "output_format is a valid OutputFormat variant"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "handle_review",
+      "description": "Async handler for the 'review' subcommand. Loads config, emits review.started Chronicler event (fire-and-forget), reads diff file, invokes intake.parse_diff → circuit.route_stages → assessor.assess → reporter.format_report pipeline, maps PipelineResult to CliResult with appropriate exit code. All output goes to stdout_output; errors and progress to stderr_output. PACT key: EXEMPLAR.CLI.handle_review.",
+      "inputs": [
+        {
+          "name": "args",
+          "type_ref": "CliArgs",
+          "required": true,
+          "default": "",
+          "description": "Validated CLI arguments with subcommand='review'",
+          "validators": []
+        }
+      ],
+      "output_type": "CliResult",
+      "error_cases": [
+        {
+          "name": "diff_file_not_found",
+          "condition": "The diff file path does not exist or is not readable",
+          "error_type": "FileNotFoundError",
+          "error_data": {
+            "exit_code": "3",
+            "detail": "Diff file not found: {path}"
+          }
+        },
+        {
+          "name": "diff_file_read_error",
+          "condition": "The diff file exists but cannot be read (permissions, encoding)",
+          "error_type": "IOError",
+          "error_data": {
+            "exit_code": "3",
+            "detail": "Failed to read diff file: {path}"
+          }
+        },
+        {
+          "name": "config_load_error",
+          "condition": "Config file specified via --config does not exist or is invalid YAML/schema",
+          "error_type": "ValueError",
+          "error_data": {
+            "exit_code": "3",
+            "detail": "Invalid or missing config: {path}"
+          }
+        },
+        {
+          "name": "pipeline_stage_failure",
+          "condition": "Any pipeline stage (intake, circuit, assessor, reporter) raises an unhandled exception",
+          "error_type": "RuntimeError",
+          "error_data": {
+            "exit_code": "3",
+            "detail": "Pipeline failed at stage: {stage_name}"
+          }
+        },
+        {
+          "name": "diff_file_empty",
+          "condition": "Diff file exists and is readable but contains zero bytes",
+          "error_type": "ValueError",
+          "error_data": {
+            "exit_code": "3",
+            "detail": "Diff file is empty: {path}"
+          }
+        }
+      ],
+      "preconditions": [
+        "args.subcommand == SubcommandName.review",
+        "args.diff_file is non-empty and points to a readable file"
+      ],
+      "postconditions": [
+        "A review.started ChroniclerEvent was emitted (fire-and-forget, failure does not affect result)",
+        "exit_code is PASS(0), WARN(1), or BLOCK(2) on successful pipeline completion",
+        "exit_code is ERROR(3) if any pipeline stage raised an unrecoverable exception",
+        "stdout_output contains the formatted report in the requested OutputFormat",
+        "stderr_output contains diagnostic info if args.debug is true"
+      ],
+      "idempotent": false,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": "diff file at args.diff_file path",
+          "description": "Reads unified diff content from filesystem"
+        },
+        {
+          "kind": "reads_file",
+          "target": "config file at args.config_path or default location",
+          "description": "Loads YAML review configuration"
+        },
+        {
+          "kind": "network_call",
+          "target": "chronicle.emit_event (fire-and-forget)",
+          "description": "Emits review.started ChroniclerEvent; failure is silently ignored"
+        },
+        {
+          "kind": "logging",
+          "target": "stderr",
+          "description": "Diagnostic output when --debug is enabled"
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 5000,
+        "max_memory_mb": null,
+        "complexity": "O(n) where n is diff line count, dominated by pipeline stages"
+      }
+    },
+    {
+      "name": "handle_trust",
+      "description": "Async handler for the 'trust' subcommand. Loads config, retrieves current reviewer trust scores from assessor.get_trust_scores(), formats them as a human-readable table to stdout. Always returns exit code PASS(0) on success. PACT key: EXEMPLAR.CLI.handle_trust.",
+      "inputs": [
+        {
+          "name": "args",
+          "type_ref": "CliArgs",
+          "required": true,
+          "default": "",
+          "description": "Validated CLI arguments with subcommand='trust'",
+          "validators": []
+        }
+      ],
+      "output_type": "CliResult",
+      "error_cases": [
+        {
+          "name": "trust_data_unavailable",
+          "condition": "Trust score storage is missing or corrupt",
+          "error_type": "RuntimeError",
+          "error_data": {
+            "exit_code": "3",
+            "detail": "Failed to load trust scores"
+          }
+        },
+        {
+          "name": "config_load_error",
+          "condition": "Config file cannot be loaded",
+          "error_type": "ValueError",
+          "error_data": {
+            "exit_code": "3",
+            "detail": "Invalid or missing config: {path}"
+          }
+        }
+      ],
+      "preconditions": [
+        "args.subcommand == SubcommandName.trust"
+      ],
+      "postconditions": [
+        "exit_code is PASS(0) on success",
+        "exit_code is ERROR(3) on failure",
+        "stdout_output contains formatted trust score table with one row per reviewer"
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": "config file and trust score storage",
+          "description": "Reads configuration and persisted trust scores"
+        },
+        {
+          "kind": "logging",
+          "target": "stderr",
+          "description": "Diagnostic output when --debug is enabled"
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 500,
+        "max_memory_mb": null,
+        "complexity": null
+      }
+    },
+    {
+      "name": "handle_history",
+      "description": "Async handler for the 'history' subcommand. Queries past review records from Kindex store via learner.query_history(). If --query is provided, filters results by term; otherwise returns recent reviews. Formats results to stdout. PACT key: EXEMPLAR.CLI.handle_history.",
+      "inputs": [
+        {
+          "name": "args",
+          "type_ref": "CliArgs",
+          "required": true,
+          "default": "",
+          "description": "Validated CLI arguments with subcommand='history'",
+          "validators": []
+        }
+      ],
+      "output_type": "CliResult",
+      "error_cases": [
+        {
+          "name": "kindex_unavailable",
+          "condition": "Kindex store is unreachable or corrupt",
+          "error_type": "RuntimeError",
+          "error_data": {
+            "exit_code": "3",
+            "detail": "Failed to query review history from Kindex"
+          }
+        },
+        {
+          "name": "config_load_error",
+          "condition": "Config file cannot be loaded",
+          "error_type": "ValueError",
+          "error_data": {
+            "exit_code": "3",
+            "detail": "Invalid or missing config: {path}"
+          }
+        }
+      ],
+      "preconditions": [
+        "args.subcommand == SubcommandName.history"
+      ],
+      "postconditions": [
+        "exit_code is PASS(0) on success, even if zero results returned",
+        "exit_code is ERROR(3) on failure",
+        "stdout_output contains formatted history results (may be empty set message)"
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": "config file and Kindex store",
+          "description": "Reads configuration and queries persisted review history"
+        },
+        {
+          "kind": "logging",
+          "target": "stderr",
+          "description": "Diagnostic output when --debug is enabled"
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 1000,
+        "max_memory_mb": null,
+        "complexity": null
+      }
+    },
+    {
+      "name": "handle_adopt",
+      "description": "Async handler for the 'adopt' subcommand (Cartographer). Scans cwd for linter configuration files (.eslintrc, .pylintrc, .flake8, pyproject.toml [tool.ruff], etc.) via learner.scan_linter_configs(). Reports findings with migration suggestions showing how existing rules map to Exemplar reviewers. PACT key: EXEMPLAR.CLI.handle_adopt.",
+      "inputs": [
+        {
+          "name": "args",
+          "type_ref": "CliArgs",
+          "required": true,
+          "default": "",
+          "description": "Validated CLI arguments with subcommand='adopt'",
+          "validators": []
+        }
+      ],
+      "output_type": "CliResult",
+      "error_cases": [
+        {
+          "name": "cwd_unreadable",
+          "condition": "Current working directory is not readable or does not exist",
+          "error_type": "PermissionError",
+          "error_data": {
+            "exit_code": "3",
+            "detail": "Cannot read current working directory"
+          }
+        },
+        {
+          "name": "scan_error",
+          "condition": "Unexpected error during filesystem scan of linter configs",
+          "error_type": "RuntimeError",
+          "error_data": {
+            "exit_code": "3",
+            "detail": "Failed during linter config scan"
+          }
+        }
+      ],
+      "preconditions": [
+        "args.subcommand == SubcommandName.adopt"
+      ],
+      "postconditions": [
+        "exit_code is PASS(0) on success, even if no linter configs found",
+        "exit_code is ERROR(3) on failure",
+        "stdout_output contains scan results with per-file findings and migration suggestions"
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": "cwd and linter config files (.eslintrc, .pylintrc, .flake8, pyproject.toml, etc.)",
+          "description": "Scans filesystem for existing linter configuration files"
+        },
+        {
+          "kind": "logging",
+          "target": "stderr",
+          "description": "Diagnostic output when --debug is enabled"
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 2000,
+        "max_memory_mb": null,
+        "complexity": null
+      }
+    },
+    {
+      "name": "build_dispatch_table",
+      "description": "Constructs the SubcommandDispatchTable mapping each SubcommandName to its async handler function. Pure function, returns a static mapping. Used by main() to route parsed subcommands to handlers.",
+      "inputs": [],
+      "output_type": "SubcommandDispatchTable",
+      "error_cases": [],
+      "preconditions": [],
+      "postconditions": [
+        "Returned table has exactly 4 entries, one per SubcommandName variant",
+        "Each handler value is an async callable accepting CliArgs and returning CliResult"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "map_decision_to_exit_code",
+      "description": "Pure mapping function from ReviewDecision enum to CliExitCode. pass→PASS(0), warn→WARN(1), block→BLOCK(2), error→ERROR(3). Used by handle_review to convert pipeline output to process exit code.",
+      "inputs": [
+        {
+          "name": "decision",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ReviewDecision variant string: one of 'pass', 'warn', 'block', 'error'",
+          "validators": [
+            {
+              "kind": "custom",
+              "expression": "value in ('pass', 'warn', 'block', 'error')",
+              "error_message": "Decision must be one of: pass, warn, block, error"
+            }
+          ]
+        }
+      ],
+      "output_type": "CliExitCode",
+      "error_cases": [
+        {
+          "name": "invalid_decision",
+          "condition": "decision string is not a recognized ReviewDecision variant",
+          "error_type": "ValueError",
+          "error_data": {
+            "detail": "Unknown ReviewDecision: {decision}"
+          }
+        }
+      ],
+      "preconditions": [
+        "decision is a valid ReviewDecision variant"
+      ],
+      "postconditions": [
+        "Returned CliExitCode numeric value matches: pass→0, warn→1, block→2, error→3"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "main",
+      "description": "Synchronous entry point for the CLI. Builds parser, parses argv (defaults to sys.argv[1:] if None), constructs dispatch table, runs the appropriate async handler via asyncio.run(), writes stdout_output to sys.stdout and stderr_output to sys.stderr, and returns the integer exit code. Catches all exceptions at the boundary and maps them to exit code 3 (ERROR). Only calls sys.exit() when invoked as __main__ script entry point — the function itself returns int for testability. PACT key: EXEMPLAR.CLI.main.",
+      "inputs": [
+        {
+          "name": "argv",
+          "type_ref": "list",
+          "required": false,
+          "default": "None",
+          "description": "Raw command-line arguments. None means use sys.argv[1:]. Empty list triggers help/error.",
+          "validators": []
+        }
+      ],
+      "output_type": "int",
+      "error_cases": [
+        {
+          "name": "unhandled_exception",
+          "condition": "Any exception not caught by subcommand handlers propagates to main",
+          "error_type": "Exception",
+          "error_data": {
+            "exit_code": "3",
+            "detail": "Caught at boundary, logged to stderr, returns 3"
+          }
+        },
+        {
+          "name": "keyboard_interrupt",
+          "condition": "User sends SIGINT/Ctrl+C during execution",
+          "error_type": "KeyboardInterrupt",
+          "error_data": {
+            "exit_code": "3",
+            "detail": "Interrupted by user"
+          }
+        }
+      ],
+      "preconditions": [],
+      "postconditions": [
+        "Return value is 0, 1, 2, or 3",
+        "On success, formatted output was written to stdout",
+        "On error, diagnostic message was written to stderr",
+        "No exception escapes this function — all are caught and mapped to exit code 3"
+      ],
+      "idempotent": false,
+      "is_async": false,
+      "side_effects": [
+        "Writes to sys.stdout",
+        "Writes to sys.stderr",
+        "Calls asyncio.run() to execute async handlers",
+        "May call sys.exit() when invoked as __main__"
+      ],
+      "structured_side_effects": [
+        {
+          "kind": "writes_file",
+          "target": "sys.stdout",
+          "description": "Writes formatted subcommand output"
+        },
+        {
+          "kind": "writes_file",
+          "target": "sys.stderr",
+          "description": "Writes error diagnostics and debug output"
+        },
+        {
+          "kind": "mutates_state",
+          "target": "asyncio event loop",
+          "description": "Creates and runs asyncio event loop via asyncio.run()"
+        }
+      ],
+      "performance_budget": null
+    }
+  ],
+  "dependencies": [
+    "intake",
+    "circuit",
+    "assessor",
+    "reporter",
+    "chronicle",
+    "learner",
+    "schemas",
+    "config"
+  ],
+  "dependency_contracts": {
+    "intake": [
+      "parse_diff"
+    ],
+    "circuit": [
+      "route_stages"
+    ],
+    "assessor": [
+      "assess",
+      "get_trust_scores"
+    ],
+    "reporter": [
+      "format_report"
+    ],
+    "chronicle": [
+      "emit_event"
+    ],
+    "learner": [
+      "query_history",
+      "scan_linter_configs"
+    ],
+    "schemas": [
+      "OutputFormat",
+      "ReviewDecision",
+      "PipelineResult",
+      "DiffInput",
+      "ReviewConfig",
+      "TrustScoreSet",
+      "HistoryQueryResult",
+      "AdoptScanResult",
+      "ChroniclerEvent"
+    ],
+    "config": [
+      "load_config"
+    ]
+  },
+  "invariants": [
+    "CLI is a thin transport layer: it never inspects findings, computes scores, or formats report content — all logic is delegated to dependency modules",
+    "Exit codes are deterministic: given the same pipeline result, the same exit code is always returned",
+    "Chronicler event emission is fire-and-forget: failure to emit review.started never affects the pipeline result or exit code",
+    "stdout carries only subcommand output (report, trust table, history results, adopt findings); stderr carries only diagnostics and error messages",
+    "No exception escapes main(): all exceptions are caught at the boundary and mapped to CliExitCode.ERROR (3)",
+    "PACT key namespace is always 'EXEMPLAR.CLI' with function-specific suffixes",
+    "Config resolution order: --config flag > XDG_CONFIG_HOME/exemplar/.exemplar.yml > cwd/.exemplar.yml",
+    "All data models are frozen (Pydantic frozen=True); CliArgs and CliResult are immutable after construction",
+    "The --debug flag controls stderr verbosity but never changes stdout content or exit codes"
+  ],
+  "requires": [
+    "intake",
+    "circuit",
+    "assessor",
+    "reporter",
+    "chronicle",
+    "learner",
+    "schemas",
+    "config"
+  ],
+  "processing_register": "rigorous-analytical",
+  "data_access": {
+    "reads": [
+      "PUBLIC",
+      "INTERNAL"
+    ],
+    "writes": [
+      "PUBLIC"
+    ],
+    "rationale": "Reads PUBLIC diff file content from filesystem for review pipeline input. Reads INTERNAL configuration files (YAML config, trust score storage, Kindex history store, linter config files in cwd) for pipeline parameterization and subcommand data retrieval. Writes PUBLIC formatted output (review reports, trust tables, history results, adopt findings) to stdout. Does not read or write PII — diff content may theoretically contain PII but the CLI treats it as opaque PUBLIC data passed through to pipeline stages.",
+    "side_effects": [
+      {
+        "type": "file_read",
+        "classification": "PUBLIC",
+        "fields": [
+          "diff_file"
+        ],
+        "rationale": "Reads unified diff content from user-specified file path to feed into the review pipeline via intake.parse_diff"
+      },
+      {
+        "type": "file_read",
+        "classification": "INTERNAL",
+        "fields": [
+          "config_path"
+        ],
+        "rationale": "Reads YAML configuration file to parameterize pipeline stages (reviewer weights, thresholds, output preferences)"
+      },
+      {
+        "type": "file_read",
+        "classification": "INTERNAL",
+        "fields": [
+          "trust_score_storage"
+        ],
+        "rationale": "Reads persisted reviewer trust scores for the trust subcommand display"
+      },
+      {
+        "type": "file_read",
+        "classification": "INTERNAL",
+        "fields": [
+          "kindex_store"
+        ],
+        "rationale": "Reads past review records from Kindex store for the history subcommand query"
+      },
+      {
+        "type": "file_read",
+        "classification": "INTERNAL",
+        "fields": [
+          "linter_config_files"
+        ],
+        "rationale": "Scans cwd for .eslintrc, .pylintrc, .flake8, pyproject.toml etc. for the adopt subcommand Cartographer scan"
+      },
+      {
+        "type": "stdout_write",
+        "classification": "PUBLIC",
+        "fields": [
+          "formatted_output"
+        ],
+        "rationale": "Writes formatted subcommand results (reports, tables, scan results) to process stdout for user or CI consumption"
+      },
+      {
+        "type": "network_call",
+        "classification": "INTERNAL",
+        "fields": [
+          "chronicler_event"
+        ],
+        "rationale": "Fire-and-forget emission of review.started ChroniclerEvent for governance audit trail; failure is silently ignored"
+      }
+    ]
+  },
+  "authority": {
+    "domains": [
+      "cli.exit_codes",
+      "cli.argument_parsing",
+      "cli.subcommand_dispatch"
+    ],
+    "rationale": "The CLI module is the sole authority for process exit code semantics (mapping ReviewDecision to OS exit codes), argparse argument definition and validation, and subcommand-to-handler dispatch routing. No other component defines CLI argument structure or exit code mappings."
+  }
+}

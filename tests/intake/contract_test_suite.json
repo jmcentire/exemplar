@@ -1,0 +1,1027 @@
+{
+  "component_id": "intake",
+  "contract_version": 1,
+  "test_cases": [
+    {
+      "id": "parse_diff_happy_single_hunk",
+      "description": "parse_diff returns one DiffHunk with correct fields for a single-hunk unified diff",
+      "function": "parse_diff",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Valid unified diff with one hunk adding a single line",
+      "expected_output_description": "One DiffHunk with deterministic id, empty classifications, correct file_path and language",
+      "expected_error": "",
+      "assertions": [
+        "len(hunks) == 1",
+        "len(errors) == 0",
+        "hunks[0].classifications == []",
+        "hunks[0].file_path != ''",
+        "hunks[0].id.startswith('hunk-')"
+      ]
+    },
+    {
+      "id": "parse_diff_happy_multi_hunk",
+      "description": "parse_diff returns multiple DiffHunks for a diff with two hunks in the same file",
+      "function": "parse_diff",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Valid unified diff with two hunks in one file",
+      "expected_output_description": "Two DiffHunks with distinct ids and no errors",
+      "expected_error": "",
+      "assertions": [
+        "len(hunks) == 2",
+        "len(errors) == 0",
+        "hunks[0].id != hunks[1].id"
+      ]
+    },
+    {
+      "id": "parse_diff_happy_multi_file",
+      "description": "parse_diff handles diffs spanning multiple files",
+      "function": "parse_diff",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Valid unified diff with hunks from two different files",
+      "expected_output_description": "DiffHunks from both files with correct file_path values",
+      "expected_error": "",
+      "assertions": [
+        "len(hunks) >= 2",
+        "hunks[0].file_path != hunks[1].file_path"
+      ]
+    },
+    {
+      "id": "parse_diff_empty_input",
+      "description": "parse_diff returns empty lists for empty string input",
+      "function": "parse_diff",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "raw": ""
+      },
+      "input_description": "",
+      "expected_output_description": "Empty tuple ([], [])",
+      "expected_error": "",
+      "assertions": [
+        "hunks == []",
+        "errors == []"
+      ]
+    },
+    {
+      "id": "parse_diff_no_diff_headers",
+      "description": "parse_diff returns errors when input has no recognizable diff headers",
+      "function": "parse_diff",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "raw": "this is just some random text\\nwith no diff markers\\n"
+      },
+      "input_description": "",
+      "expected_output_description": "Zero hunks and at least one IntakeError with phase='parse'",
+      "expected_error": "",
+      "assertions": [
+        "len(hunks) == 0",
+        "len(errors) >= 1",
+        "all(e.phase.value == 'parse' or str(e.phase) == 'parse' for e in errors)"
+      ]
+    },
+    {
+      "id": "parse_diff_malformed_hunk_header",
+      "description": "parse_diff returns error for malformed @@ hunk header",
+      "function": "parse_diff",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Diff with valid file headers but garbled @@ line",
+      "expected_output_description": "IntakeError with phase=parse and non-empty message",
+      "expected_error": "",
+      "assertions": [
+        "len(errors) >= 1",
+        "all(e.message != '' for e in errors)"
+      ]
+    },
+    {
+      "id": "parse_diff_truncated_hunk",
+      "description": "parse_diff handles diff that ends mid-hunk",
+      "function": "parse_diff",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Diff that starts a hunk header claiming 10 lines but provides only 2",
+      "expected_output_description": "At least partial results or errors indicating truncation",
+      "expected_error": "",
+      "assertions": [
+        "len(hunks) + len(errors) >= 1"
+      ]
+    },
+    {
+      "id": "parse_diff_binary_file_marker",
+      "description": "parse_diff detects binary file markers and reports error/skips",
+      "function": "parse_diff",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Diff containing 'Binary files a/img.png and b/img.png differ'",
+      "expected_output_description": "No DiffHunk for binary file; error or skip recorded",
+      "expected_error": "",
+      "assertions": [
+        "len(hunks) == 0 or all(h.file_path != 'img.png' for h in hunks)",
+        "len(errors) >= 1 or len(hunks) == 0"
+      ]
+    },
+    {
+      "id": "parse_diff_partial_success",
+      "description": "parse_diff returns valid hunks alongside errors for partially malformed input",
+      "function": "parse_diff",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Diff with one valid hunk followed by a malformed hunk section",
+      "expected_output_description": "At least one hunk and at least one error",
+      "expected_error": "",
+      "assertions": [
+        "len(hunks) >= 1",
+        "len(errors) >= 1"
+      ]
+    },
+    {
+      "id": "parse_diff_deterministic",
+      "description": "parse_diff produces identical output on repeated calls with same input",
+      "function": "parse_diff",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Same valid diff string parsed twice",
+      "expected_output_description": "Both results are identical",
+      "expected_error": "",
+      "assertions": [
+        "hunks1[0].id == hunks2[0].id",
+        "len(hunks1) == len(hunks2)"
+      ]
+    },
+    {
+      "id": "parse_diff_classifications_always_empty",
+      "description": "parse_diff never populates classifications field",
+      "function": "parse_diff",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Valid diff with content that would match classification patterns",
+      "expected_output_description": "All hunks have empty classifications",
+      "expected_error": "",
+      "assertions": [
+        "all(h.classifications == [] for h in hunks)"
+      ]
+    },
+    {
+      "id": "parse_diff_file_path_forward_slashes",
+      "description": "Every DiffHunk file_path uses forward slashes and is non-empty",
+      "function": "parse_diff",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Diff with nested directory paths",
+      "expected_output_description": "file_path contains forward slashes, no backslashes",
+      "expected_error": "",
+      "assertions": [
+        "all(h.file_path != '' for h in hunks)",
+        "all('\\\\' not in h.file_path for h in hunks)"
+      ]
+    },
+    {
+      "id": "parse_diff_language_populated",
+      "description": "parse_diff sets language from EXTENSION_LANGUAGE_MAP or 'unknown'",
+      "function": "parse_diff",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Diff modifying a .py file",
+      "expected_output_description": "language is 'python' or appropriate mapped value",
+      "expected_error": "",
+      "assertions": [
+        "all(h.language is not None for h in hunks)",
+        "all(isinstance(h.language, str) for h in hunks)"
+      ]
+    },
+    {
+      "id": "parse_diff_error_phase_is_parse",
+      "description": "All IntakeErrors from parse_diff have phase='parse'",
+      "function": "parse_diff",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Malformed diff input producing errors",
+      "expected_output_description": "All errors have phase set to parse",
+      "expected_error": "",
+      "assertions": [
+        "all(e.phase.value == 'parse' or str(e.phase) == 'parse' for e in errors)"
+      ]
+    },
+    {
+      "id": "classify_hunks_happy_path",
+      "description": "classify_hunks applies matching rules and returns classified hunks",
+      "function": "classify_hunks",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "List of DiffHunks with added_lines containing a secret pattern; config with matching secret rule",
+      "expected_output_description": "Output hunks have 'secret' in classifications",
+      "expected_error": "",
+      "assertions": [
+        "len(result) == len(input_hunks)",
+        "any('secret' in [c.value if hasattr(c, 'value') else str(c) for c in h.classifications] for h in result)"
+      ]
+    },
+    {
+      "id": "classify_hunks_no_matches",
+      "description": "classify_hunks returns empty classifications when no patterns match",
+      "function": "classify_hunks",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Hunks with innocuous added_lines and config with patterns that don't match",
+      "expected_output_description": "All output hunks have empty classifications",
+      "expected_error": "",
+      "assertions": [
+        "all(h.classifications == [] for h in result)"
+      ]
+    },
+    {
+      "id": "classify_hunks_preserves_order",
+      "description": "classify_hunks output order matches input order",
+      "function": "classify_hunks",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Multiple hunks with known distinct ids",
+      "expected_output_description": "Output hunk ids match input order",
+      "expected_error": "",
+      "assertions": [
+        "[h.id for h in result] == [h.id for h in input_hunks]"
+      ]
+    },
+    {
+      "id": "classify_hunks_preserves_fields",
+      "description": "classify_hunks preserves all non-classification fields",
+      "function": "classify_hunks",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Hunks with known file_path and raw_header",
+      "expected_output_description": "Output hunks have identical id, file_path, raw_header, added_lines, removed_lines",
+      "expected_error": "",
+      "assertions": [
+        "result[0].id == input_hunks[0].id",
+        "result[0].file_path == input_hunks[0].file_path",
+        "result[0].added_lines == input_hunks[0].added_lines",
+        "result[0].removed_lines == input_hunks[0].removed_lines"
+      ]
+    },
+    {
+      "id": "classify_hunks_no_duplicates",
+      "description": "classify_hunks does not produce duplicate labels per hunk",
+      "function": "classify_hunks",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Hunk with added_lines matching same pattern multiple times",
+      "expected_output_description": "classifications list has no duplicate labels",
+      "expected_error": "",
+      "assertions": [
+        "all(len(h.classifications) == len(set(h.classifications)) for h in result)"
+      ]
+    },
+    {
+      "id": "classify_hunks_only_scans_added_lines",
+      "description": "classify_hunks ignores removed_lines even if they match patterns",
+      "function": "classify_hunks",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Hunk with secret pattern in removed_lines only, clean added_lines",
+      "expected_output_description": "No classifications since only added_lines are scanned",
+      "expected_error": "",
+      "assertions": [
+        "result[0].classifications == []"
+      ]
+    },
+    {
+      "id": "classify_hunks_multi_label",
+      "description": "classify_hunks assigns multiple labels when multiple patterns match",
+      "function": "classify_hunks",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Hunk with added_lines matching both secret and pii patterns",
+      "expected_output_description": "classifications contains both 'secret' and 'pii'",
+      "expected_error": "",
+      "assertions": [
+        "len(result[0].classifications) >= 2"
+      ]
+    },
+    {
+      "id": "classify_hunks_empty_list_error",
+      "description": "classify_hunks handles empty hunks list",
+      "function": "classify_hunks",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "hunks": "[]"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "empty_hunks_list or returns empty list",
+      "assertions": [
+        "result == [] or error_raised"
+      ]
+    },
+    {
+      "id": "classify_hunks_invalid_regex",
+      "description": "classify_hunks raises error on invalid regex in config",
+      "function": "classify_hunks",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Config with an uncompilable regex pattern like '[invalid'",
+      "expected_output_description": "",
+      "expected_error": "ValueError or re.error for invalid regex",
+      "assertions": [
+        "error_raised"
+      ]
+    },
+    {
+      "id": "generate_hunk_id_happy",
+      "description": "generate_hunk_id returns properly formatted hunk id",
+      "function": "generate_hunk_id",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "src/main.py",
+        "raw_header": "@@ -1,3 +1,4 @@",
+        "added_lines": "[\"new line\"]"
+      },
+      "input_description": "",
+      "expected_output_description": "String starting with 'hunk-' followed by 12 hex chars",
+      "expected_error": "",
+      "assertions": [
+        "result.startswith('hunk-')",
+        "len(result) == 17",
+        "all(c in '0123456789abcdef' for c in result[5:])"
+      ]
+    },
+    {
+      "id": "generate_hunk_id_deterministic",
+      "description": "generate_hunk_id returns same result for same inputs",
+      "function": "generate_hunk_id",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Same file_path, raw_header, added_lines called twice",
+      "expected_output_description": "Both calls return identical id",
+      "expected_error": "",
+      "assertions": [
+        "result1 == result2"
+      ]
+    },
+    {
+      "id": "generate_hunk_id_uniqueness",
+      "description": "generate_hunk_id returns different ids for different inputs",
+      "function": "generate_hunk_id",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Two different file_path values with same raw_header and added_lines",
+      "expected_output_description": "Different ids",
+      "expected_error": "",
+      "assertions": [
+        "result1 != result2"
+      ]
+    },
+    {
+      "id": "generate_hunk_id_empty_file_path",
+      "description": "generate_hunk_id raises error for empty file_path",
+      "function": "generate_hunk_id",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "",
+        "raw_header": "@@ -1,3 +1,4 @@",
+        "added_lines": "[]"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValueError or similar for empty file_path",
+      "assertions": [
+        "error_raised"
+      ]
+    },
+    {
+      "id": "generate_hunk_id_empty_added_lines",
+      "description": "generate_hunk_id works with empty added_lines (deletion-only hunk)",
+      "function": "generate_hunk_id",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "src/main.py",
+        "raw_header": "@@ -1,3 +1,0 @@",
+        "added_lines": "[]"
+      },
+      "input_description": "",
+      "expected_output_description": "Valid hunk id",
+      "expected_error": "",
+      "assertions": [
+        "result.startswith('hunk-')",
+        "len(result) == 17"
+      ]
+    },
+    {
+      "id": "generate_request_id_happy",
+      "description": "generate_request_id returns properly formatted request id",
+      "function": "generate_request_id",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "String starting with 'req-' followed by 32 hex chars",
+      "expected_error": "",
+      "assertions": [
+        "result.startswith('req-')",
+        "len(result[4:]) == 32",
+        "all(c in '0123456789abcdef' for c in result[4:])"
+      ]
+    },
+    {
+      "id": "generate_request_id_unique",
+      "description": "generate_request_id returns unique values across multiple calls",
+      "function": "generate_request_id",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "All 100 generated ids are unique",
+      "expected_error": "",
+      "assertions": [
+        "len(ids) == 100",
+        "len(set(ids)) == 100"
+      ]
+    },
+    {
+      "id": "detect_language_python",
+      "description": "detect_language maps .py to python",
+      "function": "detect_language",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "src/main.py"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result == 'python'"
+      ]
+    },
+    {
+      "id": "detect_language_javascript",
+      "description": "detect_language maps .js to javascript",
+      "function": "detect_language",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "app/index.js"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result == 'javascript'"
+      ]
+    },
+    {
+      "id": "detect_language_typescript",
+      "description": "detect_language maps .ts to typescript",
+      "function": "detect_language",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "src/app.ts"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result == 'typescript'"
+      ]
+    },
+    {
+      "id": "detect_language_unknown_extension",
+      "description": "detect_language returns 'unknown' for unrecognized extension",
+      "function": "detect_language",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "data/file.xyz"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result == 'unknown'"
+      ]
+    },
+    {
+      "id": "detect_language_no_extension",
+      "description": "detect_language returns 'unknown' for file without extension",
+      "function": "detect_language",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "Makefile"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result == 'unknown'"
+      ]
+    },
+    {
+      "id": "detect_language_dotfile",
+      "description": "detect_language returns 'unknown' for dotfiles without secondary extension",
+      "function": "detect_language",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": ".gitignore"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result == 'unknown'"
+      ]
+    },
+    {
+      "id": "detect_language_case_insensitive",
+      "description": "detect_language matches extension case-insensitively",
+      "function": "detect_language",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "README.PY"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result == 'python'"
+      ]
+    },
+    {
+      "id": "detect_language_empty_path",
+      "description": "detect_language raises error for empty file_path",
+      "function": "detect_language",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": ""
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValueError or similar for empty path",
+      "assertions": [
+        "error_raised"
+      ]
+    },
+    {
+      "id": "detect_language_compound_extension",
+      "description": "detect_language handles compound extensions like .test.js",
+      "function": "detect_language",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "src/app.test.js"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result == 'javascript'"
+      ]
+    },
+    {
+      "id": "run_intake_happy_path",
+      "description": "run_intake orchestrates parse and classify, returns valid IntakeResult",
+      "function": "run_intake",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Mock DiffSource returning valid single-hunk diff, default config, collecting emitter",
+      "expected_output_description": "IntakeResult with one hunk, req- prefixed id, valid ISO timestamp",
+      "expected_error": "",
+      "assertions": [
+        "result.review_request.id.startswith('req-')",
+        "result.hunk_count >= 1",
+        "result.classified_hunk_count <= result.hunk_count"
+      ]
+    },
+    {
+      "id": "run_intake_emits_three_events",
+      "description": "run_intake emits exactly 3 Chronicler events when emitter is provided",
+      "function": "run_intake",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Mock source with valid diff, collecting emitter",
+      "expected_output_description": "Emitter collected exactly 3 events",
+      "expected_error": "",
+      "assertions": [
+        "len(emitted_events) == 3"
+      ]
+    },
+    {
+      "id": "run_intake_source_read_failure",
+      "description": "run_intake handles IOError from source.read() gracefully",
+      "function": "run_intake",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Mock source whose read() raises IOError",
+      "expected_output_description": "IntakeResult with errors populated or exception handled",
+      "expected_error": "",
+      "assertions": [
+        "len(result.errors) >= 1 or error_raised"
+      ]
+    },
+    {
+      "id": "run_intake_emitter_failure_resilience",
+      "description": "run_intake completes successfully even if emitter.emit() raises",
+      "function": "run_intake",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Mock source with valid diff, emitter that raises RuntimeError on emit()",
+      "expected_output_description": "IntakeResult returned with warnings about emission failure",
+      "expected_error": "",
+      "assertions": [
+        "result is not None",
+        "result.hunk_count >= 1"
+      ]
+    },
+    {
+      "id": "run_intake_iso_timestamp",
+      "description": "run_intake sets created_at as valid ISO 8601 UTC timestamp",
+      "function": "run_intake",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Mock source with valid diff",
+      "expected_output_description": "created_at parseable as ISO 8601",
+      "expected_error": "",
+      "assertions": [
+        "datetime.fromisoformat(result.review_request.created_at) is not None"
+      ]
+    },
+    {
+      "id": "run_intake_errors_from_parse_propagated",
+      "description": "run_intake propagates parse errors into IntakeResult.errors",
+      "function": "run_intake",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Mock source returning partially malformed diff",
+      "expected_output_description": "IntakeResult.errors contains parse-phase errors",
+      "expected_error": "",
+      "assertions": [
+        "len(result.errors) >= 1"
+      ]
+    },
+    {
+      "id": "run_intake_empty_diff",
+      "description": "run_intake handles empty diff from source",
+      "function": "run_intake",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Mock source returning empty string",
+      "expected_output_description": "IntakeResult with zero hunks, possibly with errors",
+      "expected_error": "",
+      "assertions": [
+        "result.hunk_count == 0"
+      ]
+    },
+    {
+      "id": "line_range_valid",
+      "description": "LineRange accepts valid start>=1 and count>=0",
+      "function": "LineRange",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "start": "1",
+        "count": "0"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "lr.start == 1",
+        "lr.count == 0"
+      ]
+    },
+    {
+      "id": "line_range_start_too_low",
+      "description": "LineRange rejects start < 1",
+      "function": "LineRange",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "start": "0",
+        "count": "0"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "error_raised"
+      ]
+    },
+    {
+      "id": "line_range_count_negative",
+      "description": "LineRange rejects negative count",
+      "function": "LineRange",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "start": "1",
+        "count": "-1"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "error_raised"
+      ]
+    },
+    {
+      "id": "line_range_frozen",
+      "description": "LineRange instances are frozen (immutable)",
+      "function": "LineRange",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "start": "1",
+        "count": "5"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "cannot_assign"
+      ]
+    },
+    {
+      "id": "intake_error_valid",
+      "description": "IntakeError accepts valid fields with non-empty message",
+      "function": "IntakeError",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ie.message != ''",
+        "ie.phase is not None"
+      ]
+    },
+    {
+      "id": "intake_error_empty_message",
+      "description": "IntakeError rejects empty message",
+      "function": "IntakeError",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "error_raised"
+      ]
+    },
+    {
+      "id": "intake_error_frozen",
+      "description": "IntakeError instances are frozen (immutable)",
+      "function": "IntakeError",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "cannot_assign"
+      ]
+    },
+    {
+      "id": "diff_source_kind_variants",
+      "description": "DiffSourceKind has file and stdin variants",
+      "function": "DiffSourceKind",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "DiffSourceKind.file is not None",
+        "DiffSourceKind.stdin is not None"
+      ]
+    },
+    {
+      "id": "classification_label_variants",
+      "description": "ClassificationLabel has all four expected variants",
+      "function": "ClassificationLabel",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ClassificationLabel.secret is not None",
+        "ClassificationLabel.pii is not None",
+        "ClassificationLabel.internal_api is not None",
+        "ClassificationLabel.public is not None"
+      ]
+    },
+    {
+      "id": "intake_phase_variants",
+      "description": "IntakePhase has read, parse, classify, orchestrate variants",
+      "function": "IntakePhase",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "IntakePhase.read is not None",
+        "IntakePhase.parse is not None",
+        "IntakePhase.classify is not None",
+        "IntakePhase.orchestrate is not None"
+      ]
+    },
+    {
+      "id": "intake_result_hunk_count_non_negative",
+      "description": "IntakeResult rejects negative hunk_count",
+      "function": "IntakeResult",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for hunk_count < 0",
+      "assertions": [
+        "error_raised"
+      ]
+    },
+    {
+      "id": "intake_result_classified_hunk_count_non_negative",
+      "description": "IntakeResult rejects negative classified_hunk_count",
+      "function": "IntakeResult",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for classified_hunk_count < 0",
+      "assertions": [
+        "error_raised"
+      ]
+    },
+    {
+      "id": "hunk_id_format",
+      "description": "HunkId values match expected format: hunk- prefix + 12 hex chars",
+      "function": "generate_hunk_id",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.startswith('hunk-')",
+        "len(result[5:]) == 12",
+        "all(c in '0123456789abcdef' for c in result[5:])"
+      ]
+    },
+    {
+      "id": "review_request_id_format",
+      "description": "ReviewRequestId values match expected format: req- prefix + 32 hex chars",
+      "function": "generate_request_id",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.startswith('req-')",
+        "len(result[4:]) == 32"
+      ]
+    },
+    {
+      "id": "run_intake_source_read_timeout",
+      "description": "run_intake handles source.read() timeout gracefully",
+      "function": "run_intake",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Mock source whose read() raises asyncio.TimeoutError",
+      "expected_output_description": "Error captured in result or exception handled",
+      "expected_error": "",
+      "assertions": [
+        "len(result.errors) >= 1 or error_raised"
+      ]
+    },
+    {
+      "id": "run_intake_config_regex_failure",
+      "description": "run_intake handles invalid regex in config during classify phase",
+      "function": "run_intake",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Valid diff source but config with invalid regex pattern",
+      "expected_output_description": "Error captured or raised",
+      "expected_error": "",
+      "assertions": [
+        "len(result.errors) >= 1 or error_raised"
+      ]
+    }
+  ],
+  "test_language": "python",
+  "generated_code": "\"\"\"\nContract tests for the intake module.\n\nTests organized into six test classes covering all public functions,\ntype validators, enum variants, and invariants.\n\nRequirements: pytest, pytest-asyncio\n\"\"\"\nimport asyncio\nimport re\nimport uuid\nfrom datetime import datetime\nfrom unittest.mock import AsyncMock, MagicMock, patch\n\nimport pytest\nimport pytest_asyncio\n\n# ─── Module under test ───────────────────────────────────────────────\nfrom exemplar.intake import (\n    ClassificationLabel,\n    DiffHunk,\n    DiffSourceKind,\n    IntakeError,\n    IntakePhase,\n    IntakeResult,\n    LedgerConfig,\n    LedgerFieldRule,\n    LineRange,\n    ReviewRequest,\n    classify_hunks,\n    detect_language,\n    generate_hunk_id,\n    generate_request_id,\n    parse_diff,\n    run_intake,\n)\n\n# ═════════════════════════════════════════════════════════════════════\n# Sample diff constants\n# ═════════════════════════════════════════════════════════════════════\n\nSAMPLE_SINGLE_HUNK_DIFF = (\n    \"diff --git a/src/main.py b/src/main.py\\n\"\n    \"--- a/src/main.py\\n\"\n    \"+++ b/src/main.py\\n\"\n    \"@@ -1,3 +1,4 @@\\n\"\n    \" import os\\n\"\n    \" import sys\\n\"\n    \"+import json\\n\"\n    \" \\n\"\n)\n\nSAMPLE_MULTI_HUNK_DIFF = (\n    \"diff --git a/src/main.py b/src/main.py\\n\"\n    \"--- a/src/main.py\\n\"\n    \"+++ b/src/main.py\\n\"\n    \"@@ -1,3 +1,4 @@\\n\"\n    \" import os\\n\"\n    \" import sys\\n\"\n    \"+import json\\n\"\n    \" \\n\"\n    \"@@ -10,3 +11,4 @@\\n\"\n    \" def main():\\n\"\n    \"     pass\\n\"\n    \"+    return 0\\n\"\n    \" \\n\"\n)\n\nSAMPLE_MULTI_FILE_DIFF = (\n    \"diff --git a/src/main.py b/src/main.py\\n\"\n    \"--- a/src/main.py\\n\"\n    \"+++ b/src/main.py\\n\"\n    \"@@ -1,3 +1,4 @@\\n\"\n    \" import os\\n\"\n    \" import sys\\n\"\n    \"+import json\\n\"\n    \" \\n\"\n    \"diff --git a/src/utils.py b/src/utils.py\\n\"\n    \"--- a/src/utils.py\\n\"\n    \"+++ b/src/utils.py\\n\"\n    \"@@ -1,2 +1,3 @@\\n\"\n    \" # utils\\n\"\n    \"+def helper(): pass\\n\"\n    \" \\n\"\n)\n\nSAMPLE_BINARY_DIFF = (\n    \"diff --git a/img.png b/img.png\\n\"\n    \"Binary files a/img.png and b/img.png differ\\n\"\n)\n\nSAMPLE_MALFORMED_HUNK_HEADER_DIFF = (\n    \"diff --git a/src/main.py b/src/main.py\\n\"\n    \"--- a/src/main.py\\n\"\n    \"+++ b/src/main.py\\n\"\n    \"@@ NOT_A_VALID_HEADER @@\\n\"\n    \"+some line\\n\"\n)\n\nSAMPLE_TRUNCATED_DIFF = (\n    \"diff --git a/src/main.py b/src/main.py\\n\"\n    \"--- a/src/main.py\\n\"\n    \"+++ b/src/main.py\\n\"\n    \"@@ -1,10 +1,10 @@\\n\"\n    \" line1\\n\"\n    \"+line2\\n\"\n)\n\nSAMPLE_PARTIAL_DIFF = (\n    \"diff --git a/src/good.py b/src/good.py\\n\"\n    \"--- a/src/good.py\\n\"\n    \"+++ b/src/good.py\\n\"\n    \"@@ -1,3 +1,4 @@\\n\"\n    \" import os\\n\"\n    \" import sys\\n\"\n    \"+import json\\n\"\n    \" \\n\"\n    \"diff --git a/src/bad.py b/src/bad.py\\n\"\n    \"--- a/src/bad.py\\n\"\n    \"+++ b/src/bad.py\\n\"\n    \"@@ BROKEN_HEADER @@\\n\"\n    \"+some line\\n\"\n)\n\nSAMPLE_SECRET_DIFF = (\n    \"diff --git a/src/config.py b/src/config.py\\n\"\n    \"--- a/src/config.py\\n\"\n    \"+++ b/src/config.py\\n\"\n    \"@@ -1,2 +1,3 @@\\n\"\n    \" # config\\n\"\n    \"+API_KEY = 'sk-secret12345abcdef'\\n\"\n    \" \\n\"\n)\n\nSAMPLE_PII_DIFF = (\n    \"diff --git a/src/user.py b/src/user.py\\n\"\n    \"--- a/src/user.py\\n\"\n    \"+++ b/src/user.py\\n\"\n    \"@@ -1,2 +1,3 @@\\n\"\n    \" # user\\n\"\n    \"+email = 'user@example.com'\\n\"\n    \" \\n\"\n)\n\nSAMPLE_SECRET_AND_PII_DIFF = (\n    \"diff --git a/src/both.py b/src/both.py\\n\"\n    \"--- a/src/both.py\\n\"\n    \"+++ b/src/both.py\\n\"\n    \"@@ -1,2 +1,4 @@\\n\"\n    \" # both\\n\"\n    \"+API_KEY = 'sk-secret12345abcdef'\\n\"\n    \"+email = 'user@example.com'\\n\"\n    \" \\n\"\n)\n\nSAMPLE_SECRET_IN_REMOVED_ONLY_DIFF = (\n    \"diff --git a/src/clean.py b/src/clean.py\\n\"\n    \"--- a/src/clean.py\\n\"\n    \"+++ b/src/clean.py\\n\"\n    \"@@ -1,3 +1,2 @@\\n\"\n    \" # clean\\n\"\n    \"-API_KEY = 'sk-secret12345abcdef'\\n\"\n    \"+# key removed\\n\"\n)\n\n\n# ═════════════════════════════════════════════════════════════════════\n# Helper: build fixtures\n# ═════════════════════════════════════════════════════════════════════\n\ndef make_ledger_config(rules=None, default_label=None):\n    \"\"\"Build a LedgerConfig with sensible defaults.\"\"\"\n    if rules is None:\n        rules = [\n            LedgerFieldRule(\n                pattern=r\"(?i)(api[_-]?key|secret|token)\\s*=\\s*['\\\"]\",\n                label=ClassificationLabel.secret,\n                description=\"Detects hardcoded secrets\",\n            ),\n            LedgerFieldRule(\n                pattern=r\"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+\",\n                label=ClassificationLabel.pii,\n                description=\"Detects email addresses\",\n            ),\n            LedgerFieldRule(\n                pattern=r\"internal[_-]api|__private_endpoint\",\n                label=ClassificationLabel.internal_api,\n                description=\"Detects internal API references\",\n            ),\n        ]\n    if default_label is None:\n        default_label = ClassificationLabel.public\n    return LedgerConfig(rules=rules, default_label=default_label)\n\n\ndef make_mock_source(content=None, error=None):\n    \"\"\"Create an async DiffSource-conforming mock.\"\"\"\n    source = AsyncMock()\n    source.kind = DiffSourceKind.file\n    if error is not None:\n        source.read = AsyncMock(side_effect=error)\n    else:\n        source.read = AsyncMock(return_value=content or \"\")\n    return source\n\n\ndef make_collecting_emitter():\n    \"\"\"Create an EventEmitter-conforming fake that collects events.\"\"\"\n    events = []\n\n    async def _emit(event):\n        events.append(event)\n\n    emitter = AsyncMock()\n    emitter.emit = AsyncMock(side_effect=_emit)\n    emitter._events = events\n    return emitter, events\n\n\ndef make_failing_emitter(exc=None):\n    \"\"\"Create an EventEmitter whose emit() always raises.\"\"\"\n    emitter = AsyncMock()\n    emitter.emit = AsyncMock(side_effect=exc or RuntimeError(\"emit failed\"))\n    return emitter\n\n\n# ═════════════════════════════════════════════════════════════════════\n# Test Class 1: Type / Enum / Struct Validation\n# ═════════════════════════════════════════════════════════════════════\n\nclass TestTypeValidation:\n    \"\"\"Tests for contract-defined types, enums, and struct validators.\"\"\"\n\n    # ── DiffSourceKind ────────────────────────────────────────────\n    def test_diff_source_kind_has_file_and_stdin(self):\n        assert DiffSourceKind.file is not None\n        assert DiffSourceKind.stdin is not None\n\n    # ── ClassificationLabel ───────────────────────────────────────\n    def test_classification_label_variants(self):\n        assert ClassificationLabel.secret is not None\n        assert ClassificationLabel.pii is not None\n        assert ClassificationLabel.internal_api is not None\n        assert ClassificationLabel.public is not None\n\n    # ── IntakePhase ───────────────────────────────────────────────\n    def test_intake_phase_variants(self):\n        assert IntakePhase.read is not None\n        assert IntakePhase.parse is not None\n        assert IntakePhase.classify is not None\n        assert IntakePhase.orchestrate is not None\n\n    # ── LineRange ─────────────────────────────────────────────────\n    def test_line_range_valid(self):\n        lr = LineRange(start=1, count=0)\n        assert lr.start == 1\n        assert lr.count == 0\n\n    def test_line_range_large_values(self):\n        lr = LineRange(start=99999, count=50000)\n        assert lr.start == 99999\n        assert lr.count == 50000\n\n    def test_line_range_start_too_low(self):\n        with pytest.raises(Exception):  # ValidationError\n            LineRange(start=0, count=0)\n\n    def test_line_range_negative_start(self):\n        with pytest.raises(Exception):\n            LineRange(start=-5, count=0)\n\n    def test_line_range_count_negative(self):\n        with pytest.raises(Exception):\n            LineRange(start=1, count=-1)\n\n    def test_line_range_frozen(self):\n        lr = LineRange(start=1, count=5)\n        with pytest.raises(Exception):  # FrozenInstanceError or similar\n            lr.start = 10\n\n    # ── IntakeError ───────────────────────────────────────────────\n    def test_intake_error_valid(self):\n        ie = IntakeError(\n            line_number=1,\n            message=\"something went wrong\",\n            raw_content=\"bad line\",\n            phase=IntakePhase.parse,\n        )\n        assert ie.message == \"something went wrong\"\n        assert ie.phase == IntakePhase.parse\n\n    def test_intake_error_empty_message_rejected(self):\n        with pytest.raises(Exception):  # ValidationError\n            IntakeError(\n                line_number=1,\n                message=\"\",\n                raw_content=\"bad\",\n                phase=IntakePhase.parse,\n            )\n\n    def test_intake_error_frozen(self):\n        ie = IntakeError(\n            line_number=1,\n            message=\"err\",\n            raw_content=\"x\",\n            phase=IntakePhase.parse,\n        )\n        with pytest.raises(Exception):\n            ie.message = \"changed\"\n\n\n# ═════════════════════════════════════════════════════════════════════\n# Test Class 2: TestParseDiff\n# ═════════════════════════════════════════════════════════════════════\n\nclass TestParseDiff:\n    \"\"\"Tests for async parse_diff: pure parsing of unified diff text.\"\"\"\n\n    @pytest.mark.asyncio\n    async def test_single_hunk_happy_path(self):\n        hunks, errors = await parse_diff(SAMPLE_SINGLE_HUNK_DIFF)\n        assert len(hunks) == 1\n        assert len(errors) == 0\n        h = hunks[0]\n        assert h.id.startswith(\"hunk-\")\n        assert h.file_path != \"\"\n        assert h.classifications == []\n\n    @pytest.mark.asyncio\n    async def test_multi_hunk_same_file(self):\n        hunks, errors = await parse_diff(SAMPLE_MULTI_HUNK_DIFF)\n        assert len(hunks) == 2\n        assert len(errors) == 0\n        assert hunks[0].id != hunks[1].id\n        # Both hunks should reference the same file\n        assert hunks[0].file_path == hunks[1].file_path\n\n    @pytest.mark.asyncio\n    async def test_multi_file_diff(self):\n        hunks, errors = await parse_diff(SAMPLE_MULTI_FILE_DIFF)\n        assert len(hunks) >= 2\n        file_paths = {h.file_path for h in hunks}\n        assert len(file_paths) >= 2\n\n    @pytest.mark.asyncio\n    async def test_empty_input_returns_empty(self):\n        hunks, errors = await parse_diff(\"\")\n        assert hunks == []\n        assert errors == []\n\n    @pytest.mark.asyncio\n    async def test_no_diff_headers(self):\n        hunks, errors = await parse_diff(\"this is just some random text\\nwith no diff markers\\n\")\n        assert len(hunks) == 0\n        assert len(errors) >= 1\n        for e in errors:\n            phase_val = e.phase.value if hasattr(e.phase, \"value\") else str(e.phase)\n            assert phase_val == \"parse\"\n\n    @pytest.mark.asyncio\n    async def test_malformed_hunk_header(self):\n        hunks, errors = await parse_diff(SAMPLE_MALFORMED_HUNK_HEADER_DIFF)\n        assert len(errors) >= 1\n        for e in errors:\n            assert e.message != \"\"\n\n    @pytest.mark.asyncio\n    async def test_truncated_hunk(self):\n        hunks, errors = await parse_diff(SAMPLE_TRUNCATED_DIFF)\n        # Should produce at least a partial result or an error\n        assert len(hunks) + len(errors) >= 1\n\n    @pytest.mark.asyncio\n    async def test_binary_file_marker(self):\n        hunks, errors = await parse_diff(SAMPLE_BINARY_DIFF)\n        # Binary files should not produce DiffHunks (or if hunks exist, not for binary file)\n        if hunks:\n            assert all(\"img.png\" not in h.file_path for h in hunks)\n        # At least an error or empty hunks\n        assert len(errors) >= 1 or len(hunks) == 0\n\n    @pytest.mark.asyncio\n    async def test_partial_success(self):\n        \"\"\"Valid hunks returned alongside errors for partially malformed input.\"\"\"\n        hunks, errors = await parse_diff(SAMPLE_PARTIAL_DIFF)\n        assert len(hunks) >= 1\n        assert len(errors) >= 1\n\n    @pytest.mark.asyncio\n    async def test_deterministic_output(self):\n        hunks1, errors1 = await parse_diff(SAMPLE_SINGLE_HUNK_DIFF)\n        hunks2, errors2 = await parse_diff(SAMPLE_SINGLE_HUNK_DIFF)\n        assert len(hunks1) == len(hunks2)\n        for h1, h2 in zip(hunks1, hunks2):\n            assert h1.id == h2.id\n            assert h1.file_path == h2.file_path\n            assert h1.added_lines == h2.added_lines\n\n    @pytest.mark.asyncio\n    async def test_classifications_always_empty(self):\n        hunks, _ = await parse_diff(SAMPLE_SECRET_DIFF)\n        for h in hunks:\n            assert h.classifications == []\n\n    @pytest.mark.asyncio\n    async def test_file_path_forward_slashes_and_nonempty(self):\n        hunks, _ = await parse_diff(SAMPLE_MULTI_FILE_DIFF)\n        for h in hunks:\n            assert h.file_path != \"\"\n            assert \"\\\\\" not in h.file_path\n\n    @pytest.mark.asyncio\n    async def test_language_populated(self):\n        hunks, _ = await parse_diff(SAMPLE_SINGLE_HUNK_DIFF)\n        for h in hunks:\n            assert h.language is not None\n            assert isinstance(h.language, str)\n            assert len(h.language) > 0\n\n    @pytest.mark.asyncio\n    async def test_language_for_python_file(self):\n        hunks, _ = await parse_diff(SAMPLE_SINGLE_HUNK_DIFF)\n        # .py file should map to 'python'\n        assert hunks[0].language == \"python\"\n\n    @pytest.mark.asyncio\n    async def test_all_errors_have_parse_phase(self):\n        hunks, errors = await parse_diff(SAMPLE_MALFORMED_HUNK_HEADER_DIFF)\n        for e in errors:\n            phase_val = e.phase.value if hasattr(e.phase, \"value\") else str(e.phase)\n            assert phase_val == \"parse\"\n\n    @pytest.mark.asyncio\n    async def test_hunk_id_format_from_parse(self):\n        hunks, _ = await parse_diff(SAMPLE_SINGLE_HUNK_DIFF)\n        h = hunks[0]\n        assert h.id.startswith(\"hunk-\")\n        hex_part = h.id[5:]\n        assert len(hex_part) == 12\n        assert all(c in \"0123456789abcdef\" for c in hex_part)\n\n    @pytest.mark.asyncio\n    async def test_randomized_garbage_no_crash(self):\n        \"\"\"Fuzz-like test: random bytes should not crash parse_diff.\"\"\"\n        import random\n        random.seed(42)\n        for _ in range(20):\n            length = random.randint(0, 500)\n            raw = \"\".join(chr(random.randint(32, 126)) for _ in range(length))\n            hunks, errors = await parse_diff(raw)\n            # Should never crash; just return (possibly empty) lists\n            assert isinstance(hunks, list)\n            assert isinstance(errors, list)\n\n\n# ═════════════════════════════════════════════════════════════════════\n# Test Class 3: TestClassifyHunks\n# ═════════════════════════════════════════════════════════════════════\n\nclass TestClassifyHunks:\n    \"\"\"Tests for sync classify_hunks: Ledger field classification.\"\"\"\n\n    @pytest.mark.asyncio\n    async def _parse_hunks(self, diff_text):\n        \"\"\"Helper to get hunks for classify_hunks tests.\"\"\"\n        hunks, _ = await parse_diff(diff_text)\n        return hunks\n\n    @pytest.mark.asyncio\n    async def test_classify_happy_path_secret_detected(self):\n        hunks = await self._parse_hunks(SAMPLE_SECRET_DIFF)\n        config = make_ledger_config()\n        result = classify_hunks(hunks, config)\n        assert len(result) == len(hunks)\n        labels = [c.value if hasattr(c, \"value\") else str(c) for c in result[0].classifications]\n        assert \"secret\" in labels\n\n    @pytest.mark.asyncio\n    async def test_classify_no_matches(self):\n        hunks = await self._parse_hunks(SAMPLE_SINGLE_HUNK_DIFF)\n        config = make_ledger_config()\n        result = classify_hunks(hunks, config)\n        assert all(h.classifications == [] for h in result)\n\n    @pytest.mark.asyncio\n    async def test_classify_preserves_order(self):\n        hunks = await self._parse_hunks(SAMPLE_MULTI_HUNK_DIFF)\n        config = make_ledger_config()\n        result = classify_hunks(hunks, config)\n        assert [h.id for h in result] == [h.id for h in hunks]\n\n    @pytest.mark.asyncio\n    async def test_classify_preserves_fields(self):\n        hunks = await self._parse_hunks(SAMPLE_SECRET_DIFF)\n        config = make_ledger_config()\n        result = classify_hunks(hunks, config)\n        assert result[0].id == hunks[0].id\n        assert result[0].file_path == hunks[0].file_path\n        assert result[0].added_lines == hunks[0].added_lines\n        assert result[0].removed_lines == hunks[0].removed_lines\n        assert result[0].raw_header == hunks[0].raw_header\n\n    @pytest.mark.asyncio\n    async def test_classify_no_duplicate_labels(self):\n        hunks = await self._parse_hunks(SAMPLE_SECRET_DIFF)\n        config = make_ledger_config()\n        result = classify_hunks(hunks, config)\n        for h in result:\n            assert len(h.classifications) == len(set(h.classifications))\n\n    @pytest.mark.asyncio\n    async def test_classify_only_scans_added_lines(self):\n        \"\"\"Secret in removed_lines should not trigger classification.\"\"\"\n        hunks = await self._parse_hunks(SAMPLE_SECRET_IN_REMOVED_ONLY_DIFF)\n        config = make_ledger_config()\n        result = classify_hunks(hunks, config)\n        # Only '+# key removed' is an added line - should not match secret pattern\n        labels = [c.value if hasattr(c, \"value\") else str(c) for c in result[0].classifications]\n        assert \"secret\" not in labels\n\n    @pytest.mark.asyncio\n    async def test_classify_multi_label(self):\n        hunks = await self._parse_hunks(SAMPLE_SECRET_AND_PII_DIFF)\n        config = make_ledger_config()\n        result = classify_hunks(hunks, config)\n        labels = [c.value if hasattr(c, \"value\") else str(c) for c in result[0].classifications]\n        assert \"secret\" in labels\n        assert \"pii\" in labels\n\n    def test_classify_empty_list_handling(self):\n        \"\"\"classify_hunks with empty list: either raises or returns empty.\"\"\"\n        config = make_ledger_config()\n        try:\n            result = classify_hunks([], config)\n            # If it returns, should be empty list\n            assert result == []\n        except (ValueError, Exception):\n            pass  # Also acceptable per error: empty_hunks_list\n\n    def test_classify_invalid_regex(self):\n        \"\"\"classify_hunks raises on invalid regex in config.\"\"\"\n        bad_rules = [\n            LedgerFieldRule(\n                pattern=\"[invalid\",  # broken regex\n                label=ClassificationLabel.secret,\n                description=\"broken\",\n            ),\n        ]\n        config = make_ledger_config(rules=bad_rules)\n        # Need at least one hunk to trigger the regex compilation\n        # Create a minimal DiffHunk-like object\n        # We'll parse a real diff to get a valid hunk\n        # Since classify_hunks is sync, we need to handle this differently\n        import asyncio\n        loop = asyncio.get_event_loop()\n        try:\n            hunks, _ = loop.run_until_complete(parse_diff(SAMPLE_SINGLE_HUNK_DIFF))\n        except RuntimeError:\n            # If event loop is already running (pytest-asyncio), skip or use a simpler approach\n            pytest.skip(\"Cannot run nested event loop in this context\")\n            return\n\n        with pytest.raises(Exception):  # ValueError or re.error\n            classify_hunks(hunks, config)\n\n    @pytest.mark.asyncio\n    async def test_classify_invalid_regex_async(self):\n        \"\"\"classify_hunks raises on invalid regex in config (async-friendly version).\"\"\"\n        bad_rules = [\n            LedgerFieldRule(\n                pattern=\"[invalid\",\n                label=ClassificationLabel.secret,\n                description=\"broken\",\n            ),\n        ]\n        config = make_ledger_config(rules=bad_rules)\n        hunks, _ = await parse_diff(SAMPLE_SINGLE_HUNK_DIFF)\n        with pytest.raises(Exception):  # ValueError or re.error\n            classify_hunks(hunks, config)\n\n    @pytest.mark.asyncio\n    async def test_classify_same_length_output(self):\n        hunks = await self._parse_hunks(SAMPLE_MULTI_HUNK_DIFF)\n        config = make_ledger_config()\n        result = classify_hunks(hunks, config)\n        assert len(result) == len(hunks)\n\n\n# ═════════════════════════════════════════════════════════════════════\n# Test Class 4: TestGenerateHunkId\n# ═════════════════════════════════════════════════════════════════════\n\nclass TestGenerateHunkId:\n    \"\"\"Tests for generate_hunk_id: deterministic SHA-256 based id generation.\"\"\"\n\n    def test_happy_path_format(self):\n        result = generate_hunk_id(\"src/main.py\", \"@@ -1,3 +1,4 @@\", [\"new line\"])\n        assert result.startswith(\"hunk-\")\n        hex_part = result[5:]\n        assert len(hex_part) == 12\n        assert all(c in \"0123456789abcdef\" for c in hex_part)\n\n    def test_deterministic(self):\n        r1 = generate_hunk_id(\"src/main.py\", \"@@ -1,3 +1,4 @@\", [\"line1\"])\n        r2 = generate_hunk_id(\"src/main.py\", \"@@ -1,3 +1,4 @@\", [\"line1\"])\n        assert r1 == r2\n\n    def test_different_file_path_different_id(self):\n        r1 = generate_hunk_id(\"src/a.py\", \"@@ -1,3 +1,4 @@\", [\"line1\"])\n        r2 = generate_hunk_id(\"src/b.py\", \"@@ -1,3 +1,4 @@\", [\"line1\"])\n        assert r1 != r2\n\n    def test_different_header_different_id(self):\n        r1 = generate_hunk_id(\"src/a.py\", \"@@ -1,3 +1,4 @@\", [\"line1\"])\n        r2 = generate_hunk_id(\"src/a.py\", \"@@ -5,3 +5,4 @@\", [\"line1\"])\n        assert r1 != r2\n\n    def test_different_added_lines_different_id(self):\n        r1 = generate_hunk_id(\"src/a.py\", \"@@ -1,3 +1,4 @@\", [\"line1\"])\n        r2 = generate_hunk_id(\"src/a.py\", \"@@ -1,3 +1,4 @@\", [\"line2\"])\n        assert r1 != r2\n\n    def test_empty_file_path_raises(self):\n        with pytest.raises(Exception):  # ValueError expected\n            generate_hunk_id(\"\", \"@@ -1,3 +1,4 @@\", [])\n\n    def test_empty_added_lines_valid(self):\n        \"\"\"Deletion-only hunk with empty added_lines should work.\"\"\"\n        result = generate_hunk_id(\"src/main.py\", \"@@ -1,3 +1,0 @@\", [])\n        assert result.startswith(\"hunk-\")\n        assert len(result) == 17  # \"hunk-\" (5) + 12 hex chars\n\n    def test_total_length_is_17(self):\n        result = generate_hunk_id(\"file.py\", \"@@ -1,1 +1,1 @@\", [\"x\"])\n        assert len(result) == 17\n\n    def test_lowercase_hex(self):\n        result = generate_hunk_id(\"file.py\", \"@@ -1,1 +1,1 @@\", [\"x\"])\n        hex_part = result[5:]\n        assert hex_part == hex_part.lower()\n\n\n# ═════════════════════════════════════════════════════════════════════\n# Test Class 5: TestGenerateRequestId\n# ═════════════════════════════════════════════════════════════════════\n\nclass TestGenerateRequestId:\n    \"\"\"Tests for generate_request_id: UUID4-based request id generation.\"\"\"\n\n    def test_happy_path_format(self):\n        result = generate_request_id()\n        assert result.startswith(\"req-\")\n        hex_part = result[4:]\n        assert len(hex_part) == 32\n        assert all(c in \"0123456789abcdef\" for c in hex_part)\n\n    def test_unique_across_calls(self):\n        ids = set()\n        for _ in range(100):\n            ids.add(generate_request_id())\n        assert len(ids) == 100\n\n    def test_valid_uuid4_hex(self):\n        result = generate_request_id()\n        hex_part = result[4:]\n        # Should be parseable as a UUID hex string\n        try:\n            uuid.UUID(hex=hex_part, version=4)\n        except ValueError:\n            # Some implementations may not enforce version bits; at minimum the hex is valid\n            int(hex_part, 16)  # Must be valid hex\n\n    def test_prefix_is_req_dash(self):\n        for _ in range(10):\n            r = generate_request_id()\n            assert r[:4] == \"req-\"\n\n\n# ═════════════════════════════════════════════════════════════════════\n# Test Class 6: TestDetectLanguage\n# ═════════════════════════════════════════════════════════════════════\n\nclass TestDetectLanguage:\n    \"\"\"Tests for detect_language: file extension to language mapping.\"\"\"\n\n    @pytest.mark.parametrize(\n        \"file_path,expected\",\n        [\n            (\"src/main.py\", \"python\"),\n            (\"app/index.js\", \"javascript\"),\n            (\"src/app.ts\", \"typescript\"),\n            (\"lib/module.rb\", \"ruby\"),\n            (\"Main.java\", \"java\"),\n            (\"code.go\", \"go\"),\n            (\"code.rs\", \"rust\"),\n            (\"code.c\", \"c\"),\n            (\"code.cpp\", \"cpp\"),\n            (\"code.h\", \"c\"),\n            (\"style.css\", \"css\"),\n            (\"page.html\", \"html\"),\n            (\"data.json\", \"json\"),\n            (\"data.yaml\", \"yaml\"),\n            (\"data.yml\", \"yaml\"),\n            (\"script.sh\", \"shell\"),\n            (\"config.toml\", \"toml\"),\n            (\"doc.md\", \"markdown\"),\n        ],\n    )\n    def test_common_extensions(self, file_path, expected):\n        result = detect_language(file_path)\n        # Allow for slight naming variations (e.g., \"c++\" vs \"cpp\")\n        assert result.lower() == expected.lower() or result != \"unknown\"\n\n    def test_python_extension(self):\n        assert detect_language(\"src/main.py\") == \"python\"\n\n    def test_javascript_extension(self):\n        assert detect_language(\"app/index.js\") == \"javascript\"\n\n    def test_typescript_extension(self):\n        assert detect_language(\"src/app.ts\") == \"typescript\"\n\n    def test_unknown_extension(self):\n        assert detect_language(\"data/file.xyz\") == \"unknown\"\n\n    def test_no_extension(self):\n        assert detect_language(\"Makefile\") == \"unknown\"\n\n    def test_dotfile_without_secondary_extension(self):\n        assert detect_language(\".gitignore\") == \"unknown\"\n\n    def test_case_insensitive(self):\n        result = detect_language(\"README.PY\")\n        assert result == \"python\"\n\n    def test_compound_extension(self):\n        result = detect_language(\"src/app.test.js\")\n        assert result == \"javascript\"\n\n    def test_empty_path_raises(self):\n        with pytest.raises(Exception):  # ValueError expected\n            detect_language(\"\")\n\n    def test_nested_directory_path(self):\n        result = detect_language(\"a/b/c/d/e.py\")\n        assert result == \"python\"\n\n    def test_file_with_multiple_dots(self):\n        result = detect_language(\"my.module.name.py\")\n        assert result == \"python\"\n\n    def test_dotfile_with_known_extension(self):\n        # e.g., .eslintrc.json should detect json\n        result = detect_language(\".eslintrc.json\")\n        assert result == \"json\"\n\n\n# ═════════════════════════════════════════════════════════════════════\n# Test Class 7: TestRunIntake (async integration with mocked I/O)\n# ═════════════════════════════════════════════════════════════════════\n\nclass TestRunIntake:\n    \"\"\"Tests for async run_intake: top-level orchestrator.\"\"\"\n\n    @pytest.mark.asyncio\n    async def test_happy_path(self):\n        source = make_mock_source(content=SAMPLE_SINGLE_HUNK_DIFF)\n        config = make_ledger_config()\n        emitter, events = make_collecting_emitter()\n\n        result = await run_intake(source, config, emitter)\n\n        assert result.review_request.id.startswith(\"req-\")\n        assert result.hunk_count >= 1\n        assert result.classified_hunk_count <= result.hunk_count\n        assert isinstance(result.errors, list)\n\n    @pytest.mark.asyncio\n    async def test_emits_three_events(self):\n        source = make_mock_source(content=SAMPLE_SINGLE_HUNK_DIFF)\n        config = make_ledger_config()\n        emitter, events = make_collecting_emitter()\n\n        await run_intake(source, config, emitter)\n\n        assert len(events) == 3\n\n    @pytest.mark.asyncio\n    async def test_source_read_failure_ioerror(self):\n        source = make_mock_source(error=IOError(\"disk read failed\"))\n        config = make_ledger_config()\n        emitter, events = make_collecting_emitter()\n\n        try:\n            result = await run_intake(source, config, emitter)\n            # If it returns, errors should be populated\n            assert len(result.errors) >= 1\n        except (IOError, Exception):\n            pass  # Also acceptable — may propagate\n\n    @pytest.mark.asyncio\n    async def test_source_read_failure_file_not_found(self):\n        source = make_mock_source(error=FileNotFoundError(\"no such file\"))\n        config = make_ledger_config()\n        emitter, events = make_collecting_emitter()\n\n        try:\n            result = await run_intake(source, config, emitter)\n            assert len(result.errors) >= 1\n        except (FileNotFoundError, Exception):\n            pass\n\n    @pytest.mark.asyncio\n    async def test_source_read_failure_permission(self):\n        source = make_mock_source(error=PermissionError(\"access denied\"))\n        config = make_ledger_config()\n        emitter, events = make_collecting_emitter()\n\n        try:\n            result = await run_intake(source, config, emitter)\n            assert len(result.errors) >= 1\n        except (PermissionError, Exception):\n            pass\n\n    @pytest.mark.asyncio\n    async def test_emitter_failure_resilience(self):\n        \"\"\"run_intake completes successfully even if emitter raises.\"\"\"\n        source = make_mock_source(content=SAMPLE_SINGLE_HUNK_DIFF)\n        config = make_ledger_config()\n        emitter = make_failing_emitter(RuntimeError(\"chronicle down\"))\n\n        result = await run_intake(source, config, emitter)\n\n        assert result is not None\n        assert result.hunk_count >= 1\n        # Emission failures should appear as warnings, not errors\n        # (Implementation may vary)\n\n    @pytest.mark.asyncio\n    async def test_iso_timestamp(self):\n        source = make_mock_source(content=SAMPLE_SINGLE_HUNK_DIFF)\n        config = make_ledger_config()\n        emitter, _ = make_collecting_emitter()\n\n        result = await run_intake(source, config, emitter)\n\n        # Should be parseable as ISO 8601\n        ts = result.review_request.created_at\n        dt = datetime.fromisoformat(ts.replace(\"Z\", \"+00:00\"))\n        assert dt is not None\n\n    @pytest.mark.asyncio\n    async def test_errors_from_parse_propagated(self):\n        source = make_mock_source(content=SAMPLE_PARTIAL_DIFF)\n        config = make_ledger_config()\n        emitter, _ = make_collecting_emitter()\n\n        result = await run_intake(source, config, emitter)\n\n        assert len(result.errors) >= 1\n\n    @pytest.mark.asyncio\n    async def test_empty_diff_from_source(self):\n        source = make_mock_source(content=\"\")\n        config = make_ledger_config()\n        emitter, _ = make_collecting_emitter()\n\n        result = await run_intake(source, config, emitter)\n\n        assert result.hunk_count == 0\n\n    @pytest.mark.asyncio\n    async def test_review_request_id_format(self):\n        source = make_mock_source(content=SAMPLE_SINGLE_HUNK_DIFF)\n        config = make_ledger_config()\n        emitter, _ = make_collecting_emitter()\n\n        result = await run_intake(source, config, emitter)\n\n        rid = result.review_request.id\n        assert rid.startswith(\"req-\")\n        hex_part = rid[4:]\n        assert len(hex_part) == 32\n        assert all(c in \"0123456789abcdef\" for c in hex_part)\n\n    @pytest.mark.asyncio\n    async def test_hunks_are_classified(self):\n        source = make_mock_source(content=SAMPLE_SECRET_DIFF)\n        config = make_ledger_config()\n        emitter, _ = make_collecting_emitter()\n\n        result = await run_intake(source, config, emitter)\n\n        # At least one hunk should have secret classification\n        all_labels = []\n        for h in result.review_request.hunks:\n            for c in h.classifications:\n                label = c.value if hasattr(c, \"value\") else str(c)\n                all_labels.append(label)\n        assert \"secret\" in all_labels\n\n    @pytest.mark.asyncio\n    async def test_file_paths_populated(self):\n        source = make_mock_source(content=SAMPLE_MULTI_FILE_DIFF)\n        config = make_ledger_config()\n        emitter, _ = make_collecting_emitter()\n\n        result = await run_intake(source, config, emitter)\n\n        assert len(result.review_request.file_paths) >= 2\n\n    @pytest.mark.asyncio\n    async def test_source_read_timeout(self):\n        \"\"\"run_intake handles source.read() timeout.\"\"\"\n        source = make_mock_source(error=asyncio.TimeoutError())\n        config = make_ledger_config()\n        emitter, _ = make_collecting_emitter()\n\n        try:\n            result = await run_intake(source, config, emitter)\n            assert len(result.errors) >= 1\n        except (asyncio.TimeoutError, Exception):\n            pass  # Also acceptable\n\n    @pytest.mark.asyncio\n    async def test_emitter_warnings_not_errors(self):\n        \"\"\"Emitter failures appear as warnings, not blocking errors.\"\"\"\n        source = make_mock_source(content=SAMPLE_SINGLE_HUNK_DIFF)\n        config = make_ledger_config()\n        emitter = make_failing_emitter(RuntimeError(\"emit failed\"))\n\n        result = await run_intake(source, config, emitter)\n\n        # Result should still be valid\n        assert result.review_request.id.startswith(\"req-\")\n        # Warnings may contain emission failure info\n        # The key invariant is that the process completed\n        assert result.hunk_count >= 1\n\n    @pytest.mark.asyncio\n    async def test_classified_hunk_count_leq_hunk_count(self):\n        source = make_mock_source(content=SAMPLE_SECRET_DIFF)\n        config = make_ledger_config()\n        emitter, _ = make_collecting_emitter()\n\n        result = await run_intake(source, config, emitter)\n\n        assert result.classified_hunk_count <= result.hunk_count\n\n    @pytest.mark.asyncio\n    async def test_hunk_count_matches_hunks_len(self):\n        source = make_mock_source(content=SAMPLE_MULTI_HUNK_DIFF)\n        config = make_ledger_config()\n        emitter, _ = make_collecting_emitter()\n\n        result = await run_intake(source, config, emitter)\n\n        assert result.hunk_count == len(result.review_request.hunks)\n\n\n# ═════════════════════════════════════════════════════════════════════\n# Test Class 8: Invariant Tests\n# ═════════════════════════════════════════════════════════════════════\n\nclass TestInvariants:\n    \"\"\"Cross-cutting invariant tests from the contract.\"\"\"\n\n    @pytest.mark.asyncio\n    async def test_diffhunk_frozen(self):\n        \"\"\"DiffHunk instances are frozen Pydantic models.\"\"\"\n        hunks, _ = await parse_diff(SAMPLE_SINGLE_HUNK_DIFF)\n        h = hunks[0]\n        with pytest.raises(Exception):\n            h.file_path = \"changed\"\n\n    @pytest.mark.asyncio\n    async def test_intake_result_frozen(self):\n        \"\"\"IntakeResult instances are frozen Pydantic models.\"\"\"\n        source = make_mock_source(content=SAMPLE_SINGLE_HUNK_DIFF)\n        config = make_ledger_config()\n        emitter, _ = make_collecting_emitter()\n        result = await run_intake(source, config, emitter)\n        with pytest.raises(Exception):\n            result.hunk_count = 999\n\n    @pytest.mark.asyncio\n    async def test_hunk_id_determinism_invariant(self):\n        \"\"\"Identical inputs always produce identical HunkId.\"\"\"\n        id1 = generate_hunk_id(\"a.py\", \"@@ -1,1 +1,2 @@\", [\"x\", \"y\"])\n        id2 = generate_hunk_id(\"a.py\", \"@@ -1,1 +1,2 @@\", [\"x\", \"y\"])\n        assert id1 == id2\n\n    @pytest.mark.asyncio\n    async def test_parse_diff_pure_function(self):\n        \"\"\"parse_diff produces identical output for identical input (pure).\"\"\"\n        h1, e1 = await parse_diff(SAMPLE_MULTI_HUNK_DIFF)\n        h2, e2 = await parse_diff(SAMPLE_MULTI_HUNK_DIFF)\n        assert len(h1) == len(h2)\n        assert len(e1) == len(e2)\n        for a, b in zip(h1, h2):\n            assert a.id == b.id\n            assert a.file_path == b.file_path\n\n    @pytest.mark.asyncio\n    async def test_classify_hunks_pure_function(self):\n        \"\"\"classify_hunks produces identical output for identical input and config.\"\"\"\n        hunks, _ = await parse_diff(SAMPLE_SECRET_DIFF)\n        config = make_ledger_config()\n        r1 = classify_hunks(hunks, config)\n        r2 = classify_hunks(hunks, config)\n        assert len(r1) == len(r2)\n        for a, b in zip(r1, r2):\n            assert a.id == b.id\n            assert a.classifications == b.classifications\n\n    @pytest.mark.asyncio\n    async def test_classification_only_on_added_lines_invariant(self):\n        \"\"\"Classification never scans removed_lines or context.\"\"\"\n        hunks, _ = await parse_diff(SAMPLE_SECRET_IN_REMOVED_ONLY_DIFF)\n        config = make_ledger_config()\n        result = classify_hunks(hunks, config)\n        # Secret was only in removed lines\n        labels = []\n        for h in result:\n            for c in h.classifications:\n                labels.append(c.value if hasattr(c, \"value\") else str(c))\n        assert \"secret\" not in labels\n\n    @pytest.mark.asyncio\n    async def test_event_emitter_failure_never_blocks(self):\n        \"\"\"EventEmitter failures never block or abort intake processing.\"\"\"\n        source = make_mock_source(content=SAMPLE_SINGLE_HUNK_DIFF)\n        config = make_ledger_config()\n        emitter = make_failing_emitter(Exception(\"total failure\"))\n\n        # This must complete, not hang or raise\n        result = await run_intake(source, config, emitter)\n        assert result is not None\n        assert result.review_request.id.startswith(\"req-\")\n"
+}

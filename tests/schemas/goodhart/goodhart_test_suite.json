@@ -1,0 +1,1254 @@
+{
+  "component_id": "schemas",
+  "contract_version": 1,
+  "test_cases": [
+    {
+      "id": "goodhart_enum_member_count_severity",
+      "description": "Severity enum should have exactly 5 members — no extra or missing members beyond the contract specification",
+      "function": "Severity",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "len(Severity) == 5"
+      ]
+    },
+    {
+      "id": "goodhart_enum_member_count_confidence",
+      "description": "Confidence enum should have exactly 3 members — no extra or missing members",
+      "function": "Confidence",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "len(Confidence) == 3"
+      ]
+    },
+    {
+      "id": "goodhart_enum_member_count_review_stage",
+      "description": "ReviewStage enum should have exactly 4 members",
+      "function": "ReviewStage",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "len(ReviewStage) == 4"
+      ]
+    },
+    {
+      "id": "goodhart_enum_member_count_chronicler_event_type",
+      "description": "ChroniclerEventType enum should have exactly 9 members matching the contract",
+      "function": "ChroniclerEventType",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "len(ChroniclerEventType) == 9"
+      ]
+    },
+    {
+      "id": "goodhart_enum_member_count_learner_phase",
+      "description": "LearnerPhase enum should have exactly 3 members: shadow, canary, primary",
+      "function": "LearnerPhase",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "len(LearnerPhase) == 3"
+      ]
+    },
+    {
+      "id": "goodhart_cli_exit_code_is_int_enum",
+      "description": "CliExitCode should be an IntEnum (not StrEnum) per contract invariant that IntEnum is only used for CliExitCode",
+      "function": "CliExitCode",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "isinstance(CliExitCode(0), int)"
+      ]
+    },
+    {
+      "id": "goodhart_review_stage_is_str_enum",
+      "description": "ReviewStage members should be str instances since all text-valued enums use StrEnum",
+      "function": "ReviewStage",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "isinstance(ReviewStage.security, str)"
+      ]
+    },
+    {
+      "id": "goodhart_review_decision_is_str_enum",
+      "description": "ReviewDecision members should be str instances since all text-valued enums use StrEnum",
+      "function": "ReviewDecision",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "isinstance(ReviewDecision.block, str)"
+      ]
+    },
+    {
+      "id": "goodhart_classification_label_is_str_enum",
+      "description": "ClassificationLabel members should be str instances (StrEnum)",
+      "function": "ClassificationLabel",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "isinstance(ClassificationLabel.secret, str)"
+      ]
+    },
+    {
+      "id": "goodhart_stigmergy_verb_is_str_enum",
+      "description": "StigmergyVerb members should be str instances (StrEnum)",
+      "function": "StigmergyVerb",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "isinstance(StigmergyVerb.deposit, str)"
+      ]
+    },
+    {
+      "id": "goodhart_output_format_is_str_enum",
+      "description": "OutputFormat members should be str instances (StrEnum)",
+      "function": "OutputFormat",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "isinstance(OutputFormat.json, str)"
+      ]
+    },
+    {
+      "id": "goodhart_severity_rank_none_input",
+      "description": "severity_rank should reject None as invalid input, not silently return a value",
+      "function": "severity_rank",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "Exception raised for None input",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_severity_rank_string_input",
+      "description": "severity_rank should reject a plain string 'critical' that is not an actual Severity enum member",
+      "function": "severity_rank",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "severity": "'critical'"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "Exception raised for plain string input",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_severity_rank_int_input",
+      "description": "severity_rank should reject integer input even if it matches a rank value",
+      "function": "severity_rank",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "severity": "4"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "Exception raised for integer input",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_confidence_rank_none_input",
+      "description": "confidence_rank should reject None as invalid input",
+      "function": "confidence_rank",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "Exception raised for None input",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_confidence_rank_return_type",
+      "description": "confidence_rank should return int type for all valid Confidence members",
+      "function": "confidence_rank",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "all(isinstance(confidence_rank(c), int) for c in Confidence)"
+      ]
+    },
+    {
+      "id": "goodhart_confidence_rank_range",
+      "description": "confidence_rank should return values in [0, 2] for all valid Confidence members",
+      "function": "confidence_rank",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "all(0 <= confidence_rank(c) <= 2 for c in Confidence)"
+      ]
+    },
+    {
+      "id": "goodhart_learner_phase_rank_return_type",
+      "description": "learner_phase_rank should return int type for all valid LearnerPhase members",
+      "function": "learner_phase_rank",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "all(isinstance(learner_phase_rank(p), int) for p in LearnerPhase)"
+      ]
+    },
+    {
+      "id": "goodhart_learner_phase_rank_range",
+      "description": "learner_phase_rank should return values in [0, 3] for all valid LearnerPhase members",
+      "function": "learner_phase_rank",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "all(0 <= learner_phase_rank(p) <= 3 for p in LearnerPhase)"
+      ]
+    },
+    {
+      "id": "goodhart_learner_phase_rank_unique_values",
+      "description": "learner_phase_rank should return distinct values for each phase — no two phases share a rank",
+      "function": "learner_phase_rank",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "len(set(learner_phase_rank(p) for p in LearnerPhase)) == len(LearnerPhase)"
+      ]
+    },
+    {
+      "id": "goodhart_severity_rank_unique_values",
+      "description": "severity_rank should return distinct values for each severity — no two severities share a rank",
+      "function": "severity_rank",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "len(set(severity_rank(s) for s in Severity)) == len(Severity)"
+      ]
+    },
+    {
+      "id": "goodhart_confidence_rank_unique_values",
+      "description": "confidence_rank should return distinct values for each confidence level — no two share a rank",
+      "function": "confidence_rank",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "len(set(confidence_rank(c) for c in Confidence)) == len(Confidence)"
+      ]
+    },
+    {
+      "id": "goodhart_validate_iso_timestamp_returns_unchanged",
+      "description": "validate_iso_timestamp must return the exact input string without any transformation or normalization",
+      "function": "validate_iso_timestamp",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "value": "2024-06-15T08:30:00+05:30"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "validate_iso_timestamp('2024-06-15T08:30:00+05:30') == '2024-06-15T08:30:00+05:30'"
+      ]
+    },
+    {
+      "id": "goodhart_validate_iso_timestamp_microseconds",
+      "description": "validate_iso_timestamp should accept and return ISO strings with microsecond precision unchanged",
+      "function": "validate_iso_timestamp",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "value": "2024-01-15T12:30:45.123456"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "validate_iso_timestamp('2024-01-15T12:30:45.123456') == '2024-01-15T12:30:45.123456'"
+      ]
+    },
+    {
+      "id": "goodhart_validate_iso_timestamp_negative_offset",
+      "description": "validate_iso_timestamp should accept ISO strings with negative UTC offset",
+      "function": "validate_iso_timestamp",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "value": "2024-03-01T00:00:00-08:00"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "validate_iso_timestamp('2024-03-01T00:00:00-08:00') == '2024-03-01T00:00:00-08:00'"
+      ]
+    },
+    {
+      "id": "goodhart_validate_iso_timestamp_rejects_random_text",
+      "description": "validate_iso_timestamp should reject arbitrary non-date text",
+      "function": "validate_iso_timestamp",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "value": "hello-world"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "Exception for non-ISO text",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_validate_iso_timestamp_rejects_whitespace",
+      "description": "validate_iso_timestamp should reject whitespace-only strings",
+      "function": "validate_iso_timestamp",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "value": "   "
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "Exception for whitespace string",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_all_exports_present",
+      "description": "The module __all__ should list every public type defined in the contract",
+      "function": "_ExemplarBase",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "all(name in dir_or_all for name in expected_names)"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_value",
+      "description": "PACT_KEY should have the exact value 'exemplar.schemas' as specified in the contract",
+      "function": "_ExemplarBase",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "_ExemplarBase.PACT_KEY == 'exemplar.schemas'"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_inherited",
+      "description": "All model subclasses should inherit PACT_KEY from _ExemplarBase",
+      "function": "_ExemplarBase",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "DiffHunk.PACT_KEY == 'exemplar.schemas'",
+        "Finding.PACT_KEY == 'exemplar.schemas'",
+        "ReviewReport.PACT_KEY == 'exemplar.schemas'"
+      ]
+    },
+    {
+      "id": "goodhart_finding_extra_forbid",
+      "description": "Finding should forbid extra fields not in the schema, per frozen+extra=forbid config",
+      "function": "Finding",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for extra field",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_assessment_extra_forbid",
+      "description": "Assessment should forbid extra fields not in the schema",
+      "function": "Assessment",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for extra field",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_trust_score_extra_forbid",
+      "description": "TrustScore should forbid extra fields not in the schema",
+      "function": "TrustScore",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for extra field",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_review_report_extra_forbid",
+      "description": "ReviewReport should forbid extra fields not in the schema",
+      "function": "ReviewReport",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for extra field",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_finding_frozen",
+      "description": "Finding instances should be immutable — attribute assignment should raise",
+      "function": "Finding",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for attribute assignment",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_assessment_frozen",
+      "description": "Assessment instances should be immutable — attribute assignment should raise",
+      "function": "Assessment",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for attribute assignment",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_trust_score_frozen",
+      "description": "TrustScore instances should be immutable — attribute assignment should raise",
+      "function": "TrustScore",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for attribute assignment",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_tessera_seal_frozen",
+      "description": "TesseraSeal instances should be immutable — attribute assignment should raise",
+      "function": "TesseraSeal",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for attribute assignment",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_trust_score_weight_slightly_negative",
+      "description": "TrustScore should reject weight=-0.001 which is just barely below the valid range",
+      "function": "TrustScore",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for weight=-0.001",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_trust_score_weight_slightly_above",
+      "description": "TrustScore should reject weight=1.001 which is just barely above the valid range",
+      "function": "TrustScore",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for weight=1.001",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_trust_score_weight_mid_range",
+      "description": "TrustScore should accept weight=0.5 as a typical mid-range value",
+      "function": "TrustScore",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ts.weight == 0.5"
+      ]
+    },
+    {
+      "id": "goodhart_trust_score_weight_near_boundaries",
+      "description": "TrustScore should accept weight values very close to but within bounds (0.0001, 0.9999)",
+      "function": "TrustScore",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ts1.weight == 0.0001",
+        "ts2.weight == 0.9999"
+      ]
+    },
+    {
+      "id": "goodhart_canonical_bytes_sorted_keys",
+      "description": "canonical_bytes should produce output with sorted JSON keys for determinism",
+      "function": "canonical_bytes",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "keys are in sorted order in the JSON output"
+      ]
+    },
+    {
+      "id": "goodhart_canonical_bytes_compact_separators",
+      "description": "canonical_bytes should use compact separators with no spaces (comma-colon, no whitespace)",
+      "function": "canonical_bytes",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "no spaces after colons or commas in output"
+      ]
+    },
+    {
+      "id": "goodhart_canonical_bytes_nested_model",
+      "description": "canonical_bytes on a model with nested sub-models should still produce valid deterministic JSON",
+      "function": "canonical_bytes",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "json.loads(output) is valid",
+        "output is bytes"
+      ]
+    },
+    {
+      "id": "goodhart_canonical_hash_lowercase",
+      "description": "canonical_hash must return only lowercase hex characters (no uppercase A-F)",
+      "function": "canonical_hash",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result == result.lower()",
+        "all(c in '0123456789abcdef' for c in result)"
+      ]
+    },
+    {
+      "id": "goodhart_canonical_hash_length_multiple_models",
+      "description": "canonical_hash should always return exactly 64 characters regardless of which model type it's called on",
+      "function": "canonical_hash",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "len(hash) == 64 for multiple different model types"
+      ]
+    },
+    {
+      "id": "goodhart_json_roundtrip_trust_score",
+      "description": "TrustScore should survive JSON round-trip via model_dump_json and model_validate_json",
+      "function": "TrustScore",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "TrustScore.model_validate_json(ts.model_dump_json()) == ts"
+      ]
+    },
+    {
+      "id": "goodhart_json_roundtrip_reviewer_credential",
+      "description": "ReviewerCredential should survive JSON round-trip",
+      "function": "ReviewerCredential",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ReviewerCredential.model_validate_json(rc.model_dump_json()) == rc"
+      ]
+    },
+    {
+      "id": "goodhart_json_roundtrip_policy_token",
+      "description": "PolicyToken should survive JSON round-trip",
+      "function": "PolicyToken",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "PolicyToken.model_validate_json(pt.model_dump_json()) == pt"
+      ]
+    },
+    {
+      "id": "goodhart_json_roundtrip_chronicler_event",
+      "description": "ChroniclerEvent should survive JSON round-trip",
+      "function": "ChroniclerEvent",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ChroniclerEvent.model_validate_json(ce.model_dump_json()) == ce"
+      ]
+    },
+    {
+      "id": "goodhart_json_roundtrip_stigmergy_signal",
+      "description": "StigmergySignal should survive JSON round-trip",
+      "function": "StigmergySignal",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "StigmergySignal.model_validate_json(ss.model_dump_json()) == ss"
+      ]
+    },
+    {
+      "id": "goodhart_json_roundtrip_learning_record",
+      "description": "LearningRecord should survive JSON round-trip",
+      "function": "LearningRecord",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "LearningRecord.model_validate_json(lr.model_dump_json()) == lr"
+      ]
+    },
+    {
+      "id": "goodhart_json_roundtrip_kindex_entry",
+      "description": "KindexEntry should survive JSON round-trip",
+      "function": "KindexEntry",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "KindexEntry.model_validate_json(ke.model_dump_json()) == ke"
+      ]
+    },
+    {
+      "id": "goodhart_json_roundtrip_tessera_seal",
+      "description": "TesseraSeal should survive JSON round-trip",
+      "function": "TesseraSeal",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "TesseraSeal.model_validate_json(ts.model_dump_json()) == ts"
+      ]
+    },
+    {
+      "id": "goodhart_diffhunk_classifications_accept_all_labels",
+      "description": "DiffHunk classifications field should accept any valid ClassificationLabel enum values",
+      "function": "DiffHunk",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "DiffHunk with all classification labels constructs successfully"
+      ]
+    },
+    {
+      "id": "goodhart_assessment_optional_error_message",
+      "description": "Assessment should allow None for optional error_message field",
+      "function": "Assessment",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "assessment.error_message is None"
+      ]
+    },
+    {
+      "id": "goodhart_tessera_seal_optional_previous_hash",
+      "description": "TesseraSeal should allow None for optional previous_hash (first link in chain)",
+      "function": "TesseraSeal",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "seal.previous_hash is None"
+      ]
+    },
+    {
+      "id": "goodhart_review_report_optional_seal",
+      "description": "ReviewReport should allow None for optional seal field (unsealed report)",
+      "function": "ReviewReport",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "report.seal is None"
+      ]
+    },
+    {
+      "id": "goodhart_policy_token_optional_expires_at",
+      "description": "PolicyToken should allow None for optional expires_at field (non-expiring token)",
+      "function": "PolicyToken",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "pt.expires_at is None"
+      ]
+    },
+    {
+      "id": "goodhart_chronicler_event_optional_stage",
+      "description": "ChroniclerEvent should allow None for optional stage and reviewer_id fields",
+      "function": "ChroniclerEvent",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ce.stage is None",
+        "ce.reviewer_id is None"
+      ]
+    },
+    {
+      "id": "goodhart_learning_record_optional_human_comment",
+      "description": "LearningRecord should allow None for optional human_comment field",
+      "function": "LearningRecord",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "lr.human_comment is None"
+      ]
+    },
+    {
+      "id": "goodhart_stigmergy_signal_optional_fields",
+      "description": "StigmergySignal should allow None for optional reviewer_id and stage fields",
+      "function": "StigmergySignal",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ss.reviewer_id is None",
+        "ss.stage is None"
+      ]
+    },
+    {
+      "id": "goodhart_review_request_extra_forbid",
+      "description": "ReviewRequest should forbid extra fields not in the schema",
+      "function": "ReviewRequest",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for extra field",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_kindex_entry_frozen",
+      "description": "KindexEntry instances should be immutable — attribute assignment should raise",
+      "function": "KindexEntry",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for attribute assignment",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_learning_record_frozen",
+      "description": "LearningRecord instances should be immutable — attribute assignment should raise",
+      "function": "LearningRecord",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for attribute assignment",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_canonical_bytes_model_dump_equivalence",
+      "description": "json.loads of canonical_bytes() should produce a dict equivalent to model_dump(mode='json')",
+      "function": "canonical_bytes",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "json.loads(instance.canonical_bytes()) == instance.model_dump(mode='json')"
+      ]
+    },
+    {
+      "id": "goodhart_models_inherit_exemplar_base",
+      "description": "All domain models should be subclasses of _ExemplarBase",
+      "function": "_ExemplarBase",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "issubclass(cls, _ExemplarBase) for all model classes"
+      ]
+    },
+    {
+      "id": "goodhart_diffhunk_invalid_classification",
+      "description": "DiffHunk should reject invalid classification labels that are not ClassificationLabel members",
+      "function": "DiffHunk",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for invalid classification",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_finding_invalid_severity",
+      "description": "Finding should reject invalid severity values that are not Severity members",
+      "function": "Finding",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for invalid severity",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_finding_invalid_stage",
+      "description": "Finding should reject invalid stage values that are not ReviewStage members",
+      "function": "Finding",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for invalid stage",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_assessment_invalid_decision",
+      "description": "Assessment should reject invalid decision values that are not ReviewDecision members",
+      "function": "Assessment",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for invalid decision",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_canonical_hash_changes_with_field_value",
+      "description": "Changing any single field value in a model should produce a different canonical_hash",
+      "function": "canonical_hash",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "hash1 != hash2 when a single field differs"
+      ]
+    },
+    {
+      "id": "goodhart_review_report_empty_lists",
+      "description": "ReviewReport should accept empty lists for findings, assessments, trust_scores, and conflict_notes",
+      "function": "ReviewReport",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "report with empty lists constructs successfully"
+      ]
+    },
+    {
+      "id": "goodhart_assessment_empty_findings",
+      "description": "Assessment should accept an empty findings list (reviewer found no issues)",
+      "function": "Assessment",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "assessment with empty findings list constructs successfully"
+      ]
+    },
+    {
+      "id": "goodhart_models_hashable_multiple_types",
+      "description": "Multiple different frozen model types should all be hashable for use in sets/dicts",
+      "function": "_ExemplarBase",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "hash() works on DiffHunk, TrustScore, TesseraSeal, KindexEntry instances"
+      ]
+    },
+    {
+      "id": "goodhart_learner_phase_rank_string_input",
+      "description": "learner_phase_rank should reject a plain string that is not a LearnerPhase enum member",
+      "function": "learner_phase_rank",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "phase": "'shadow'"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "Exception raised for plain string input",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_confidence_rank_string_input",
+      "description": "confidence_rank should reject a plain string 'high' that is not an actual Confidence enum member",
+      "function": "confidence_rank",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "confidence": "'high'"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "Exception raised for plain string input",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_reviewer_credential_frozen",
+      "description": "ReviewerCredential instances should be immutable — attribute assignment should raise",
+      "function": "ReviewerCredential",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for attribute assignment",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_policy_token_frozen",
+      "description": "PolicyToken instances should be immutable — attribute assignment should raise",
+      "function": "PolicyToken",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError for attribute assignment",
+      "assertions": []
+    },
+    {
+      "id": "goodhart_json_roundtrip_review_request",
+      "description": "ReviewRequest with nested DiffHunks should survive JSON round-trip",
+      "function": "ReviewRequest",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ReviewRequest.model_validate_json(rr.model_dump_json()) == rr"
+      ]
+    },
+    {
+      "id": "goodhart_json_roundtrip_pipeline_result",
+      "description": "PipelineResult with deeply nested structures should survive JSON round-trip",
+      "function": "PipelineResult",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "PipelineResult.model_validate_json(pr.model_dump_json()) == pr"
+      ]
+    },
+    {
+      "id": "goodhart_diffhunk_empty_lines",
+      "description": "DiffHunk should accept empty lists for context_before, added_lines, removed_lines, context_after",
+      "function": "DiffHunk",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "DiffHunk with empty line lists constructs successfully"
+      ]
+    },
+    {
+      "id": "goodhart_review_request_empty_hunks",
+      "description": "ReviewRequest should accept empty hunks list and empty file_paths",
+      "function": "ReviewRequest",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ReviewRequest with empty hunks constructs successfully"
+      ]
+    },
+    {
+      "id": "goodhart_canonical_bytes_utf8_encoding",
+      "description": "canonical_bytes output should be decodable as valid UTF-8",
+      "function": "canonical_bytes",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "instance.canonical_bytes().decode('utf-8') succeeds"
+      ]
+    }
+  ],
+  "test_language": "python",
+  "generated_code": "\"\"\"\nAdversarial hidden acceptance tests for Data Models & Schemas.\nThese tests detect implementations that pass visible tests through shortcuts\n(hardcoded returns, missing validation, incomplete invariants).\n\"\"\"\nimport hashlib\nimport json\n\nimport pytest\n\nfrom exemplar.schemas import (\n    _ExemplarBase,\n    Assessment,\n    ChroniclerEvent,\n    ChroniclerEventType,\n    ClassificationLabel,\n    CliExitCode,\n    Confidence,\n    DiffHunk,\n    Finding,\n    KindexEntry,\n    LearnerPhase,\n    LearningRecord,\n    OutputFormat,\n    PipelineResult,\n    PolicyToken,\n    ReviewDecision,\n    ReviewerCredential,\n    ReviewReport,\n    ReviewRequest,\n    ReviewStage,\n    Severity,\n    StigmergySignal,\n    StigmergyVerb,\n    TesseraSeal,\n    TrustScore,\n    canonical_hash,\n    confidence_rank,\n    learner_phase_rank,\n    severity_rank,\n    validate_iso_timestamp,\n)\n\n\n# ---- Helpers ----\n\ndef _make_diffhunk(**overrides):\n    defaults = dict(\n        id=\"hunk-1\",\n        file_path=\"src/main.py\",\n        start_line_old=10,\n        count_old=5,\n        start_line_new=10,\n        count_new=7,\n        context_before=[\"# context\"],\n        added_lines=[\"+ new line\"],\n        removed_lines=[\"- old line\"],\n        context_after=[\"# after\"],\n        raw_header=\"@@ -10,5 +10,7 @@\",\n        classifications=[ClassificationLabel.public],\n        language=\"python\",\n    )\n    defaults.update(overrides)\n    return DiffHunk(**defaults)\n\n\ndef _make_finding(**overrides):\n    defaults = dict(\n        id=\"finding-1\",\n        hunk_id=\"hunk-1\",\n        file_path=\"src/main.py\",\n        line_number=42,\n        severity=Severity.high,\n        confidence=Confidence.high,\n        title=\"Test finding\",\n        description=\"A test finding\",\n        suggestion=\"Fix it\",\n        rule_id=\"RULE-001\",\n        stage=ReviewStage.security,\n    )\n    defaults.update(overrides)\n    return Finding(**defaults)\n\n\ndef _make_assessment(**overrides):\n    defaults = dict(\n        id=\"assess-1\",\n        review_request_id=\"rr-1\",\n        stage=ReviewStage.security,\n        reviewer_id=\"reviewer-1\",\n        decision=ReviewDecision.warn,\n        findings=[],\n        confidence=Confidence.medium,\n        is_partial=False,\n        error_message=None,\n        duration_ms=150,\n        created_at=\"2024-01-01T00:00:00Z\",\n    )\n    defaults.update(overrides)\n    return Assessment(**defaults)\n\n\ndef _make_trust_score(**overrides):\n    defaults = dict(\n        reviewer_id=\"reviewer-1\",\n        stage=ReviewStage.security,\n        weight=0.75,\n        accepted_count=10,\n        dismissed_count=2,\n        updated_at=\"2024-01-01T00:00:00Z\",\n    )\n    defaults.update(overrides)\n    return TrustScore(**defaults)\n\n\ndef _make_tessera_seal(**overrides):\n    defaults = dict(\n        content_hash=\"abc123\",\n        previous_hash=None,\n        chain_hash=\"def456\",\n        sealed_at=\"2024-01-01T00:00:00Z\",\n        sealer_id=\"sealer-1\",\n    )\n    defaults.update(overrides)\n    return TesseraSeal(**defaults)\n\n\ndef _make_review_report(**overrides):\n    defaults = dict(\n        id=\"report-1\",\n        review_request_id=\"rr-1\",\n        decision=ReviewDecision.warn,\n        findings=[],\n        assessments=[],\n        confidence=Confidence.medium,\n        trust_scores=[],\n        conflict_notes=[],\n        summary=\"Summary\",\n        seal=None,\n        created_at=\"2024-01-01T00:00:00Z\",\n        metadata={},\n    )\n    defaults.update(overrides)\n    return ReviewReport(**defaults)\n\n\ndef _make_reviewer_credential(**overrides):\n    defaults = dict(\n        reviewer_id=\"rev-1\",\n        display_name=\"Test Reviewer\",\n        stage=ReviewStage.security,\n        public_key_hex=\"aabbccdd\",\n        created_at=\"2024-01-01T00:00:00Z\",\n        is_active=True,\n    )\n    defaults.update(overrides)\n    return ReviewerCredential(**defaults)\n\n\ndef _make_policy_token(**overrides):\n    defaults = dict(\n        token_id=\"tok-1\",\n        reviewer_id=\"rev-1\",\n        allowed_file_patterns=[\"*.py\"],\n        denied_file_patterns=[\"*.secret\"],\n        allowed_classifications=[ClassificationLabel.public],\n        max_severity=Severity.high,\n        issued_at=\"2024-01-01T00:00:00Z\",\n        expires_at=None,\n    )\n    defaults.update(overrides)\n    return PolicyToken(**defaults)\n\n\ndef _make_chronicler_event(**overrides):\n    defaults = dict(\n        event_id=\"evt-1\",\n        event_type=ChroniclerEventType(\"review.started\"),\n        review_request_id=\"rr-1\",\n        timestamp=\"2024-01-01T00:00:00Z\",\n        stage=None,\n        reviewer_id=None,\n        payload={},\n        message=\"Review started\",\n    )\n    defaults.update(overrides)\n    return ChroniclerEvent(**defaults)\n\n\ndef _make_stigmergy_signal(**overrides):\n    defaults = dict(\n        signal_id=\"sig-1\",\n        pattern_key=\"pattern.test\",\n        description=\"A test pattern\",\n        occurrences=5,\n        first_seen_at=\"2024-01-01T00:00:00Z\",\n        last_seen_at=\"2024-01-02T00:00:00Z\",\n        reviewer_id=None,\n        stage=None,\n        metadata={},\n    )\n    defaults.update(overrides)\n    return StigmergySignal(**defaults)\n\n\ndef _make_learning_record(**overrides):\n    defaults = dict(\n        record_id=\"lr-1\",\n        finding_id=\"finding-1\",\n        reviewer_id=\"rev-1\",\n        stage=ReviewStage.security,\n        rule_id=\"RULE-001\",\n        severity=Severity.high,\n        accepted=True,\n        human_comment=None,\n        recorded_at=\"2024-01-01T00:00:00Z\",\n    )\n    defaults.update(overrides)\n    return LearningRecord(**defaults)\n\n\ndef _make_kindex_entry(**overrides):\n    defaults = dict(\n        key=\"kindex-1\",\n        kind=\"review\",\n        summary=\"A review entry\",\n        data={\"file\": \"main.py\"},\n        tags=[\"test\"],\n        created_at=\"2024-01-01T00:00:00Z\",\n        updated_at=\"2024-01-02T00:00:00Z\",\n    )\n    defaults.update(overrides)\n    return KindexEntry(**defaults)\n\n\ndef _make_review_request(**overrides):\n    defaults = dict(\n        id=\"rr-1\",\n        source=\"github\",\n        hunks=[],\n        file_paths=[],\n        created_at=\"2024-01-01T00:00:00Z\",\n        metadata={},\n    )\n    defaults.update(overrides)\n    return ReviewRequest(**defaults)\n\n\ndef _make_pipeline_result(**overrides):\n    rr = _make_review_request()\n    report = _make_review_report()\n    defaults = dict(\n        review_request=rr,\n        assessments=[],\n        report=report,\n        events=[],\n        formatted_output=\"{}\",\n        output_format=OutputFormat.json,\n        exit_code=0,\n    )\n    defaults.update(overrides)\n    return PipelineResult(**defaults)\n\n\n# ---- Enum member count tests ----\n\nclass TestGoodhartEnumCounts:\n    def test_goodhart_severity_member_count(self):\n        \"\"\"Severity enum should have exactly 5 members — no extra or missing members\"\"\"\n        assert len(Severity) == 5\n\n    def test_goodhart_confidence_member_count(self):\n        \"\"\"Confidence enum should have exactly 3 members\"\"\"\n        assert len(Confidence) == 3\n\n    def test_goodhart_review_stage_member_count(self):\n        \"\"\"ReviewStage enum should have exactly 4 members\"\"\"\n        assert len(ReviewStage) == 4\n\n    def test_goodhart_chronicler_event_type_member_count(self):\n        \"\"\"ChroniclerEventType enum should have exactly 9 members\"\"\"\n        assert len(ChroniclerEventType) == 9\n\n    def test_goodhart_learner_phase_member_count(self):\n        \"\"\"LearnerPhase enum should have exactly 3 members\"\"\"\n        assert len(LearnerPhase) == 3\n\n    def test_goodhart_review_decision_member_count(self):\n        \"\"\"ReviewDecision enum should have exactly 3 members\"\"\"\n        assert len(ReviewDecision) == 3\n\n    def test_goodhart_classification_label_member_count(self):\n        \"\"\"ClassificationLabel enum should have exactly 4 members\"\"\"\n        assert len(ClassificationLabel) == 4\n\n    def test_goodhart_stigmergy_verb_member_count(self):\n        \"\"\"StigmergyVerb enum should have exactly 4 members\"\"\"\n        assert len(StigmergyVerb) == 4\n\n    def test_goodhart_output_format_member_count(self):\n        \"\"\"OutputFormat enum should have exactly 3 members\"\"\"\n        assert len(OutputFormat) == 3\n\n    def test_goodhart_cli_exit_code_member_count(self):\n        \"\"\"CliExitCode enum should have exactly 4 members\"\"\"\n        assert len(CliExitCode) == 4\n\n\n# ---- StrEnum / IntEnum type tests ----\n\nclass TestGoodhartEnumTypes:\n    def test_goodhart_cli_exit_code_is_int(self):\n        \"\"\"CliExitCode should be an IntEnum — members are int instances\"\"\"\n        for member in CliExitCode:\n            assert isinstance(member, int), f\"{member} should be int instance\"\n\n    def test_goodhart_review_stage_is_str(self):\n        \"\"\"ReviewStage members should be str instances (StrEnum)\"\"\"\n        for member in ReviewStage:\n            assert isinstance(member, str), f\"{member} should be str\"\n\n    def test_goodhart_review_decision_is_str(self):\n        \"\"\"ReviewDecision members should be str instances (StrEnum)\"\"\"\n        for member in ReviewDecision:\n            assert isinstance(member, str), f\"{member} should be str\"\n\n    def test_goodhart_classification_label_is_str(self):\n        \"\"\"ClassificationLabel members should be str instances (StrEnum)\"\"\"\n        for member in ClassificationLabel:\n            assert isinstance(member, str)\n\n    def test_goodhart_stigmergy_verb_is_str(self):\n        \"\"\"StigmergyVerb members should be str instances (StrEnum)\"\"\"\n        for member in StigmergyVerb:\n            assert isinstance(member, str)\n\n    def test_goodhart_output_format_is_str(self):\n        \"\"\"OutputFormat members should be str instances (StrEnum)\"\"\"\n        for member in OutputFormat:\n            assert isinstance(member, str)\n\n    def test_goodhart_chronicler_event_type_is_str(self):\n        \"\"\"ChroniclerEventType members should be str instances (StrEnum)\"\"\"\n        for member in ChroniclerEventType:\n            assert isinstance(member, str)\n\n    def test_goodhart_learner_phase_is_str(self):\n        \"\"\"LearnerPhase members should be str instances (StrEnum)\"\"\"\n        for member in LearnerPhase:\n            assert isinstance(member, str)\n\n\n# ---- Rank function input validation ----\n\nclass TestGoodhartRankInputValidation:\n    def test_goodhart_severity_rank_none(self):\n        \"\"\"severity_rank should reject None\"\"\"\n        with pytest.raises(Exception):\n            severity_rank(None)\n\n    def test_goodhart_severity_rank_plain_string(self):\n        \"\"\"severity_rank should reject plain string 'critical' not an enum member\"\"\"\n        with pytest.raises(Exception):\n            severity_rank(\"critical\")\n\n    def test_goodhart_severity_rank_int_input(self):\n        \"\"\"severity_rank should reject integer input\"\"\"\n        with pytest.raises(Exception):\n            severity_rank(4)\n\n    def test_goodhart_confidence_rank_none(self):\n        \"\"\"confidence_rank should reject None\"\"\"\n        with pytest.raises(Exception):\n            confidence_rank(None)\n\n    def test_goodhart_confidence_rank_plain_string(self):\n        \"\"\"confidence_rank should reject plain string 'high'\"\"\"\n        with pytest.raises(Exception):\n            confidence_rank(\"high\")\n\n    def test_goodhart_learner_phase_rank_plain_string(self):\n        \"\"\"learner_phase_rank should reject plain string 'shadow'\"\"\"\n        with pytest.raises(Exception):\n            learner_phase_rank(\"shadow\")\n\n    def test_goodhart_learner_phase_rank_none(self):\n        \"\"\"learner_phase_rank should reject None\"\"\"\n        with pytest.raises(Exception):\n            learner_phase_rank(None)\n\n\n# ---- Rank function return type and range ----\n\nclass TestGoodhartRankProperties:\n    def test_goodhart_confidence_rank_return_type(self):\n        \"\"\"confidence_rank should return int for all valid members\"\"\"\n        for c in Confidence:\n            assert isinstance(confidence_rank(c), int)\n\n    def test_goodhart_confidence_rank_range(self):\n        \"\"\"confidence_rank values should be in [0, 2]\"\"\"\n        for c in Confidence:\n            assert 0 <= confidence_rank(c) <= 2\n\n    def test_goodhart_learner_phase_rank_return_type(self):\n        \"\"\"learner_phase_rank should return int for all valid members\"\"\"\n        for p in LearnerPhase:\n            assert isinstance(learner_phase_rank(p), int)\n\n    def test_goodhart_learner_phase_rank_range(self):\n        \"\"\"learner_phase_rank values should be in [0, 3]\"\"\"\n        for p in LearnerPhase:\n            assert 0 <= learner_phase_rank(p) <= 3\n\n    def test_goodhart_severity_rank_unique(self):\n        \"\"\"severity_rank should return distinct values for all severity levels\"\"\"\n        ranks = [severity_rank(s) for s in Severity]\n        assert len(set(ranks)) == len(ranks)\n\n    def test_goodhart_confidence_rank_unique(self):\n        \"\"\"confidence_rank should return distinct values for all confidence levels\"\"\"\n        ranks = [confidence_rank(c) for c in Confidence]\n        assert len(set(ranks)) == len(ranks)\n\n    def test_goodhart_learner_phase_rank_unique(self):\n        \"\"\"learner_phase_rank should return distinct values for all phases\"\"\"\n        ranks = [learner_phase_rank(p) for p in LearnerPhase]\n        assert len(set(ranks)) == len(ranks)\n\n\n# ---- validate_iso_timestamp ----\n\nclass TestGoodhartIsoTimestamp:\n    def test_goodhart_iso_returns_unchanged_with_offset(self):\n        \"\"\"validate_iso_timestamp must return exact input with non-UTC offset\"\"\"\n        v = \"2024-06-15T08:30:00+05:30\"\n        assert validate_iso_timestamp(v) == v\n\n    def test_goodhart_iso_microseconds(self):\n        \"\"\"validate_iso_timestamp should accept microsecond precision\"\"\"\n        v = \"2024-01-15T12:30:45.123456\"\n        assert validate_iso_timestamp(v) == v\n\n    def test_goodhart_iso_negative_offset(self):\n        \"\"\"validate_iso_timestamp should accept negative UTC offsets\"\"\"\n        v = \"2024-03-01T00:00:00-08:00\"\n        assert validate_iso_timestamp(v) == v\n\n    def test_goodhart_iso_rejects_random_text(self):\n        \"\"\"validate_iso_timestamp should reject arbitrary non-date text\"\"\"\n        with pytest.raises(Exception):\n            validate_iso_timestamp(\"hello-world\")\n\n    def test_goodhart_iso_rejects_whitespace(self):\n        \"\"\"validate_iso_timestamp should reject whitespace-only strings\"\"\"\n        with pytest.raises(Exception):\n            validate_iso_timestamp(\"   \")\n\n    def test_goodhart_iso_midnight(self):\n        \"\"\"validate_iso_timestamp should accept midnight time\"\"\"\n        v = \"2024-12-31T00:00:00\"\n        assert validate_iso_timestamp(v) == v\n\n    def test_goodhart_iso_rejects_partial_date(self):\n        \"\"\"validate_iso_timestamp should reject incomplete date like '2024-13'\"\"\"\n        with pytest.raises(Exception):\n            validate_iso_timestamp(\"2024-13\")\n\n\n# ---- PACT_KEY ----\n\nclass TestGoodhartPactKey:\n    def test_goodhart_pact_key_exact_value(self):\n        \"\"\"PACT_KEY should have exact value 'exemplar.schemas'\"\"\"\n        assert _ExemplarBase.PACT_KEY == \"exemplar.schemas\"\n\n    def test_goodhart_pact_key_inherited_by_diffhunk(self):\n        \"\"\"DiffHunk should inherit PACT_KEY from _ExemplarBase\"\"\"\n        assert DiffHunk.PACT_KEY == \"exemplar.schemas\"\n\n    def test_goodhart_pact_key_inherited_by_finding(self):\n        \"\"\"Finding should inherit PACT_KEY\"\"\"\n        assert Finding.PACT_KEY == \"exemplar.schemas\"\n\n    def test_goodhart_pact_key_inherited_by_review_report(self):\n        \"\"\"ReviewReport should inherit PACT_KEY\"\"\"\n        assert ReviewReport.PACT_KEY == \"exemplar.schemas\"\n\n    def test_goodhart_pact_key_inherited_by_trust_score(self):\n        \"\"\"TrustScore should inherit PACT_KEY\"\"\"\n        assert TrustScore.PACT_KEY == \"exemplar.schemas\"\n\n    def test_goodhart_pact_key_inherited_by_kindex(self):\n        \"\"\"KindexEntry should inherit PACT_KEY\"\"\"\n        assert KindexEntry.PACT_KEY == \"exemplar.schemas\"\n\n\n# ---- Inheritance ----\n\nclass TestGoodhartInheritance:\n    def test_goodhart_all_models_inherit_exemplar_base(self):\n        \"\"\"All domain model classes should be subclasses of _ExemplarBase\"\"\"\n        model_classes = [\n            DiffHunk, ReviewRequest, Finding, Assessment, TrustScore,\n            TesseraSeal, ReviewReport, ReviewerCredential, PolicyToken,\n            ChroniclerEvent, StigmergySignal, LearningRecord, KindexEntry,\n            PipelineResult,\n        ]\n        for cls in model_classes:\n            assert issubclass(cls, _ExemplarBase), f\"{cls.__name__} should inherit from _ExemplarBase\"\n\n\n# ---- Extra forbid on multiple models ----\n\nclass TestGoodhartExtraForbid:\n    def test_goodhart_finding_extra_forbid(self):\n        \"\"\"Finding should forbid extra fields\"\"\"\n        with pytest.raises(Exception):\n            _make_finding(extra_unknown_field=\"bad\")\n\n    def test_goodhart_assessment_extra_forbid(self):\n        \"\"\"Assessment should forbid extra fields\"\"\"\n        with pytest.raises(Exception):\n            _make_assessment(extra_unknown_field=\"bad\")\n\n    def test_goodhart_trust_score_extra_forbid(self):\n        \"\"\"TrustScore should forbid extra fields\"\"\"\n        with pytest.raises(Exception):\n            _make_trust_score(extra_unknown_field=\"bad\")\n\n    def test_goodhart_review_report_extra_forbid(self):\n        \"\"\"ReviewReport should forbid extra fields\"\"\"\n        with pytest.raises(Exception):\n            _make_review_report(extra_unknown_field=\"bad\")\n\n    def test_goodhart_review_request_extra_forbid(self):\n        \"\"\"ReviewRequest should forbid extra fields\"\"\"\n        with pytest.raises(Exception):\n            _make_review_request(extra_unknown_field=\"bad\")\n\n    def test_goodhart_reviewer_credential_extra_forbid(self):\n        \"\"\"ReviewerCredential should forbid extra fields\"\"\"\n        with pytest.raises(Exception):\n            _make_reviewer_credential(extra_unknown_field=\"bad\")\n\n    def test_goodhart_policy_token_extra_forbid(self):\n        \"\"\"PolicyToken should forbid extra fields\"\"\"\n        with pytest.raises(Exception):\n            _make_policy_token(extra_unknown_field=\"bad\")\n\n    def test_goodhart_chronicler_event_extra_forbid(self):\n        \"\"\"ChroniclerEvent should forbid extra fields\"\"\"\n        with pytest.raises(Exception):\n            _make_chronicler_event(extra_unknown_field=\"bad\")\n\n    def test_goodhart_stigmergy_signal_extra_forbid(self):\n        \"\"\"StigmergySignal should forbid extra fields\"\"\"\n        with pytest.raises(Exception):\n            _make_stigmergy_signal(extra_unknown_field=\"bad\")\n\n    def test_goodhart_learning_record_extra_forbid(self):\n        \"\"\"LearningRecord should forbid extra fields\"\"\"\n        with pytest.raises(Exception):\n            _make_learning_record(extra_unknown_field=\"bad\")\n\n    def test_goodhart_kindex_entry_extra_forbid(self):\n        \"\"\"KindexEntry should forbid extra fields\"\"\"\n        with pytest.raises(Exception):\n            _make_kindex_entry(extra_unknown_field=\"bad\")\n\n\n# ---- Frozen on multiple models ----\n\nclass TestGoodhartFrozen:\n    def test_goodhart_finding_frozen(self):\n        \"\"\"Finding should be immutable\"\"\"\n        f = _make_finding()\n        with pytest.raises(Exception):\n            f.title = \"changed\"\n\n    def test_goodhart_assessment_frozen(self):\n        \"\"\"Assessment should be immutable\"\"\"\n        a = _make_assessment()\n        with pytest.raises(Exception):\n            a.decision = ReviewDecision.block\n\n    def test_goodhart_trust_score_frozen(self):\n        \"\"\"TrustScore should be immutable\"\"\"\n        ts = _make_trust_score()\n        with pytest.raises(Exception):\n            ts.weight = 0.5\n\n    def test_goodhart_tessera_seal_frozen(self):\n        \"\"\"TesseraSeal should be immutable\"\"\"\n        s = _make_tessera_seal()\n        with pytest.raises(Exception):\n            s.content_hash = \"changed\"\n\n    def test_goodhart_kindex_entry_frozen(self):\n        \"\"\"KindexEntry should be immutable\"\"\"\n        k = _make_kindex_entry()\n        with pytest.raises(Exception):\n            k.key = \"changed\"\n\n    def test_goodhart_learning_record_frozen(self):\n        \"\"\"LearningRecord should be immutable\"\"\"\n        lr = _make_learning_record()\n        with pytest.raises(Exception):\n            lr.accepted = False\n\n    def test_goodhart_reviewer_credential_frozen(self):\n        \"\"\"ReviewerCredential should be immutable\"\"\"\n        rc = _make_reviewer_credential()\n        with pytest.raises(Exception):\n            rc.is_active = False\n\n    def test_goodhart_policy_token_frozen(self):\n        \"\"\"PolicyToken should be immutable\"\"\"\n        pt = _make_policy_token()\n        with pytest.raises(Exception):\n            pt.token_id = \"changed\"\n\n    def test_goodhart_review_report_frozen(self):\n        \"\"\"ReviewReport should be immutable\"\"\"\n        rr = _make_review_report()\n        with pytest.raises(Exception):\n            rr.summary = \"changed\"\n\n    def test_goodhart_chronicler_event_frozen(self):\n        \"\"\"ChroniclerEvent should be immutable\"\"\"\n        ce = _make_chronicler_event()\n        with pytest.raises(Exception):\n            ce.message = \"changed\"\n\n    def test_goodhart_stigmergy_signal_frozen(self):\n        \"\"\"StigmergySignal should be immutable\"\"\"\n        ss = _make_stigmergy_signal()\n        with pytest.raises(Exception):\n            ss.occurrences = 99\n\n\n# ---- TrustScore weight boundary adjacency ----\n\nclass TestGoodhartTrustScoreBoundaries:\n    def test_goodhart_trust_score_weight_slightly_negative(self):\n        \"\"\"TrustScore should reject weight=-0.001 just below range\"\"\"\n        with pytest.raises(Exception):\n            _make_trust_score(weight=-0.001)\n\n    def test_goodhart_trust_score_weight_slightly_above(self):\n        \"\"\"TrustScore should reject weight=1.001 just above range\"\"\"\n        with pytest.raises(Exception):\n            _make_trust_score(weight=1.001)\n\n    def test_goodhart_trust_score_weight_mid_range(self):\n        \"\"\"TrustScore should accept typical mid-range weight 0.5\"\"\"\n        ts = _make_trust_score(weight=0.5)\n        assert ts.weight == 0.5\n\n    def test_goodhart_trust_score_weight_near_zero(self):\n        \"\"\"TrustScore should accept weight very close to zero (0.0001)\"\"\"\n        ts = _make_trust_score(weight=0.0001)\n        assert ts.weight == 0.0001\n\n    def test_goodhart_trust_score_weight_near_one(self):\n        \"\"\"TrustScore should accept weight very close to one (0.9999)\"\"\"\n        ts = _make_trust_score(weight=0.9999)\n        assert ts.weight == 0.9999\n\n    def test_goodhart_trust_score_large_negative(self):\n        \"\"\"TrustScore should reject large negative weight\"\"\"\n        with pytest.raises(Exception):\n            _make_trust_score(weight=-100.0)\n\n    def test_goodhart_trust_score_large_positive(self):\n        \"\"\"TrustScore should reject large positive weight\"\"\"\n        with pytest.raises(Exception):\n            _make_trust_score(weight=100.0)\n\n\n# ---- canonical_bytes properties ----\n\nclass TestGoodhartCanonicalBytes:\n    def test_goodhart_canonical_bytes_sorted_keys(self):\n        \"\"\"canonical_bytes should produce JSON with keys in sorted order\"\"\"\n        ts = _make_trust_score()\n        data = json.loads(ts.canonical_bytes().decode(\"utf-8\"))\n        keys = list(data.keys())\n        assert keys == sorted(keys), \"Keys should be sorted\"\n\n    def test_goodhart_canonical_bytes_compact_separators(self):\n        \"\"\"canonical_bytes should use compact separators (no spaces after : or ,)\"\"\"\n        ts = _make_trust_score()\n        raw = ts.canonical_bytes().decode(\"utf-8\")\n        # Compact JSON should not have \": \" or \", \" patterns\n        assert \": \" not in raw, \"Should use compact separators without spaces\"\n        assert \", \" not in raw, \"Should use compact separators without spaces\"\n\n    def test_goodhart_canonical_bytes_nested_model(self):\n        \"\"\"canonical_bytes should work correctly on models with nested sub-models\"\"\"\n        finding = _make_finding()\n        assessment = _make_assessment(findings=[finding])\n        raw = assessment.canonical_bytes()\n        assert isinstance(raw, bytes)\n        parsed = json.loads(raw.decode(\"utf-8\"))\n        assert isinstance(parsed, dict)\n        assert \"findings\" in parsed\n        assert len(parsed[\"findings\"]) == 1\n\n    def test_goodhart_canonical_bytes_model_dump_equivalence(self):\n        \"\"\"json.loads(canonical_bytes()) should equal model_dump(mode='json')\"\"\"\n        for instance in [\n            _make_trust_score(),\n            _make_finding(),\n            _make_diffhunk(),\n            _make_kindex_entry(),\n        ]:\n            parsed = json.loads(instance.canonical_bytes().decode(\"utf-8\"))\n            dumped = instance.model_dump(mode=\"json\")\n            assert parsed == dumped, f\"Mismatch for {type(instance).__name__}\"\n\n    def test_goodhart_canonical_bytes_utf8_encoding(self):\n        \"\"\"canonical_bytes output should be valid UTF-8\"\"\"\n        instances = [\n            _make_trust_score(),\n            _make_finding(),\n            _make_kindex_entry(),\n        ]\n        for inst in instances:\n            raw = inst.canonical_bytes()\n            # Should not raise\n            raw.decode(\"utf-8\")\n\n    def test_goodhart_canonical_bytes_deterministic_across_model_types(self):\n        \"\"\"canonical_bytes called twice on different model types should both be deterministic\"\"\"\n        for factory in [_make_trust_score, _make_finding, _make_diffhunk, _make_kindex_entry]:\n            inst = factory()\n            assert inst.canonical_bytes() == inst.canonical_bytes()\n\n\n# ---- canonical_hash properties ----\n\nclass TestGoodhartCanonicalHash:\n    def test_goodhart_canonical_hash_lowercase_hex(self):\n        \"\"\"canonical_hash must return only lowercase hex characters\"\"\"\n        for factory in [_make_trust_score, _make_finding, _make_diffhunk]:\n            h = factory().canonical_hash()\n            assert h == h.lower()\n            assert all(c in \"0123456789abcdef\" for c in h)\n\n    def test_goodhart_canonical_hash_length_multiple_models(self):\n        \"\"\"canonical_hash should return 64 chars for all model types\"\"\"\n        for factory in [_make_trust_score, _make_finding, _make_diffhunk,\n                        _make_kindex_entry, _make_assessment, _make_tessera_seal]:\n            h = factory().canonical_hash()\n            assert len(h) == 64, f\"Hash length should be 64 for {factory.__name__}\"\n\n    def test_goodhart_canonical_hash_matches_sha256_multiple(self):\n        \"\"\"canonical_hash should equal SHA-256 of canonical_bytes for various model types\"\"\"\n        for factory in [_make_trust_score, _make_finding, _make_diffhunk,\n                        _make_kindex_entry, _make_learning_record]:\n            inst = factory()\n            expected = hashlib.sha256(inst.canonical_bytes()).hexdigest()\n            assert inst.canonical_hash() == expected\n\n    def test_goodhart_canonical_hash_changes_with_single_field(self):\n        \"\"\"Changing one field should produce a different hash\"\"\"\n        f1 = _make_finding(title=\"Title A\")\n        f2 = _make_finding(title=\"Title B\")\n        assert f1.canonical_hash() != f2.canonical_hash()\n\n    def test_goodhart_canonical_hash_changes_with_numeric_field(self):\n        \"\"\"Changing a numeric field should produce a different hash\"\"\"\n        ts1 = _make_trust_score(accepted_count=10)\n        ts2 = _make_trust_score(accepted_count=11)\n        assert ts1.canonical_hash() != ts2.canonical_hash()\n\n\n# ---- JSON round-trip for models not covered by visible tests ----\n\nclass TestGoodhartJsonRoundtrip:\n    def test_goodhart_json_roundtrip_trust_score(self):\n        \"\"\"TrustScore should survive JSON round-trip\"\"\"\n        ts = _make_trust_score()\n        assert TrustScore.model_validate_json(ts.model_dump_json()) == ts\n\n    def test_goodhart_json_roundtrip_reviewer_credential(self):\n        \"\"\"ReviewerCredential should survive JSON round-trip\"\"\"\n        rc = _make_reviewer_credential()\n        assert ReviewerCredential.model_validate_json(rc.model_dump_json()) == rc\n\n    def test_goodhart_json_roundtrip_policy_token(self):\n        \"\"\"PolicyToken should survive JSON round-trip\"\"\"\n        pt = _make_policy_token()\n        assert PolicyToken.model_validate_json(pt.model_dump_json()) == pt\n\n    def test_goodhart_json_roundtrip_chronicler_event(self):\n        \"\"\"ChroniclerEvent should survive JSON round-trip\"\"\"\n        ce = _make_chronicler_event()\n        assert ChroniclerEvent.model_validate_json(ce.model_dump_json()) == ce\n\n    def test_goodhart_json_roundtrip_stigmergy_signal(self):\n        \"\"\"StigmergySignal should survive JSON round-trip\"\"\"\n        ss = _make_stigmergy_signal()\n        assert StigmergySignal.model_validate_json(ss.model_dump_json()) == ss\n\n    def test_goodhart_json_roundtrip_learning_record(self):\n        \"\"\"LearningRecord should survive JSON round-trip\"\"\"\n        lr = _make_learning_record()\n        assert LearningRecord.model_validate_json(lr.model_dump_json()) == lr\n\n    def test_goodhart_json_roundtrip_kindex_entry(self):\n        \"\"\"KindexEntry should survive JSON round-trip\"\"\"\n        ke = _make_kindex_entry()\n        assert KindexEntry.model_validate_json(ke.model_dump_json()) == ke\n\n    def test_goodhart_json_roundtrip_tessera_seal(self):\n        \"\"\"TesseraSeal should survive JSON round-trip\"\"\"\n        ts = _make_tessera_seal()\n        assert TesseraSeal.model_validate_json(ts.model_dump_json()) == ts\n\n    def test_goodhart_json_roundtrip_review_request(self):\n        \"\"\"ReviewRequest with nested hunks should survive JSON round-trip\"\"\"\n        hunk = _make_diffhunk()\n        rr = _make_review_request(hunks=[hunk], file_paths=[\"src/main.py\"])\n        assert ReviewRequest.model_validate_json(rr.model_dump_json()) == rr\n\n    def test_goodhart_json_roundtrip_pipeline_result(self):\n        \"\"\"PipelineResult should survive JSON round-trip\"\"\"\n        pr = _make_pipeline_result()\n        assert PipelineResult.model_validate_json(pr.model_dump_json()) == pr\n\n\n# ---- Optional field tests ----\n\nclass TestGoodhartOptionalFields:\n    def test_goodhart_assessment_optional_error_message(self):\n        \"\"\"Assessment allows None for optional error_message\"\"\"\n        a = _make_assessment(error_message=None)\n        assert a.error_message is None\n\n    def test_goodhart_tessera_seal_optional_previous_hash(self):\n        \"\"\"TesseraSeal allows None for previous_hash (first in chain)\"\"\"\n        s = _make_tessera_seal(previous_hash=None)\n        assert s.previous_hash is None\n\n    def test_goodhart_review_report_optional_seal(self):\n        \"\"\"ReviewReport allows None seal (unsealed report)\"\"\"\n        r = _make_review_report(seal=None)\n        assert r.seal is None\n\n    def test_goodhart_policy_token_optional_expires_at(self):\n        \"\"\"PolicyToken allows None for expires_at (non-expiring)\"\"\"\n        pt = _make_policy_token(expires_at=None)\n        assert pt.expires_at is None\n\n    def test_goodhart_chronicler_event_optional_stage_and_reviewer(self):\n        \"\"\"ChroniclerEvent allows None for both stage and reviewer_id\"\"\"\n        ce = _make_chronicler_event(stage=None, reviewer_id=None)\n        assert ce.stage is None\n        assert ce.reviewer_id is None\n\n    def test_goodhart_learning_record_optional_human_comment(self):\n        \"\"\"LearningRecord allows None for human_comment\"\"\"\n        lr = _make_learning_record(human_comment=None)\n        assert lr.human_comment is None\n\n    def test_goodhart_stigmergy_signal_optional_reviewer_and_stage(self):\n        \"\"\"StigmergySignal allows None for reviewer_id and stage\"\"\"\n        ss = _make_stigmergy_signal(reviewer_id=None, stage=None)\n        assert ss.reviewer_id is None\n        assert ss.stage is None\n\n\n# ---- Empty list fields ----\n\nclass TestGoodhartEmptyLists:\n    def test_goodhart_review_report_empty_lists(self):\n        \"\"\"ReviewReport should accept empty lists for all list fields\"\"\"\n        r = _make_review_report(\n            findings=[], assessments=[], trust_scores=[], conflict_notes=[]\n        )\n        assert r.findings == []\n        assert r.assessments == []\n        assert r.trust_scores == []\n        assert r.conflict_notes == []\n\n    def test_goodhart_assessment_empty_findings(self):\n        \"\"\"Assessment should accept empty findings list\"\"\"\n        a = _make_assessment(findings=[])\n        assert a.findings == []\n\n    def test_goodhart_diffhunk_empty_lines(self):\n        \"\"\"DiffHunk should accept empty line lists\"\"\"\n        h = _make_diffhunk(\n            context_before=[], added_lines=[], removed_lines=[], context_after=[]\n        )\n        assert h.context_before == []\n        assert h.added_lines == []\n        assert h.removed_lines == []\n        assert h.context_after == []\n\n    def test_goodhart_review_request_empty_hunks(self):\n        \"\"\"ReviewRequest should accept empty hunks list\"\"\"\n        rr = _make_review_request(hunks=[], file_paths=[])\n        assert rr.hunks == []\n        assert rr.file_paths == []\n\n\n# ---- Enum validation in model fields ----\n\nclass TestGoodhartEnumFieldValidation:\n    def test_goodhart_diffhunk_invalid_classification(self):\n        \"\"\"DiffHunk should reject invalid classification labels\"\"\"\n        with pytest.raises(Exception):\n            _make_diffhunk(classifications=[\"not_a_label\"])\n\n    def test_goodhart_finding_invalid_severity(self):\n        \"\"\"Finding should reject invalid severity values\"\"\"\n        with pytest.raises(Exception):\n            _make_finding(severity=\"extreme\")\n\n    def test_goodhart_finding_invalid_stage(self):\n        \"\"\"Finding should reject invalid stage values\"\"\"\n        with pytest.raises(Exception):\n            _make_finding(stage=\"testing\")\n\n    def test_goodhart_assessment_invalid_decision(self):\n        \"\"\"Assessment should reject invalid decision values\"\"\"\n        with pytest.raises(Exception):\n            _make_assessment(decision=\"maybe\")\n\n    def test_goodhart_finding_invalid_confidence(self):\n        \"\"\"Finding should reject invalid confidence values\"\"\"\n        with pytest.raises(Exception):\n            _make_finding(confidence=\"super_high\")\n\n\n# ---- Hashable models ----\n\nclass TestGoodhartHashable:\n    def test_goodhart_multiple_model_types_hashable(self):\n        \"\"\"Multiple frozen model types should be hashable\"\"\"\n        instances = [\n            _make_diffhunk(),\n            _make_trust_score(),\n            _make_tessera_seal(),\n            _make_kindex_entry(),\n            _make_learning_record(),\n            _make_reviewer_credential(),\n        ]\n        for inst in instances:\n            # Should not raise\n            h = hash(inst)\n            assert isinstance(h, int)\n\n    def test_goodhart_equal_instances_same_hash(self):\n        \"\"\"Two equal instances should have the same hash value\"\"\"\n        f1 = _make_finding()\n        f2 = _make_finding()\n        assert f1 == f2\n        assert hash(f1) == hash(f2)\n\n\n# ---- DiffHunk with all classification labels ----\n\nclass TestGoodhartDiffHunkClassifications:\n    def test_goodhart_diffhunk_all_classification_labels(self):\n        \"\"\"DiffHunk should accept all valid ClassificationLabel values\"\"\"\n        all_labels = list(ClassificationLabel)\n        h = _make_diffhunk(classifications=all_labels)\n        assert len(h.classifications) == len(ClassificationLabel)\n\n\n# ---- __all__ exports ----\n\nclass TestGoodhartAllExports:\n    def test_goodhart_all_exports(self):\n        \"\"\"Module __all__ should contain all public types from the contract\"\"\"\n        import exemplar.schemas as mod\n        expected_names = [\n            \"Severity\", \"Confidence\", \"ReviewStage\", \"ReviewDecision\",\n            \"ClassificationLabel\", \"ChroniclerEventType\", \"LearnerPhase\",\n            \"StigmergyVerb\", \"CliExitCode\", \"OutputFormat\",\n            \"DiffHunk\", \"ReviewRequest\", \"Finding\", \"Assessment\",\n            \"TrustScore\", \"TesseraSeal\", \"ReviewReport\",\n            \"ReviewerCredential\", \"PolicyToken\", \"ChroniclerEvent\",\n            \"StigmergySignal\", \"LearningRecord\", \"KindexEntry\",\n            \"PipelineResult\",\n        ]\n        module_all = getattr(mod, \"__all__\", dir(mod))\n        for name in expected_names:\n            assert name in module_all, f\"{name} should be in __all__\"\n\n\n# ---- Verify severity_rank specific values not hardcoded ----\n\nclass TestGoodhartRankSpecificValues:\n    def test_goodhart_severity_rank_info_is_zero(self):\n        \"\"\"severity_rank for info should be 0 (the lowest)\"\"\"\n        assert severity_rank(Severity.info) == 0\n\n    def test_goodhart_severity_rank_critical_is_four(self):\n        \"\"\"severity_rank for critical should be 4 (the highest)\"\"\"\n        assert severity_rank(Severity.critical) == 4\n\n    def test_goodhart_severity_rank_low_is_one(self):\n        \"\"\"severity_rank for low should be 1\"\"\"\n        assert severity_rank(Severity.low) == 1\n\n    def test_goodhart_severity_rank_medium_is_two(self):\n        \"\"\"severity_rank for medium should be 2\"\"\"\n        assert severity_rank(Severity.medium) == 2\n\n    def test_goodhart_severity_rank_high_is_three(self):\n        \"\"\"severity_rank for high should be 3\"\"\"\n        assert severity_rank(Severity.high) == 3\n\n    def test_goodhart_confidence_rank_low_is_zero(self):\n        \"\"\"confidence_rank for low should be 0\"\"\"\n        assert confidence_rank(Confidence.low) == 0\n\n    def test_goodhart_confidence_rank_medium_is_one(self):\n        \"\"\"confidence_rank for medium should be 1\"\"\"\n        assert confidence_rank(Confidence.medium) == 1\n\n    def test_goodhart_confidence_rank_high_is_two(self):\n        \"\"\"confidence_rank for high should be 2\"\"\"\n        assert confidence_rank(Confidence.high) == 2\n\n\n# ---- LearnerPhase specific member values ----\n\nclass TestGoodhartLearnerPhaseValues:\n    def test_goodhart_learner_phase_shadow_value(self):\n        \"\"\"LearnerPhase.shadow should have string value 'shadow'\"\"\"\n        assert LearnerPhase.shadow == \"shadow\"\n\n    def test_goodhart_learner_phase_canary_value(self):\n        \"\"\"LearnerPhase.canary should have string value 'canary'\"\"\"\n        assert LearnerPhase.canary == \"canary\"\n\n    def test_goodhart_learner_phase_primary_value(self):\n        \"\"\"LearnerPhase.primary should have string value 'primary'\"\"\"\n        assert LearnerPhase.primary == \"primary\"\n\n    def test_goodhart_learner_phase_rank_ordering_specific(self):\n        \"\"\"learner_phase_rank should have shadow < canary < primary\"\"\"\n        assert learner_phase_rank(LearnerPhase.shadow) < learner_phase_rank(LearnerPhase.canary)\n        assert learner_phase_rank(LearnerPhase.canary) < learner_phase_rank(LearnerPhase.primary)\n\n\n# ---- ChroniclerEventType specific values ----\n\nclass TestGoodhartChroniclerEventTypeValues:\n    def test_goodhart_chronicler_event_type_dotted_values(self):\n        \"\"\"ChroniclerEventType members should have dotted string values\"\"\"\n        expected_values = {\n            \"review.started\", \"stage.started\", \"stage.complete\",\n            \"assessment.merged\", \"report.sealed\", \"review.complete\",\n            \"policy.violation\", \"pattern.detected\", \"learning.recorded\",\n        }\n        actual_values = {m.value for m in ChroniclerEventType}\n        assert actual_values == expected_values\n"
+}

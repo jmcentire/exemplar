@@ -1,0 +1,1678 @@
+{
+  "component_id": "schemas",
+  "name": "Data Models & Schemas",
+  "description": "Frozen Pydantic v2 models and StrEnums forming the shared data contract for the entire Exemplar system. Provides: _ExemplarBase (shared frozen base with canonical_bytes()/canonical_hash() for deterministic hashing), 9 enums (Severity, Confidence, ReviewStage, ReviewDecision, ClassificationLabel, ChroniclerEventType, LearnerPhase, StigmergyVerb, CliExitCode), and 16 domain models in dependency order (ClassificationLabel → DiffHunk → ReviewRequest → Finding → Assessment → TrustScore → TesseraSeal → ReviewReport → ReviewerCredential → PolicyToken → ChroniclerEvent → StigmergySignal → LearningRecord → KindexEntry → PipelineResult). All models use frozen=True and extra='forbid'. Shallow-freeze semantics with list[]/dict[] fields. IsoTimestamp annotated type for ISO 8601 validation. JSON round-trip guarantee: M.model_validate_json(instance.model_dump_json()) == instance. PACT_KEY ClassVar on base model for Sentinel attribution. No ABC per SOP — concrete Pydantic base only. Module-level ordering functions for enums with comparison semantics. __all__ export control for clean imports.",
+  "version": 1,
+  "types": [
+    {
+      "name": "str",
+      "kind": "primitive",
+      "fields": [],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "",
+      "owner_component": ""
+    },
+    {
+      "name": "int",
+      "kind": "primitive",
+      "fields": [],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "",
+      "owner_component": ""
+    },
+    {
+      "name": "float",
+      "kind": "primitive",
+      "fields": [],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "",
+      "owner_component": ""
+    },
+    {
+      "name": "bool",
+      "kind": "primitive",
+      "fields": [],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "",
+      "owner_component": ""
+    },
+    {
+      "name": "bytes",
+      "kind": "primitive",
+      "fields": [],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "",
+      "owner_component": ""
+    },
+    {
+      "name": "None",
+      "kind": "primitive",
+      "fields": [],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "",
+      "owner_component": ""
+    },
+    {
+      "name": "dict",
+      "kind": "primitive",
+      "fields": [],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "",
+      "owner_component": ""
+    },
+    {
+      "name": "list",
+      "kind": "primitive",
+      "fields": [],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "",
+      "owner_component": ""
+    },
+    {
+      "name": "any",
+      "kind": "primitive",
+      "fields": [],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "",
+      "owner_component": ""
+    },
+    {
+      "name": "IsoTimestamp",
+      "kind": "primitive",
+      "fields": [],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Annotated str type validated against ISO 8601 format. Stored as plain str but guaranteed to parse as a valid ISO 8601 datetime string. Uses AfterValidator to reject non-conforming values at model construction time.",
+      "owner_component": ""
+    },
+    {
+      "name": "Severity",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ],
+      "inner_types": [],
+      "description": "Severity level of a review finding, ordered from most to least critical.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "Confidence",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "inner_types": [],
+      "description": "Confidence level of a reviewer finding or merged assessment.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ReviewStage",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "security",
+        "correctness",
+        "style",
+        "architecture"
+      ],
+      "inner_types": [],
+      "description": "Named stage in the review circuit pipeline.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ReviewDecision",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "block",
+        "warn",
+        "pass"
+      ],
+      "inner_types": [],
+      "description": "Final decision on a pull request review: block merging, warn, or pass.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ClassificationLabel",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "secret",
+        "pii",
+        "internal_api",
+        "public"
+      ],
+      "inner_types": [],
+      "description": "Ledger data classification label for diff content.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ChroniclerEventType",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "review.started",
+        "stage.started",
+        "stage.complete",
+        "assessment.merged",
+        "report.sealed",
+        "review.complete",
+        "policy.violation",
+        "pattern.detected",
+        "learning.recorded"
+      ],
+      "inner_types": [],
+      "description": "Well-known Chronicler event types emitted throughout the review lifecycle.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "LearnerPhase",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "shadow",
+        "canary",
+        "primary"
+      ],
+      "inner_types": [],
+      "description": "Apprentice learning phase progression stage.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "StigmergyVerb",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "deposit",
+        "reinforce",
+        "decay",
+        "query"
+      ],
+      "inner_types": [],
+      "description": "Stigmergy signal verb for inter-agent coordination. StrEnum.",
+      "owner_component": ""
+    },
+    {
+      "name": "CliExitCode",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ],
+      "inner_types": [],
+      "description": "CLI process exit codes mapping to review outcomes.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "_ExemplarBase",
+      "kind": "struct",
+      "fields": [],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Shared frozen Pydantic v2 base model. ConfigDict(frozen=True, extra='forbid'). Provides canonical_bytes() and canonical_hash() methods. Contains PACT_KEY: ClassVar[str] = 'exemplar.schemas' for Sentinel attribution. All domain models inherit from this.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "DiffHunk",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique identifier for this hunk (deterministic from content).",
+          "validators": []
+        },
+        {
+          "name": "file_path",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Relative file path the hunk belongs to.",
+          "validators": []
+        },
+        {
+          "name": "start_line_old",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Starting line number in the old file.",
+          "validators": []
+        },
+        {
+          "name": "count_old",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of lines in the old file span.",
+          "validators": []
+        },
+        {
+          "name": "start_line_new",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Starting line number in the new file.",
+          "validators": []
+        },
+        {
+          "name": "count_new",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of lines in the new file span.",
+          "validators": []
+        },
+        {
+          "name": "context_before",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Context lines before the change.",
+          "validators": []
+        },
+        {
+          "name": "added_lines",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Lines added in this hunk.",
+          "validators": []
+        },
+        {
+          "name": "removed_lines",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Lines removed in this hunk.",
+          "validators": []
+        },
+        {
+          "name": "context_after",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Context lines after the change.",
+          "validators": []
+        },
+        {
+          "name": "raw_header",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Original @@ header line from the diff.",
+          "validators": []
+        },
+        {
+          "name": "classifications",
+          "type_ref": "list[ClassificationLabel]",
+          "required": true,
+          "default": "[]",
+          "description": "Ledger classification labels applied to this hunk.",
+          "validators": []
+        },
+        {
+          "name": "language",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Detected programming language of the file, if known.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single parsed hunk from a unified diff, with metadata and classification labels.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ReviewRequest",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique review request identifier.",
+          "validators": []
+        },
+        {
+          "name": "source",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Source identifier (e.g., file path, PR URL, stdin).",
+          "validators": []
+        },
+        {
+          "name": "hunks",
+          "type_ref": "list[DiffHunk]",
+          "required": true,
+          "default": "",
+          "description": "Parsed and classified diff hunks.",
+          "validators": []
+        },
+        {
+          "name": "file_paths",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "",
+          "description": "Deduplicated list of all file paths in the diff.",
+          "validators": []
+        },
+        {
+          "name": "created_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of when the request was created.",
+          "validators": []
+        },
+        {
+          "name": "metadata",
+          "type_ref": "dict[str, str]",
+          "required": true,
+          "default": "{}",
+          "description": "Arbitrary key-value metadata (PR number, branch, author, etc.).",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "The output of intake: a complete review request containing parsed and classified hunks.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "Finding",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique finding identifier.",
+          "validators": []
+        },
+        {
+          "name": "hunk_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the DiffHunk this finding applies to.",
+          "validators": []
+        },
+        {
+          "name": "file_path",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "File path where the finding was detected.",
+          "validators": []
+        },
+        {
+          "name": "line_number",
+          "type_ref": "Optional[int]",
+          "required": false,
+          "default": "null",
+          "description": "Specific line number if applicable.",
+          "validators": []
+        },
+        {
+          "name": "severity",
+          "type_ref": "Severity",
+          "required": true,
+          "default": "",
+          "description": "Severity of the finding.",
+          "validators": []
+        },
+        {
+          "name": "confidence",
+          "type_ref": "Confidence",
+          "required": true,
+          "default": "",
+          "description": "Reviewer confidence in this finding.",
+          "validators": []
+        },
+        {
+          "name": "title",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Short human-readable title of the finding.",
+          "validators": []
+        },
+        {
+          "name": "description",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Detailed explanation of the issue.",
+          "validators": []
+        },
+        {
+          "name": "suggestion",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Suggested fix or remediation.",
+          "validators": []
+        },
+        {
+          "name": "rule_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the rule or pattern that triggered this finding.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "Which review stage produced this finding.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single issue found by a reviewer in a specific hunk.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "Assessment",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique assessment identifier.",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the ReviewRequest this assessment responds to.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "The review stage this assessment covers.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the reviewer agent that produced this assessment.",
+          "validators": []
+        },
+        {
+          "name": "decision",
+          "type_ref": "ReviewDecision",
+          "required": true,
+          "default": "",
+          "description": "This reviewer's overall decision.",
+          "validators": []
+        },
+        {
+          "name": "findings",
+          "type_ref": "list[Finding]",
+          "required": true,
+          "default": "[]",
+          "description": "List of findings from this reviewer.",
+          "validators": []
+        },
+        {
+          "name": "confidence",
+          "type_ref": "Confidence",
+          "required": true,
+          "default": "",
+          "description": "Overall confidence of this assessment.",
+          "validators": []
+        },
+        {
+          "name": "is_partial",
+          "type_ref": "bool",
+          "required": true,
+          "default": "false",
+          "description": "True if the reviewer failed/timed out and this is a degraded result.",
+          "validators": []
+        },
+        {
+          "name": "error_message",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Error message if the reviewer encountered an issue.",
+          "validators": []
+        },
+        {
+          "name": "duration_ms",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Time in milliseconds the reviewer took to produce this assessment.",
+          "validators": []
+        },
+        {
+          "name": "created_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of assessment creation.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single reviewer's complete assessment of the diff hunks it was given.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "TrustScore",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the reviewer this score applies to.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "Stage the reviewer operates in.",
+          "validators": []
+        },
+        {
+          "name": "weight",
+          "type_ref": "float",
+          "required": true,
+          "default": "",
+          "description": "Trust weight in range [0.0, 1.0].",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "0.0 <= value <= 1.0",
+              "error_message": "Trust weight must be between 0.0 and 1.0"
+            }
+          ]
+        },
+        {
+          "name": "accepted_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "0",
+          "description": "Number of findings from this reviewer that humans accepted.",
+          "validators": []
+        },
+        {
+          "name": "dismissed_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "0",
+          "description": "Number of findings from this reviewer that humans dismissed.",
+          "validators": []
+        },
+        {
+          "name": "updated_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of last trust score update.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Arbiter trust weight for a reviewer agent, used in weighted assessment merging.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "TesseraSeal",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "content_hash",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "SHA-256 hash of the canonical JSON content that was sealed.",
+          "validators": []
+        },
+        {
+          "name": "previous_hash",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Hash of the previous seal in the chain (null for first seal).",
+          "validators": []
+        },
+        {
+          "name": "chain_hash",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "SHA-256 hash of (content_hash + previous_hash), forming the chain link.",
+          "validators": []
+        },
+        {
+          "name": "sealed_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of when the seal was created.",
+          "validators": []
+        },
+        {
+          "name": "sealer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the entity that created this seal.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A hash-chain tamper-proof seal over serialized content, verifiable independently.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ReviewReport",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique report identifier.",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the originating ReviewRequest.",
+          "validators": []
+        },
+        {
+          "name": "decision",
+          "type_ref": "ReviewDecision",
+          "required": true,
+          "default": "",
+          "description": "Final merged decision.",
+          "validators": []
+        },
+        {
+          "name": "findings",
+          "type_ref": "list[Finding]",
+          "required": true,
+          "default": "",
+          "description": "Deduplicated, merged findings from all reviewers.",
+          "validators": []
+        },
+        {
+          "name": "assessments",
+          "type_ref": "list[Assessment]",
+          "required": true,
+          "default": "",
+          "description": "All individual reviewer assessments that contributed.",
+          "validators": []
+        },
+        {
+          "name": "confidence",
+          "type_ref": "Confidence",
+          "required": true,
+          "default": "",
+          "description": "Overall confidence of the merged report.",
+          "validators": []
+        },
+        {
+          "name": "trust_scores",
+          "type_ref": "list[TrustScore]",
+          "required": true,
+          "default": "",
+          "description": "Trust scores of all reviewers at the time of merge.",
+          "validators": []
+        },
+        {
+          "name": "conflict_notes",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Explanations of any conflicts between reviewers and how they were resolved.",
+          "validators": []
+        },
+        {
+          "name": "summary",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable summary of the review outcome.",
+          "validators": []
+        },
+        {
+          "name": "seal",
+          "type_ref": "Optional[TesseraSeal]",
+          "required": false,
+          "default": "null",
+          "description": "Tessera hash-chain seal over the report content, set after sealing.",
+          "validators": []
+        },
+        {
+          "name": "created_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of report creation.",
+          "validators": []
+        },
+        {
+          "name": "metadata",
+          "type_ref": "dict[str, str]",
+          "required": true,
+          "default": "{}",
+          "description": "Arbitrary key-value metadata carried from ReviewRequest.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "The final merged review report: all assessments combined with trust-weighted scoring and a tamper-proof seal.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ReviewerCredential",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique identifier for this reviewer agent.",
+          "validators": []
+        },
+        {
+          "name": "display_name",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable name of the reviewer.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "Primary stage this reviewer operates in.",
+          "validators": []
+        },
+        {
+          "name": "public_key_hex",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Hex-encoded public key for signature verification.",
+          "validators": []
+        },
+        {
+          "name": "created_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of credential creation.",
+          "validators": []
+        },
+        {
+          "name": "is_active",
+          "type_ref": "bool",
+          "required": true,
+          "default": "true",
+          "description": "Whether this credential is currently active.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Signet identity credential for a reviewer agent, used for authentication and attribution.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "PolicyToken",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "token_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique token identifier.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Reviewer agent this token is issued to.",
+          "validators": []
+        },
+        {
+          "name": "allowed_file_patterns",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "['**/*']",
+          "description": "Glob patterns for files the reviewer may inspect.",
+          "validators": []
+        },
+        {
+          "name": "denied_file_patterns",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Glob patterns for files the reviewer must NOT inspect.",
+          "validators": []
+        },
+        {
+          "name": "allowed_classifications",
+          "type_ref": "list[ClassificationLabel]",
+          "required": true,
+          "default": "['public']",
+          "description": "Classification labels the reviewer is permitted to see.",
+          "validators": []
+        },
+        {
+          "name": "max_severity",
+          "type_ref": "Severity",
+          "required": true,
+          "default": "critical",
+          "description": "Maximum severity level the reviewer is allowed to emit.",
+          "validators": []
+        },
+        {
+          "name": "issued_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of token issuance.",
+          "validators": []
+        },
+        {
+          "name": "expires_at",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "ISO-8601 expiry timestamp, null if non-expiring.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Agent-Safe policy token defining what a reviewer agent is permitted to access and do.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ChroniclerEvent",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "event_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique event identifier.",
+          "validators": []
+        },
+        {
+          "name": "event_type",
+          "type_ref": "ChroniclerEventType",
+          "required": true,
+          "default": "",
+          "description": "Well-known event type.",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the ReviewRequest this event relates to.",
+          "validators": []
+        },
+        {
+          "name": "timestamp",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of when the event occurred.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "Optional[ReviewStage]",
+          "required": false,
+          "default": "null",
+          "description": "Review stage this event relates to, if applicable.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Reviewer agent ID if this event is reviewer-specific.",
+          "validators": []
+        },
+        {
+          "name": "payload",
+          "type_ref": "dict[str, str]",
+          "required": true,
+          "default": "{}",
+          "description": "Arbitrary structured data associated with the event.",
+          "validators": []
+        },
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable description of the event.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A structured event emitted at review lifecycle boundaries for audit trail and story assembly.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "StigmergySignal",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "signal_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique signal identifier.",
+          "validators": []
+        },
+        {
+          "name": "pattern_key",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Machine-readable key identifying the pattern (e.g., 'security.false_positive.test_files').",
+          "validators": []
+        },
+        {
+          "name": "description",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable description of the detected pattern.",
+          "validators": []
+        },
+        {
+          "name": "occurrences",
+          "type_ref": "int",
+          "required": true,
+          "default": "1",
+          "description": "Number of times this pattern has been observed.",
+          "validators": []
+        },
+        {
+          "name": "first_seen_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of first observation.",
+          "validators": []
+        },
+        {
+          "name": "last_seen_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of most recent observation.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Reviewer associated with the pattern, if applicable.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "Optional[ReviewStage]",
+          "required": false,
+          "default": "null",
+          "description": "Stage associated with the pattern, if applicable.",
+          "validators": []
+        },
+        {
+          "name": "metadata",
+          "type_ref": "dict[str, str]",
+          "required": true,
+          "default": "{}",
+          "description": "Additional context about the pattern.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A recurring pattern signal detected by Stigmergy, recorded for cross-review pattern discovery.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "LearningRecord",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "record_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique record identifier.",
+          "validators": []
+        },
+        {
+          "name": "finding_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the Finding this record is about.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Reviewer that produced the finding.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "Stage the finding belongs to.",
+          "validators": []
+        },
+        {
+          "name": "rule_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Rule ID of the finding.",
+          "validators": []
+        },
+        {
+          "name": "severity",
+          "type_ref": "Severity",
+          "required": true,
+          "default": "",
+          "description": "Severity of the original finding.",
+          "validators": []
+        },
+        {
+          "name": "accepted",
+          "type_ref": "bool",
+          "required": true,
+          "default": "",
+          "description": "True if the human accepted/agreed with the finding, false if dismissed.",
+          "validators": []
+        },
+        {
+          "name": "human_comment",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Optional comment from the human reviewer.",
+          "validators": []
+        },
+        {
+          "name": "recorded_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of when this learning was recorded.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single learning observation: an AI finding paired with human decision (accepted or dismissed).",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "KindexEntry",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "key",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique key for retrieval (e.g., review request ID or context topic).",
+          "validators": []
+        },
+        {
+          "name": "kind",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Entry kind: 'review', 'context', 'pattern'.",
+          "validators": []
+        },
+        {
+          "name": "summary",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable summary for search and display.",
+          "validators": []
+        },
+        {
+          "name": "data",
+          "type_ref": "dict[str, str]",
+          "required": true,
+          "default": "",
+          "description": "Structured data payload of the entry.",
+          "validators": []
+        },
+        {
+          "name": "tags",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Tags for query filtering.",
+          "validators": []
+        },
+        {
+          "name": "created_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of entry creation.",
+          "validators": []
+        },
+        {
+          "name": "updated_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of last update.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A Kindex knowledge store entry representing a past review or codebase context artifact.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "PipelineResult",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "review_request",
+          "type_ref": "ReviewRequest",
+          "required": true,
+          "default": "",
+          "description": "The parsed review request.",
+          "validators": []
+        },
+        {
+          "name": "assessments",
+          "type_ref": "list[Assessment]",
+          "required": true,
+          "default": "",
+          "description": "All individual stage assessments.",
+          "validators": []
+        },
+        {
+          "name": "report",
+          "type_ref": "ReviewReport",
+          "required": true,
+          "default": "",
+          "description": "The final merged and sealed report.",
+          "validators": []
+        },
+        {
+          "name": "events",
+          "type_ref": "list[ChroniclerEvent]",
+          "required": true,
+          "default": "[]",
+          "description": "All Chronicler events emitted during the pipeline.",
+          "validators": []
+        },
+        {
+          "name": "formatted_output",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The report formatted in the requested output format.",
+          "validators": []
+        },
+        {
+          "name": "output_format",
+          "type_ref": "OutputFormat",
+          "required": true,
+          "default": "",
+          "description": "The format used for formatted_output.",
+          "validators": []
+        },
+        {
+          "name": "exit_code",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Numeric exit code: 0=pass, 1=warn, 2=block, 3=error.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "End-to-end pipeline result returned by the core pipeline, used by both CLI and MCP server.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "OutputFormat",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "json",
+        "md",
+        "github"
+      ],
+      "inner_types": [],
+      "description": "Supported report output formats.",
+      "owner_component": "schemas"
+    }
+  ],
+  "functions": [
+    {
+      "name": "severity_rank",
+      "description": "Returns an integer rank for a Severity enum value. Higher rank = more severe. critical=4, high=3, medium=2, low=1, info=0. Pure function, no side effects. Used for sorting and comparison of severity levels across the system.",
+      "inputs": [
+        {
+          "name": "severity",
+          "type_ref": "Severity",
+          "required": true,
+          "default": "",
+          "description": "The severity value to rank.",
+          "validators": []
+        }
+      ],
+      "output_type": "int",
+      "error_cases": [
+        {
+          "name": "invalid_severity",
+          "condition": "severity is not a valid Severity enum member",
+          "error_type": "ValueError",
+          "error_data": {
+            "detail": "Unknown severity value"
+          }
+        }
+      ],
+      "preconditions": [
+        "severity must be a valid Severity enum member"
+      ],
+      "postconditions": [
+        "returned value is in range [0, 4]",
+        "critical > high > medium > low > info"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "confidence_rank",
+      "description": "Returns an integer rank for a Confidence enum value. Higher rank = more confident. high=2, medium=1, low=0. Pure function, no side effects.",
+      "inputs": [
+        {
+          "name": "confidence",
+          "type_ref": "Confidence",
+          "required": true,
+          "default": "",
+          "description": "The confidence value to rank.",
+          "validators": []
+        }
+      ],
+      "output_type": "int",
+      "error_cases": [
+        {
+          "name": "invalid_confidence",
+          "condition": "confidence is not a valid Confidence enum member",
+          "error_type": "ValueError",
+          "error_data": {
+            "detail": "Unknown confidence value"
+          }
+        }
+      ],
+      "preconditions": [
+        "confidence must be a valid Confidence enum member"
+      ],
+      "postconditions": [
+        "returned value is in range [0, 2]",
+        "high > medium > low"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "learner_phase_rank",
+      "description": "Returns an integer rank for a LearnerPhase enum value. Higher rank = more advanced phase. observe=0, suggest=1, act=2, reflect=3. Pure function, no side effects.",
+      "inputs": [
+        {
+          "name": "phase",
+          "type_ref": "LearnerPhase",
+          "required": true,
+          "default": "",
+          "description": "The learner phase value to rank.",
+          "validators": []
+        }
+      ],
+      "output_type": "int",
+      "error_cases": [
+        {
+          "name": "invalid_phase",
+          "condition": "phase is not a valid LearnerPhase enum member",
+          "error_type": "ValueError",
+          "error_data": {
+            "detail": "Unknown learner phase value"
+          }
+        }
+      ],
+      "preconditions": [
+        "phase must be a valid LearnerPhase enum member"
+      ],
+      "postconditions": [
+        "returned value is in range [0, 3]",
+        "reflect > act > suggest > observe"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "canonical_bytes",
+      "description": "Instance method on _ExemplarBase. Returns deterministic JSON bytes of the model instance suitable for SHA-256 hashing. Uses model_dump(mode='json') serialized with sort_keys=True and compact separators (',', ':'). The output is stable across Python dict insertion order and is used by TesseraSeal for hash-chain proofs. PACT_KEY attribution: docstring references _ExemplarBase.PACT_KEY for Sentinel tracing.",
+      "inputs": [
+        {
+          "name": "self",
+          "type_ref": "_ExemplarBase",
+          "required": true,
+          "default": "",
+          "description": "The model instance to serialize.",
+          "validators": []
+        }
+      ],
+      "output_type": "bytes",
+      "error_cases": [],
+      "preconditions": [
+        "self is a valid _ExemplarBase subclass instance that passes Pydantic validation"
+      ],
+      "postconditions": [
+        "output is valid UTF-8 encoded JSON",
+        "output is deterministic: identical field values always produce identical bytes",
+        "json.loads(output) produces a dict equivalent to self.model_dump(mode='json')",
+        "calling canonical_bytes() twice on the same instance returns identical bytes"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 5,
+        "max_memory_mb": null,
+        "complexity": "O(n) where n is total number of fields recursively"
+      }
+    },
+    {
+      "name": "canonical_hash",
+      "description": "Instance method on _ExemplarBase. Returns the hex SHA-256 digest of canonical_bytes(). Used by TesseraSeal.content_hash and TesseraSeal.seal_hash for hash-chain integrity verification. PACT_KEY attribution: docstring references _ExemplarBase.PACT_KEY for Sentinel tracing.",
+      "inputs": [
+        {
+          "name": "self",
+          "type_ref": "_ExemplarBase",
+          "required": true,
+          "default": "",
+          "description": "The model instance to hash.",
+          "validators": []
+        }
+      ],
+      "output_type": "str",
+      "error_cases": [],
+      "preconditions": [
+        "self is a valid _ExemplarBase subclass instance that passes Pydantic validation"
+      ],
+      "postconditions": [
+        "output is a 64-character lowercase hexadecimal string",
+        "output == hashlib.sha256(self.canonical_bytes()).hexdigest()",
+        "output is deterministic for identical field values"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 5,
+        "max_memory_mb": null,
+        "complexity": "O(n) where n is total number of fields recursively"
+      }
+    },
+    {
+      "name": "validate_iso_timestamp",
+      "description": "Validator function for the IsoTimestamp annotated type. Accepts a string, validates it conforms to ISO 8601 datetime format (using datetime.fromisoformat()), and returns the original string unchanged. Used as an AfterValidator in the Annotated type definition.",
+      "inputs": [
+        {
+          "name": "value",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The string value to validate as ISO 8601.",
+          "validators": []
+        }
+      ],
+      "output_type": "str",
+      "error_cases": [
+        {
+          "name": "invalid_iso_format",
+          "condition": "value cannot be parsed by datetime.fromisoformat()",
+          "error_type": "ValueError",
+          "error_data": {
+            "detail": "Timestamp must be valid ISO 8601 format"
+          }
+        },
+        {
+          "name": "empty_string",
+          "condition": "value is an empty string",
+          "error_type": "ValueError",
+          "error_data": {
+            "detail": "Timestamp must not be empty"
+          }
+        }
+      ],
+      "preconditions": [
+        "value is a non-empty string"
+      ],
+      "postconditions": [
+        "datetime.fromisoformat(value) does not raise ValueError",
+        "returned value is identical to input value (no transformation)"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": null
+    }
+  ],
+  "dependencies": [],
+  "dependency_contracts": {},
+  "invariants": [
+    "All models inherit from _ExemplarBase which sets frozen=True and extra='forbid' via ConfigDict",
+    "No model uses ABC or abstract methods — only concrete Pydantic BaseModel per SOP",
+    "All models satisfy JSON round-trip: M.model_validate_json(instance.model_dump_json()) == instance",
+    "canonical_bytes() output is deterministic: same field values always produce identical bytes regardless of insertion order",
+    "canonical_hash() returns SHA-256 hex digest of canonical_bytes()",
+    "Models are defined in dependency order so no ForwardRef annotations are needed",
+    "All list[] and dict[] fields use shallow-freeze semantics — the container is not deeply frozen",
+    "IsoTimestamp fields accept only valid ISO 8601 strings and store them as str",
+    "PACT_KEY ClassVar is present on _ExemplarBase and inherited by all models",
+    "StrEnum is used for all text-valued enums; IntEnum only for CliExitCode",
+    "Every public type is listed in __all__"
+  ],
+  "requires": [],
+  "processing_register": "rigorous-analytical",
+  "data_access": {
+    "reads": [
+      "PUBLIC"
+    ],
+    "writes": [],
+    "rationale": "Schemas are pure data definitions with no persistent storage. Models may hold fields classified as INTERNAL or PII (e.g., reviewer identity in ReviewerCredential, file paths in DiffHunk), but the schemas module itself only reads PUBLIC configuration data (enum definitions, model structure). It does not read or write to any external data store, database, or file system. All data flows through these types in-memory only.",
+    "side_effects": [
+      {
+        "type": "canonical_hashing",
+        "classification": "PUBLIC",
+        "fields": [
+          "canonical_bytes",
+          "canonical_hash"
+        ],
+        "rationale": "canonical_bytes() and canonical_hash() produce deterministic SHA-256 digests of model instances for hash-chain proofs (TesseraSeal) and deduplication. These are pure CPU computations with no I/O."
+      }
+    ]
+  },
+  "authority": {
+    "domains": [
+      "exemplar.data_models",
+      "exemplar.enums",
+      "exemplar.serialization"
+    ],
+    "rationale": "This component is the single source of truth for all domain types, enums, and serialization contracts used across every other Exemplar component. No other component may define or redefine these data structures. All inter-component data exchange uses types defined here."
+  }
+}

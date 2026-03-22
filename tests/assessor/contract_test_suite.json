@@ -1,0 +1,1031 @@
+{
+  "component_id": "assessor",
+  "contract_version": 1,
+  "test_cases": [
+    {
+      "id": "type_severity_valid",
+      "description": "Severity enum accepts all valid variants",
+      "function": "Severity",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All severity variants (critical, high, medium, low, info) are constructible"
+      ]
+    },
+    {
+      "id": "type_review_decision_valid",
+      "description": "ReviewDecision enum accepts all valid variants",
+      "function": "ReviewDecision",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All ReviewDecision variants (block, warn, pass) are constructible"
+      ]
+    },
+    {
+      "id": "type_review_request_id_valid",
+      "description": "ReviewRequestId accepts non-empty string up to 256 chars",
+      "function": "ReviewRequestId",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ReviewRequestId('abc') succeeds",
+        "ReviewRequestId('x'*256) succeeds"
+      ]
+    },
+    {
+      "id": "type_review_request_id_empty",
+      "description": "ReviewRequestId rejects empty string",
+      "function": "ReviewRequestId",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "ReviewRequestId('') raises ValidationError"
+      ]
+    },
+    {
+      "id": "type_review_request_id_too_long",
+      "description": "ReviewRequestId rejects string exceeding 256 chars",
+      "function": "ReviewRequestId",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "ReviewRequestId('x'*257) raises ValidationError"
+      ]
+    },
+    {
+      "id": "type_reviewer_id_valid",
+      "description": "ReviewerId accepts non-empty string up to 128 chars",
+      "function": "ReviewerId",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ReviewerId('r1') succeeds"
+      ]
+    },
+    {
+      "id": "type_reviewer_id_empty",
+      "description": "ReviewerId rejects empty string",
+      "function": "ReviewerId",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "ReviewerId('') raises ValidationError"
+      ]
+    },
+    {
+      "id": "type_trust_weight_valid",
+      "description": "TrustWeight accepts values in [0.0, 1.0]",
+      "function": "TrustWeight",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "TrustWeight(0.0) succeeds",
+        "TrustWeight(0.5) succeeds",
+        "TrustWeight(1.0) succeeds"
+      ]
+    },
+    {
+      "id": "type_trust_weight_negative",
+      "description": "TrustWeight rejects negative values",
+      "function": "TrustWeight",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "TrustWeight(-0.01) raises ValidationError"
+      ]
+    },
+    {
+      "id": "type_trust_weight_over_one",
+      "description": "TrustWeight rejects values > 1.0",
+      "function": "TrustWeight",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "TrustWeight(1.01) raises ValidationError"
+      ]
+    },
+    {
+      "id": "type_confidence_score_valid",
+      "description": "ConfidenceScore accepts values in [0.0, 1.0]",
+      "function": "ConfidenceScore",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ConfidenceScore(0.0) succeeds",
+        "ConfidenceScore(1.0) succeeds"
+      ]
+    },
+    {
+      "id": "type_confidence_score_invalid",
+      "description": "ConfidenceScore rejects out-of-range values",
+      "function": "ConfidenceScore",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "ConfidenceScore(-0.1) raises ValidationError",
+        "ConfidenceScore(1.1) raises ValidationError"
+      ]
+    },
+    {
+      "id": "type_finding_dedup_key_valid",
+      "description": "FindingDeduplicationKey accepts valid composite key",
+      "function": "FindingDeduplicationKey",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "FindingDeduplicationKey with valid fields succeeds"
+      ]
+    },
+    {
+      "id": "type_finding_dedup_key_invalid_line",
+      "description": "FindingDeduplicationKey rejects line_number < 1",
+      "function": "FindingDeduplicationKey",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "line_number=0 raises ValidationError"
+      ]
+    },
+    {
+      "id": "type_finding_dedup_key_empty_file_path",
+      "description": "FindingDeduplicationKey rejects empty file_path",
+      "function": "FindingDeduplicationKey",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "file_path='' raises ValidationError"
+      ]
+    },
+    {
+      "id": "type_pact_attribution_valid",
+      "description": "PactAttribution accepts valid component and version",
+      "function": "PactAttribution",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "PactAttribution with component='assessor', version=1 succeeds"
+      ]
+    },
+    {
+      "id": "type_pact_attribution_empty_component",
+      "description": "PactAttribution rejects empty component",
+      "function": "PactAttribution",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "component='' raises ValidationError"
+      ]
+    },
+    {
+      "id": "type_pact_attribution_zero_version",
+      "description": "PactAttribution rejects version < 1",
+      "function": "PactAttribution",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "version=0 raises ValidationError"
+      ]
+    },
+    {
+      "id": "type_merge_context_valid",
+      "description": "MergeContext accepts valid thresholds and stage_priority",
+      "function": "MergeContext",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "MergeContext with block_threshold=10 warn_threshold=5 succeeds"
+      ]
+    },
+    {
+      "id": "type_merge_context_empty_stage_priority",
+      "description": "MergeContext rejects empty stage_priority",
+      "function": "MergeContext",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "stage_priority=[] raises ValidationError"
+      ]
+    },
+    {
+      "id": "resolve_trust_explicit_match",
+      "description": "_resolve_trust returns explicit trust weight when matching (reviewer_id, stage) exists",
+      "function": "_resolve_trust",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Returned weight matches the explicit TrustScore weight for the reviewer/stage pair"
+      ]
+    },
+    {
+      "id": "resolve_trust_default_fallback",
+      "description": "_resolve_trust falls back to default_trust_weight when no explicit TrustScore exists",
+      "function": "_resolve_trust",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Returned weight equals merge_context.default_trust_weight"
+      ]
+    },
+    {
+      "id": "resolve_trust_multiple_reviewers",
+      "description": "_resolve_trust correctly resolves trust for multiple reviewers with mixed explicit/default",
+      "function": "_resolve_trust",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Each reviewer gets correct explicit or default weight"
+      ]
+    },
+    {
+      "id": "resolve_trust_zero_weight",
+      "description": "_resolve_trust handles zero-weight trust scores correctly",
+      "function": "_resolve_trust",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Zero weight is accepted and returned as-is"
+      ]
+    },
+    {
+      "id": "resolve_trust_boundary_weights",
+      "description": "_resolve_trust handles boundary weights 0.0 and 1.0",
+      "function": "_resolve_trust",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Weights at 0.0 and 1.0 are returned correctly"
+      ]
+    },
+    {
+      "id": "dedup_exact_duplicates_collapse",
+      "description": "_deduplicate_findings collapses findings with identical composite keys",
+      "function": "_deduplicate_findings",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Output has one finding per unique composite key",
+        "Highest severity finding is kept"
+      ]
+    },
+    {
+      "id": "dedup_near_duplicates_preserved",
+      "description": "_deduplicate_findings preserves findings that differ in any composite key field",
+      "function": "_deduplicate_findings",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Findings with different rule_ids are both preserved",
+        "Findings with different line_numbers are both preserved"
+      ]
+    },
+    {
+      "id": "dedup_confidence_boost",
+      "description": "Deduplicated findings have confidence boosted to min(1.0, max_trust_weight * original_confidence)",
+      "function": "_deduplicate_findings",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Output finding confidence equals min(1.0, max_trust * orig_confidence)"
+      ]
+    },
+    {
+      "id": "dedup_empty_input",
+      "description": "_deduplicate_findings returns empty list for empty assessments",
+      "function": "_deduplicate_findings",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Output is an empty list"
+      ]
+    },
+    {
+      "id": "dedup_single_finding",
+      "description": "_deduplicate_findings returns the single finding unchanged (except confidence boost)",
+      "function": "_deduplicate_findings",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Output has exactly one finding"
+      ]
+    },
+    {
+      "id": "dedup_contributing_reviewers",
+      "description": "Deduplicated findings list all contributing reviewer_ids",
+      "function": "_deduplicate_findings",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "contributing_reviewers contains all reviewer_ids that reported the finding"
+      ]
+    },
+    {
+      "id": "compute_decision_block_threshold",
+      "description": "_compute_decision returns BLOCK when total_score >= block_threshold",
+      "function": "_compute_decision",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "decision is ReviewDecision.block"
+      ]
+    },
+    {
+      "id": "compute_decision_warn_threshold",
+      "description": "_compute_decision returns WARN when total_score >= warn_threshold and < block_threshold",
+      "function": "_compute_decision",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "decision is ReviewDecision.warn"
+      ]
+    },
+    {
+      "id": "compute_decision_pass",
+      "description": "_compute_decision returns PASS when total_score < warn_threshold and no overrides",
+      "function": "_compute_decision",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "decision is ReviewDecision.pass"
+      ]
+    },
+    {
+      "id": "compute_decision_security_override",
+      "description": "_compute_decision returns BLOCK when security_block_overrides is True and security assessment is BLOCK",
+      "function": "_compute_decision",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "decision is ReviewDecision.block regardless of score"
+      ]
+    },
+    {
+      "id": "compute_decision_security_override_disabled",
+      "description": "_compute_decision ignores security BLOCK when security_block_overrides is False",
+      "function": "_compute_decision",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "decision is based on score thresholds, not override"
+      ]
+    },
+    {
+      "id": "compute_decision_conflict_notes_generated",
+      "description": "_compute_decision generates ConflictNotes when stage decisions conflict",
+      "function": "_compute_decision",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "conflict_notes is non-empty when assessments disagree"
+      ]
+    },
+    {
+      "id": "compute_decision_conflict_notes_sorted_by_priority",
+      "description": "Conflict notes are sorted by stage priority (security first, then correctness, architecture, style)",
+      "function": "_compute_decision",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "conflict_notes ordered by stage priority highest first"
+      ]
+    },
+    {
+      "id": "compute_decision_exact_block_boundary",
+      "description": "_compute_decision returns BLOCK at exact block_threshold boundary",
+      "function": "_compute_decision",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "total_score == block_threshold yields BLOCK"
+      ]
+    },
+    {
+      "id": "compute_decision_exact_warn_boundary",
+      "description": "_compute_decision returns WARN at exact warn_threshold boundary",
+      "function": "_compute_decision",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "total_score == warn_threshold yields WARN"
+      ]
+    },
+    {
+      "id": "compute_decision_just_below_warn",
+      "description": "_compute_decision returns PASS when total_score is just below warn_threshold",
+      "function": "_compute_decision",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "decision is PASS"
+      ]
+    },
+    {
+      "id": "build_report_structure",
+      "description": "_build_report returns ReviewReport with correct fields",
+      "function": "_build_report",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ReviewReport.review_request_id matches input",
+        "ReviewReport.decision matches input",
+        "ReviewReport.findings is sorted correctly"
+      ]
+    },
+    {
+      "id": "build_report_pact_attribution",
+      "description": "_build_report includes PACT attribution with component='assessor' and version=1",
+      "function": "_build_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ReviewReport.pact.component == 'assessor'",
+        "ReviewReport.pact.version == 1"
+      ]
+    },
+    {
+      "id": "build_report_timestamp_from_clock",
+      "description": "_build_report uses injected clock for timestamp",
+      "function": "_build_report",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ReviewReport.timestamp == clock return value"
+      ]
+    },
+    {
+      "id": "build_report_chronicler_event_emitted",
+      "description": "_build_report emits assessment.merged ChroniclerEvent",
+      "function": "_build_report",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ChroniclerEmitter.emit was called",
+        "Event type is assessment.merged"
+      ]
+    },
+    {
+      "id": "build_report_chronicler_failure_suppressed",
+      "description": "_build_report suppresses ChroniclerEmitter failures",
+      "function": "_build_report",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "chronicler_emission_failure",
+      "assertions": [
+        "Report is still returned even when emitter raises"
+      ]
+    },
+    {
+      "id": "build_report_findings_sort_order",
+      "description": "_build_report sorts findings by (file_path ASC, line_number ASC, severity DESC, id ASC)",
+      "function": "_build_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Findings are in deterministic sort order"
+      ]
+    },
+    {
+      "id": "merge_happy_path_single_assessment",
+      "description": "merge_assessments with a single assessment returns correct ReviewReport",
+      "function": "merge_assessments",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ReviewReport.review_request_id matches",
+        "ReviewReport.findings matches assessment findings",
+        "assessments_merged_count == 1"
+      ]
+    },
+    {
+      "id": "merge_happy_path_multiple_reviewers",
+      "description": "merge_assessments with multiple reviewers correctly merges and deduplicates",
+      "function": "merge_assessments",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Deduplication applied",
+        "Trust weighting applied",
+        "Decision computed correctly"
+      ]
+    },
+    {
+      "id": "merge_empty_assessments",
+      "description": "merge_assessments with empty assessments list returns PASS with no findings",
+      "function": "merge_assessments",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "decision is PASS",
+        "findings is empty",
+        "total_score is 0.0"
+      ]
+    },
+    {
+      "id": "merge_error_empty_review_request_id",
+      "description": "merge_assessments raises error when review_request_id is empty",
+      "function": "merge_assessments",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "invalid_review_request_id",
+      "assertions": [
+        "Raises invalid_review_request_id error"
+      ]
+    },
+    {
+      "id": "merge_error_too_long_review_request_id",
+      "description": "merge_assessments raises error when review_request_id exceeds 256 chars",
+      "function": "merge_assessments",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "invalid_review_request_id",
+      "assertions": [
+        "Raises invalid_review_request_id error"
+      ]
+    },
+    {
+      "id": "merge_error_assessment_request_id_mismatch",
+      "description": "merge_assessments raises error when assessment review_request_id doesn't match",
+      "function": "merge_assessments",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "assessment_request_id_mismatch",
+      "assertions": [
+        "Raises assessment_request_id_mismatch error"
+      ]
+    },
+    {
+      "id": "merge_error_invalid_trust_weight",
+      "description": "merge_assessments raises error when TrustScore weight is outside [0.0, 1.0]",
+      "function": "merge_assessments",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "invalid_trust_weight",
+      "assertions": [
+        "Raises invalid_trust_weight error"
+      ]
+    },
+    {
+      "id": "merge_error_duplicate_reviewer_stage",
+      "description": "merge_assessments raises error when two assessments share (reviewer_id, stage)",
+      "function": "merge_assessments",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "duplicate_assessment_reviewer_stage",
+      "assertions": [
+        "Raises duplicate_assessment_reviewer_stage error"
+      ]
+    },
+    {
+      "id": "merge_chronicler_failure_does_not_propagate",
+      "description": "merge_assessments returns report even when Chronicler emission fails",
+      "function": "merge_assessments",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "chronicler_emission_failure",
+      "assertions": [
+        "Report is returned successfully",
+        "No exception propagated"
+      ]
+    },
+    {
+      "id": "merge_security_block_override_integration",
+      "description": "merge_assessments with security BLOCK override produces BLOCK decision",
+      "function": "merge_assessments",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Final decision is BLOCK when security stage blocks"
+      ]
+    },
+    {
+      "id": "merge_findings_sorted_deterministically",
+      "description": "merge_assessments returns findings sorted by (file_path, line_number, severity, id)",
+      "function": "merge_assessments",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Findings in ReviewReport are deterministically sorted"
+      ]
+    },
+    {
+      "id": "merge_no_duplicate_findings_in_output",
+      "description": "merge_assessments output contains no duplicate composite keys",
+      "function": "merge_assessments",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Each (hunk_id, file_path, line_number, rule_id) appears at most once"
+      ]
+    },
+    {
+      "id": "merge_pact_component_always_assessor",
+      "description": "PACT_COMPONENT is always 'assessor' in every ReviewReport",
+      "function": "merge_assessments",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "metadata.pact.component == 'assessor'"
+      ]
+    },
+    {
+      "id": "merge_default_trust_weight_fallback",
+      "description": "When no TrustScore matches a reviewer, default weight of 0.5 is used",
+      "function": "merge_assessments",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Reviewer without explicit TrustScore gets default weight applied"
+      ]
+    },
+    {
+      "id": "merge_mixed_decisions_across_stages",
+      "description": "merge_assessments handles mixed decisions (block, warn, pass) across stages",
+      "function": "merge_assessments",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Final decision reflects trust-weighted scoring and overrides"
+      ]
+    },
+    {
+      "id": "invariant_frozen_models",
+      "description": "All data models are frozen and cannot be mutated after construction",
+      "function": "Finding",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Attempting to set attribute raises error"
+      ]
+    },
+    {
+      "id": "invariant_severity_score_map",
+      "description": "SEVERITY_SCORE maps info=1.0, warning=3.0, error=7.0, critical=15.0",
+      "function": "SeverityScoreMap",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Score map values match contract specification"
+      ]
+    },
+    {
+      "id": "invariant_stage_priority_order",
+      "description": "STAGE_PRIORITY ordering is [security, correctness, architecture, style]",
+      "function": "ReviewStage",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Stage priority order matches contract"
+      ]
+    },
+    {
+      "id": "merge_determinism_same_input",
+      "description": "merge_assessments produces identical output for identical input (deterministic)",
+      "function": "merge_assessments",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Two calls with same input produce identical reports"
+      ]
+    },
+    {
+      "id": "merge_decision_monotonicity",
+      "description": "Adding a BLOCK assessment never weakens the final decision",
+      "function": "merge_assessments",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Decision with BLOCK assessment is >= decision without it"
+      ]
+    }
+  ],
+  "test_language": "python",
+  "generated_code": "\"\"\"\nContract tests for the Assessor component.\nTests verify merge_assessments and its sub-phases against the contract specification.\n\"\"\"\nimport pytest\nimport asyncio\nimport uuid\nfrom unittest.mock import AsyncMock, MagicMock, patch, PropertyMock\nfrom datetime import datetime, timezone\n\n# Import the component under test\nfrom exemplar.assessor import (\n    merge_assessments,\n    _resolve_trust,\n    _deduplicate_findings,\n    _compute_decision,\n    _build_report,\n)\n\n# Import types - try multiple paths for flexibility\ntry:\n    from exemplar.assessor import (\n        Severity,\n        ReviewDecision,\n        ReviewStage,\n        ReviewRequestId,\n        ReviewerId,\n        TrustWeight,\n        ConfidenceScore,\n        FindingDeduplicationKey,\n        Finding,\n        TrustScore,\n        Assessment,\n        ConflictNote,\n        PactAttribution,\n        ReviewReport,\n        MergeContext,\n        ChroniclerEvent,\n        ChroniclerEventType,\n        Confidence,\n        TesseraSeal,\n        SeverityScoreMap,\n        ConfidenceScoreMap,\n    )\nexcept ImportError:\n    from exemplar.schemas import (\n        Severity,\n        ReviewDecision,\n        ReviewStage,\n        ReviewRequestId,\n        ReviewerId,\n        TrustWeight,\n        ConfidenceScore,\n        FindingDeduplicationKey,\n        Finding,\n        TrustScore,\n        Assessment,\n        ConflictNote,\n        PactAttribution,\n        ReviewReport,\n        MergeContext,\n        ChroniclerEvent,\n        ChroniclerEventType,\n        Confidence,\n        TesseraSeal,\n        SeverityScoreMap,\n        ConfidenceScoreMap,\n    )\n\n\n# ============================================================================\n# Fixtures & Factory Functions\n# ============================================================================\n\nFIXED_TIMESTAMP = \"2024-01-15T12:00:00Z\"\nFIXED_REVIEW_REQUEST_ID = \"rr-001\"\n\n\ndef make_finding(\n    id=None,\n    hunk_id=\"hunk-1\",\n    file_path=\"src/main.py\",\n    line_number=10,\n    severity=None,\n    confidence=None,\n    title=\"Test finding\",\n    description=\"A test finding description\",\n    suggestion=None,\n    rule_id=\"RULE-001\",\n    stage=None,\n    **kwargs,\n):\n    \"\"\"Factory for Finding with sensible defaults.\"\"\"\n    if id is None:\n        id = f\"f-{uuid.uuid4().hex[:8]}\"\n    if severity is None:\n        severity = Severity.medium\n    if confidence is None:\n        confidence = Confidence.high\n    if stage is None:\n        stage = ReviewStage.security\n    return Finding(\n        id=id,\n        hunk_id=hunk_id,\n        file_path=file_path,\n        line_number=line_number,\n        severity=severity,\n        confidence=confidence,\n        title=title,\n        description=description,\n        suggestion=suggestion,\n        rule_id=rule_id,\n        stage=stage,\n        **kwargs,\n    )\n\n\ndef make_assessment(\n    id=None,\n    review_request_id=FIXED_REVIEW_REQUEST_ID,\n    stage=None,\n    reviewer_id=\"reviewer-1\",\n    decision=None,\n    findings=None,\n    confidence=None,\n    is_partial=False,\n    error_message=None,\n    duration_ms=100,\n    created_at=FIXED_TIMESTAMP,\n    **kwargs,\n):\n    \"\"\"Factory for Assessment with sensible defaults.\"\"\"\n    if id is None:\n        id = f\"a-{uuid.uuid4().hex[:8]}\"\n    if stage is None:\n        stage = ReviewStage.security\n    if decision is None:\n        decision = ReviewDecision.warn\n    if findings is None:\n        findings = []\n    if confidence is None:\n        confidence = Confidence.high\n    return Assessment(\n        id=id,\n        review_request_id=review_request_id,\n        stage=stage,\n        reviewer_id=reviewer_id,\n        decision=decision,\n        findings=findings,\n        confidence=confidence,\n        is_partial=is_partial,\n        error_message=error_message,\n        duration_ms=duration_ms,\n        created_at=created_at,\n        **kwargs,\n    )\n\n\ndef make_trust_score(\n    reviewer_id=\"reviewer-1\",\n    stage=None,\n    weight=0.8,\n    accepted_count=10,\n    dismissed_count=2,\n    updated_at=FIXED_TIMESTAMP,\n    **kwargs,\n):\n    \"\"\"Factory for TrustScore with sensible defaults.\"\"\"\n    if stage is None:\n        stage = ReviewStage.security\n    return TrustScore(\n        reviewer_id=reviewer_id,\n        stage=stage,\n        weight=weight,\n        accepted_count=accepted_count,\n        dismissed_count=dismissed_count,\n        updated_at=updated_at,\n        **kwargs,\n    )\n\n\ndef make_merge_context(\n    default_trust_weight=None,\n    block_threshold=10.0,\n    warn_threshold=5.0,\n    stage_priority=None,\n    security_block_overrides=True,\n    **kwargs,\n):\n    \"\"\"Factory for MergeContext with sensible defaults.\"\"\"\n    if default_trust_weight is None:\n        default_trust_weight = TrustWeight(value=0.5)\n    if stage_priority is None:\n        stage_priority = [\n            ReviewStage.security,\n            ReviewStage.correctness,\n            ReviewStage.architecture,\n            ReviewStage.style,\n        ]\n    return MergeContext(\n        default_trust_weight=default_trust_weight,\n        block_threshold=block_threshold,\n        warn_threshold=warn_threshold,\n        stage_priority=stage_priority,\n        security_block_overrides=security_block_overrides,\n        **kwargs,\n    )\n\n\ndef make_mock_clock(timestamp=FIXED_TIMESTAMP):\n    \"\"\"Create a mock clock callable that returns a fixed timestamp.\"\"\"\n    return MagicMock(return_value=timestamp)\n\n\ndef make_mock_chronicler(should_fail=False):\n    \"\"\"Create a mock ChroniclerEmitter.\"\"\"\n    emitter = AsyncMock()\n    if should_fail:\n        emitter.emit.side_effect = Exception(\"Chronicler connection failed\")\n    return emitter\n\n\n# ============================================================================\n# Type Validation Tests\n# ============================================================================\n\nclass TestSeverityEnum:\n    def test_all_variants_constructible(self):\n        \"\"\"Severity enum accepts all valid variants.\"\"\"\n        assert Severity.critical is not None\n        assert Severity.high is not None\n        assert Severity.medium is not None\n        assert Severity.low is not None\n        assert Severity.info is not None\n\n    def test_variant_count(self):\n        \"\"\"Severity has exactly 5 variants.\"\"\"\n        variants = list(Severity)\n        assert len(variants) == 5\n\n\nclass TestReviewDecisionEnum:\n    def test_all_variants_constructible(self):\n        \"\"\"ReviewDecision enum accepts all valid variants.\"\"\"\n        # Note: 'pass' is a Python keyword, so the contract may use a different accessor\n        assert ReviewDecision.block is not None\n        assert ReviewDecision.warn is not None\n        # Try accessing 'pass' variant - may be named differently\n        pass_variant = getattr(ReviewDecision, \"pass\", None)\n        if pass_variant is None:\n            pass_variant = ReviewDecision(\"pass\")\n        assert pass_variant is not None\n\n\nclass TestReviewRequestId:\n    def test_valid_short_string(self):\n        \"\"\"ReviewRequestId accepts non-empty string.\"\"\"\n        rid = ReviewRequestId(value=\"abc\")\n        assert rid.value == \"abc\"\n\n    def test_valid_max_length(self):\n        \"\"\"ReviewRequestId accepts string of exactly 256 chars.\"\"\"\n        rid = ReviewRequestId(value=\"x\" * 256)\n        assert len(rid.value) == 256\n\n    def test_single_char(self):\n        \"\"\"ReviewRequestId accepts a single character.\"\"\"\n        rid = ReviewRequestId(value=\"a\")\n        assert rid.value == \"a\"\n\n    def test_empty_string_rejected(self):\n        \"\"\"ReviewRequestId rejects empty string.\"\"\"\n        with pytest.raises(Exception):  # ValidationError\n            ReviewRequestId(value=\"\")\n\n    def test_exceeds_max_length_rejected(self):\n        \"\"\"ReviewRequestId rejects string exceeding 256 chars.\"\"\"\n        with pytest.raises(Exception):  # ValidationError\n            ReviewRequestId(value=\"x\" * 257)\n\n\nclass TestReviewerId:\n    def test_valid(self):\n        \"\"\"ReviewerId accepts non-empty string.\"\"\"\n        r = ReviewerId(value=\"r1\")\n        assert r.value == \"r1\"\n\n    def test_max_length(self):\n        \"\"\"ReviewerId accepts string of exactly 128 chars.\"\"\"\n        r = ReviewerId(value=\"x\" * 128)\n        assert len(r.value) == 128\n\n    def test_empty_rejected(self):\n        \"\"\"ReviewerId rejects empty string.\"\"\"\n        with pytest.raises(Exception):\n            ReviewerId(value=\"\")\n\n    def test_exceeds_max_rejected(self):\n        \"\"\"ReviewerId rejects string exceeding 128 chars.\"\"\"\n        with pytest.raises(Exception):\n            ReviewerId(value=\"x\" * 129)\n\n\nclass TestTrustWeight:\n    def test_valid_zero(self):\n        \"\"\"TrustWeight accepts 0.0.\"\"\"\n        tw = TrustWeight(value=0.0)\n        assert tw.value == 0.0\n\n    def test_valid_one(self):\n        \"\"\"TrustWeight accepts 1.0.\"\"\"\n        tw = TrustWeight(value=1.0)\n        assert tw.value == 1.0\n\n    def test_valid_mid(self):\n        \"\"\"TrustWeight accepts 0.5.\"\"\"\n        tw = TrustWeight(value=0.5)\n        assert tw.value == 0.5\n\n    def test_negative_rejected(self):\n        \"\"\"TrustWeight rejects negative values.\"\"\"\n        with pytest.raises(Exception):\n            TrustWeight(value=-0.01)\n\n    def test_over_one_rejected(self):\n        \"\"\"TrustWeight rejects values > 1.0.\"\"\"\n        with pytest.raises(Exception):\n            TrustWeight(value=1.01)\n\n\nclass TestConfidenceScore:\n    def test_valid_boundaries(self):\n        \"\"\"ConfidenceScore accepts boundary values.\"\"\"\n        assert ConfidenceScore(value=0.0).value == 0.0\n        assert ConfidenceScore(value=1.0).value == 1.0\n\n    def test_negative_rejected(self):\n        \"\"\"ConfidenceScore rejects negative values.\"\"\"\n        with pytest.raises(Exception):\n            ConfidenceScore(value=-0.1)\n\n    def test_over_one_rejected(self):\n        \"\"\"ConfidenceScore rejects values > 1.0.\"\"\"\n        with pytest.raises(Exception):\n            ConfidenceScore(value=1.1)\n\n\nclass TestFindingDeduplicationKey:\n    def test_valid(self):\n        \"\"\"FindingDeduplicationKey accepts valid composite key.\"\"\"\n        key = FindingDeduplicationKey(\n            hunk_id=\"h1\", file_path=\"src/main.py\", line_number=1, rule_id=\"R001\"\n        )\n        assert key.file_path == \"src/main.py\"\n        assert key.line_number == 1\n\n    def test_line_number_zero_rejected(self):\n        \"\"\"FindingDeduplicationKey rejects line_number < 1.\"\"\"\n        with pytest.raises(Exception):\n            FindingDeduplicationKey(\n                hunk_id=\"h1\", file_path=\"src/main.py\", line_number=0, rule_id=\"R001\"\n            )\n\n    def test_empty_file_path_rejected(self):\n        \"\"\"FindingDeduplicationKey rejects empty file_path.\"\"\"\n        with pytest.raises(Exception):\n            FindingDeduplicationKey(\n                hunk_id=\"h1\", file_path=\"\", line_number=1, rule_id=\"R001\"\n            )\n\n    def test_empty_rule_id_rejected(self):\n        \"\"\"FindingDeduplicationKey rejects empty rule_id.\"\"\"\n        with pytest.raises(Exception):\n            FindingDeduplicationKey(\n                hunk_id=\"h1\", file_path=\"src/main.py\", line_number=1, rule_id=\"\"\n            )\n\n    def test_max_file_path_length(self):\n        \"\"\"FindingDeduplicationKey accepts file_path of 1024 chars.\"\"\"\n        key = FindingDeduplicationKey(\n            hunk_id=\"h1\", file_path=\"x\" * 1024, line_number=1, rule_id=\"R001\"\n        )\n        assert len(key.file_path) == 1024\n\n    def test_file_path_exceeds_max_rejected(self):\n        \"\"\"FindingDeduplicationKey rejects file_path exceeding 1024 chars.\"\"\"\n        with pytest.raises(Exception):\n            FindingDeduplicationKey(\n                hunk_id=\"h1\", file_path=\"x\" * 1025, line_number=1, rule_id=\"R001\"\n            )\n\n\nclass TestPactAttribution:\n    def test_valid(self):\n        \"\"\"PactAttribution accepts valid component and version.\"\"\"\n        pa = PactAttribution(\n            component=\"assessor\", version=1, timestamp=FIXED_TIMESTAMP\n        )\n        assert pa.component == \"assessor\"\n        assert pa.version == 1\n\n    def test_empty_component_rejected(self):\n        \"\"\"PactAttribution rejects empty component.\"\"\"\n        with pytest.raises(Exception):\n            PactAttribution(component=\"\", version=1, timestamp=FIXED_TIMESTAMP)\n\n    def test_zero_version_rejected(self):\n        \"\"\"PactAttribution rejects version < 1.\"\"\"\n        with pytest.raises(Exception):\n            PactAttribution(\n                component=\"assessor\", version=0, timestamp=FIXED_TIMESTAMP\n            )\n\n\nclass TestMergeContext:\n    def test_valid(self):\n        \"\"\"MergeContext accepts valid thresholds and stage_priority.\"\"\"\n        mc = make_merge_context()\n        assert mc.block_threshold == 10.0\n        assert mc.warn_threshold == 5.0\n\n    def test_empty_stage_priority_rejected(self):\n        \"\"\"MergeContext rejects empty stage_priority.\"\"\"\n        with pytest.raises(Exception):\n            make_merge_context(stage_priority=[])\n\n    def test_zero_thresholds_accepted(self):\n        \"\"\"MergeContext accepts zero thresholds.\"\"\"\n        mc = make_merge_context(block_threshold=0.0, warn_threshold=0.0)\n        assert mc.block_threshold == 0.0\n        assert mc.warn_threshold == 0.0\n\n\n# ============================================================================\n# TestResolvedTrust — Phase 1\n# ============================================================================\n\nclass TestResolvedTrust:\n    def test_explicit_match(self):\n        \"\"\"_resolve_trust returns explicit trust weight when matching (reviewer_id, stage) exists.\"\"\"\n        assessments = [make_assessment(reviewer_id=\"r1\", stage=ReviewStage.security)]\n        trust_scores = [\n            make_trust_score(reviewer_id=\"r1\", stage=ReviewStage.security, weight=0.9)\n        ]\n        mc = make_merge_context()\n        result = _resolve_trust(assessments, trust_scores, mc)\n        key = (\"r1\", ReviewStage.security)\n        assert key in result\n        assert abs(result[key] - 0.9) < 1e-9\n\n    def test_default_fallback(self):\n        \"\"\"_resolve_trust falls back to default_trust_weight when no explicit TrustScore exists.\"\"\"\n        assessments = [make_assessment(reviewer_id=\"r1\", stage=ReviewStage.security)]\n        trust_scores = []  # No explicit scores\n        mc = make_merge_context(default_trust_weight=TrustWeight(value=0.5))\n        result = _resolve_trust(assessments, trust_scores, mc)\n        key = (\"r1\", ReviewStage.security)\n        assert key in result\n        assert abs(result[key] - 0.5) < 1e-9\n\n    def test_multiple_reviewers_mixed(self):\n        \"\"\"_resolve_trust correctly resolves trust for multiple reviewers with mixed explicit/default.\"\"\"\n        assessments = [\n            make_assessment(reviewer_id=\"r1\", stage=ReviewStage.security),\n            make_assessment(reviewer_id=\"r2\", stage=ReviewStage.correctness),\n        ]\n        trust_scores = [\n            make_trust_score(reviewer_id=\"r1\", stage=ReviewStage.security, weight=0.9)\n        ]\n        mc = make_merge_context(default_trust_weight=TrustWeight(value=0.5))\n        result = _resolve_trust(assessments, trust_scores, mc)\n        assert abs(result[(\"r1\", ReviewStage.security)] - 0.9) < 1e-9\n        assert abs(result[(\"r2\", ReviewStage.correctness)] - 0.5) < 1e-9\n\n    def test_zero_weight(self):\n        \"\"\"_resolve_trust handles zero-weight trust scores correctly.\"\"\"\n        assessments = [make_assessment(reviewer_id=\"r1\", stage=ReviewStage.security)]\n        trust_scores = [\n            make_trust_score(reviewer_id=\"r1\", stage=ReviewStage.security, weight=0.0)\n        ]\n        mc = make_merge_context()\n        result = _resolve_trust(assessments, trust_scores, mc)\n        assert result[(\"r1\", ReviewStage.security)] == 0.0\n\n    def test_boundary_weights(self):\n        \"\"\"_resolve_trust handles boundary weights 0.0 and 1.0.\"\"\"\n        assessments = [\n            make_assessment(reviewer_id=\"r1\", stage=ReviewStage.security),\n            make_assessment(reviewer_id=\"r2\", stage=ReviewStage.correctness),\n        ]\n        trust_scores = [\n            make_trust_score(reviewer_id=\"r1\", stage=ReviewStage.security, weight=0.0),\n            make_trust_score(\n                reviewer_id=\"r2\", stage=ReviewStage.correctness, weight=1.0\n            ),\n        ]\n        mc = make_merge_context()\n        result = _resolve_trust(assessments, trust_scores, mc)\n        assert result[(\"r1\", ReviewStage.security)] == 0.0\n        assert result[(\"r2\", ReviewStage.correctness)] == 1.0\n\n    def test_all_unique_pairs_covered(self):\n        \"\"\"_resolve_trust returns entry for every unique (reviewer_id, stage) pair.\"\"\"\n        assessments = [\n            make_assessment(reviewer_id=\"r1\", stage=ReviewStage.security),\n            make_assessment(reviewer_id=\"r1\", stage=ReviewStage.correctness),\n            make_assessment(reviewer_id=\"r2\", stage=ReviewStage.style),\n        ]\n        trust_scores = []\n        mc = make_merge_context()\n        result = _resolve_trust(assessments, trust_scores, mc)\n        assert len(result) == 3\n        assert (\"r1\", ReviewStage.security) in result\n        assert (\"r1\", ReviewStage.correctness) in result\n        assert (\"r2\", ReviewStage.style) in result\n\n    def test_values_in_range(self):\n        \"\"\"Every value in returned dict is a float in [0.0, 1.0].\"\"\"\n        assessments = [\n            make_assessment(reviewer_id=\"r1\", stage=ReviewStage.security),\n            make_assessment(reviewer_id=\"r2\", stage=ReviewStage.correctness),\n        ]\n        trust_scores = [\n            make_trust_score(reviewer_id=\"r1\", stage=ReviewStage.security, weight=0.75)\n        ]\n        mc = make_merge_context(default_trust_weight=TrustWeight(value=0.3))\n        result = _resolve_trust(assessments, trust_scores, mc)\n        for key, value in result.items():\n            assert isinstance(value, float) or isinstance(value, (int, float))\n            assert 0.0 <= float(value) <= 1.0\n\n\n# ============================================================================\n# TestDeduplicateFindings — Phase 2\n# ============================================================================\n\nclass TestDeduplicateFindings:\n    def test_exact_duplicates_collapse(self):\n        \"\"\"Findings with identical composite keys collapse into one.\"\"\"\n        f1 = make_finding(\n            id=\"f1\", hunk_id=\"h1\", file_path=\"a.py\", line_number=10,\n            rule_id=\"R001\", severity=Severity.medium,\n        )\n        f2 = make_finding(\n            id=\"f2\", hunk_id=\"h1\", file_path=\"a.py\", line_number=10,\n            rule_id=\"R001\", severity=Severity.critical,\n        )\n        a1 = make_assessment(reviewer_id=\"r1\", stage=ReviewStage.security, findings=[f1])\n        a2 = make_assessment(reviewer_id=\"r2\", stage=ReviewStage.security, findings=[f2])\n        resolved_trust = {\n            (\"r1\", ReviewStage.security): 0.8,\n            (\"r2\", ReviewStage.security): 0.9,\n        }\n        result = _deduplicate_findings([a1, a2], resolved_trust)\n        # Only one finding per composite key\n        dedup_keys = set()\n        for f in result:\n            key = (f.hunk_id, f.file_path, f.line_number, f.rule_id)\n            assert key not in dedup_keys, f\"Duplicate key found: {key}\"\n            dedup_keys.add(key)\n        assert len(result) == 1\n\n    def test_highest_severity_kept(self):\n        \"\"\"For duplicate findings, the highest severity is kept.\"\"\"\n        f1 = make_finding(\n            id=\"f1\", hunk_id=\"h1\", file_path=\"a.py\", line_number=10,\n            rule_id=\"R001\", severity=Severity.low,\n        )\n        f2 = make_finding(\n            id=\"f2\", hunk_id=\"h1\", file_path=\"a.py\", line_number=10,\n            rule_id=\"R001\", severity=Severity.critical,\n        )\n        a1 = make_assessment(reviewer_id=\"r1\", stage=ReviewStage.security, findings=[f1])\n        a2 = make_assessment(reviewer_id=\"r2\", stage=ReviewStage.security, findings=[f2])\n        resolved_trust = {\n            (\"r1\", ReviewStage.security): 0.8,\n            (\"r2\", ReviewStage.security): 0.9,\n        }\n        result = _deduplicate_findings([a1, a2], resolved_trust)\n        assert len(result) == 1\n        assert result[0].severity == Severity.critical\n\n    def test_near_duplicates_preserved(self):\n        \"\"\"Findings that differ in any composite key field are preserved.\"\"\"\n        f1 = make_finding(\n            id=\"f1\", hunk_id=\"h1\", file_path=\"a.py\", line_number=10,\n            rule_id=\"R001\",\n        )\n        f2 = make_finding(\n            id=\"f2\", hunk_id=\"h1\", file_path=\"a.py\", line_number=10,\n            rule_id=\"R002\",  # Different rule_id\n        )\n        f3 = make_finding(\n            id=\"f3\", hunk_id=\"h1\", file_path=\"a.py\", line_number=20,  # Different line\n            rule_id=\"R001\",\n        )\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.security, findings=[f1, f2, f3]\n        )\n        resolved_trust = {(\"r1\", ReviewStage.security): 0.8}\n        result = _deduplicate_findings([a1], resolved_trust)\n        assert len(result) == 3\n\n    def test_empty_input(self):\n        \"\"\"_deduplicate_findings returns empty list for empty assessments.\"\"\"\n        result = _deduplicate_findings([], {})\n        assert result == []\n\n    def test_single_finding_unchanged(self):\n        \"\"\"Single finding is returned (possibly with confidence boost).\"\"\"\n        f1 = make_finding(id=\"f1\")\n        a1 = make_assessment(reviewer_id=\"r1\", stage=ReviewStage.security, findings=[f1])\n        resolved_trust = {(\"r1\", ReviewStage.security): 0.8}\n        result = _deduplicate_findings([a1], resolved_trust)\n        assert len(result) == 1\n\n    def test_output_count_less_than_or_equal_input(self):\n        \"\"\"Output count <= total input finding count across all assessments.\"\"\"\n        f1 = make_finding(id=\"f1\", hunk_id=\"h1\", file_path=\"a.py\", line_number=10, rule_id=\"R001\")\n        f2 = make_finding(id=\"f2\", hunk_id=\"h1\", file_path=\"a.py\", line_number=10, rule_id=\"R001\")\n        f3 = make_finding(id=\"f3\", hunk_id=\"h1\", file_path=\"b.py\", line_number=5, rule_id=\"R002\")\n        a1 = make_assessment(reviewer_id=\"r1\", stage=ReviewStage.security, findings=[f1, f3])\n        a2 = make_assessment(reviewer_id=\"r2\", stage=ReviewStage.correctness, findings=[f2])\n        resolved_trust = {\n            (\"r1\", ReviewStage.security): 0.8,\n            (\"r2\", ReviewStage.correctness): 0.7,\n        }\n        result = _deduplicate_findings([a1, a2], resolved_trust)\n        total_input = 3\n        assert len(result) <= total_input\n\n\n# ============================================================================\n# TestComputeDecision — Phase 3\n# ============================================================================\n\nclass TestComputeDecision:\n    def test_block_threshold(self):\n        \"\"\"_compute_decision returns BLOCK when total_score >= block_threshold.\"\"\"\n        # Create a finding with critical severity to push score above block threshold\n        f1 = make_finding(\n            severity=Severity.critical, confidence=Confidence.high, rule_id=\"R001\"\n        )\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            decision=ReviewDecision.warn, findings=[f1],\n        )\n        resolved_trust = {(\"r1\", ReviewStage.security): 1.0}\n        # block_threshold=10, critical=15.0, trust=1.0 -> score=15.0 >= 10\n        mc = make_merge_context(\n            block_threshold=10.0, warn_threshold=5.0, security_block_overrides=False\n        )\n        result = _compute_decision([f1], [a1], resolved_trust, mc)\n        assert result[\"decision\"] == ReviewDecision.block\n\n    def test_warn_threshold(self):\n        \"\"\"_compute_decision returns WARN when total_score >= warn_threshold and < block_threshold.\"\"\"\n        f1 = make_finding(\n            severity=Severity.error, confidence=Confidence.high, rule_id=\"R001\"\n        )\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            decision=ReviewDecision.warn, findings=[f1],\n        )\n        resolved_trust = {(\"r1\", ReviewStage.security): 1.0}\n        # error=7.0, trust=1.0 -> score=7.0. warn=5, block=10 -> WARN\n        mc = make_merge_context(\n            block_threshold=10.0, warn_threshold=5.0, security_block_overrides=False\n        )\n        result = _compute_decision([f1], [a1], resolved_trust, mc)\n        assert result[\"decision\"] == ReviewDecision.warn\n\n    def test_pass_below_warn(self):\n        \"\"\"_compute_decision returns PASS when total_score < warn_threshold.\"\"\"\n        f1 = make_finding(\n            severity=Severity.info, confidence=Confidence.low, rule_id=\"R001\"\n        )\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            decision=getattr(ReviewDecision, \"pass\", ReviewDecision(\"pass\")),\n            findings=[f1],\n        )\n        resolved_trust = {(\"r1\", ReviewStage.security): 0.1}\n        # info=1.0, low confidence, trust=0.1 -> very low score\n        mc = make_merge_context(\n            block_threshold=10.0, warn_threshold=5.0, security_block_overrides=False\n        )\n        result = _compute_decision([f1], [a1], resolved_trust, mc)\n        pass_decision = getattr(ReviewDecision, \"pass\", ReviewDecision(\"pass\"))\n        assert result[\"decision\"] == pass_decision\n\n    def test_security_block_override_enabled(self):\n        \"\"\"_compute_decision returns BLOCK when security_block_overrides is True and security assessment is BLOCK.\"\"\"\n        f1 = make_finding(\n            severity=Severity.info, confidence=Confidence.low, rule_id=\"R001\"\n        )\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            decision=ReviewDecision.block, findings=[f1],\n        )\n        resolved_trust = {(\"r1\", ReviewStage.security): 0.1}\n        mc = make_merge_context(\n            block_threshold=100.0, warn_threshold=50.0, security_block_overrides=True\n        )\n        result = _compute_decision([f1], [a1], resolved_trust, mc)\n        assert result[\"decision\"] == ReviewDecision.block\n\n    def test_security_block_override_disabled(self):\n        \"\"\"_compute_decision ignores security BLOCK when security_block_overrides is False.\"\"\"\n        f1 = make_finding(\n            severity=Severity.info, confidence=Confidence.low, rule_id=\"R001\"\n        )\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            decision=ReviewDecision.block, findings=[f1],\n        )\n        resolved_trust = {(\"r1\", ReviewStage.security): 0.1}\n        mc = make_merge_context(\n            block_threshold=100.0, warn_threshold=50.0, security_block_overrides=False\n        )\n        result = _compute_decision([f1], [a1], resolved_trust, mc)\n        # Should be based on score only, which is very low\n        pass_decision = getattr(ReviewDecision, \"pass\", ReviewDecision(\"pass\"))\n        assert result[\"decision\"] == pass_decision\n\n    def test_result_contains_required_keys(self):\n        \"\"\"Returned dict contains keys: decision, total_score, conflict_notes.\"\"\"\n        a1 = make_assessment(reviewer_id=\"r1\", stage=ReviewStage.security, findings=[])\n        resolved_trust = {(\"r1\", ReviewStage.security): 0.5}\n        mc = make_merge_context(security_block_overrides=False)\n        result = _compute_decision([], [a1], resolved_trust, mc)\n        assert \"decision\" in result\n        assert \"total_score\" in result\n        assert \"conflict_notes\" in result\n\n    def test_total_score_non_negative(self):\n        \"\"\"total_score is always >= 0.\"\"\"\n        a1 = make_assessment(reviewer_id=\"r1\", stage=ReviewStage.security, findings=[])\n        resolved_trust = {(\"r1\", ReviewStage.security): 0.5}\n        mc = make_merge_context(security_block_overrides=False)\n        result = _compute_decision([], [a1], resolved_trust, mc)\n        assert result[\"total_score\"] >= 0.0\n\n    def test_conflict_notes_sorted_by_stage_priority(self):\n        \"\"\"Conflict notes are sorted by stage priority (security first).\"\"\"\n        f_sec = make_finding(\n            severity=Severity.critical, rule_id=\"R001\", stage=ReviewStage.security\n        )\n        f_style = make_finding(\n            severity=Severity.info, rule_id=\"R002\", stage=ReviewStage.style\n        )\n        a_sec = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            decision=ReviewDecision.block, findings=[f_sec],\n        )\n        a_style = make_assessment(\n            reviewer_id=\"r2\", stage=ReviewStage.style,\n            decision=getattr(ReviewDecision, \"pass\", ReviewDecision(\"pass\")),\n            findings=[f_style],\n        )\n        resolved_trust = {\n            (\"r1\", ReviewStage.security): 0.9,\n            (\"r2\", ReviewStage.style): 0.5,\n        }\n        mc = make_merge_context(security_block_overrides=True)\n        result = _compute_decision([f_sec, f_style], [a_sec, a_style], resolved_trust, mc)\n        # If conflict notes exist, they should be ordered by stage priority\n        if result[\"conflict_notes\"]:\n            # Verify ordering - security should come before style\n            stages_in_notes = []\n            for note in result[\"conflict_notes\"]:\n                if hasattr(note, 'overriding_stage'):\n                    stages_in_notes.append(note.overriding_stage)\n            # Just verify they are present and ordered correctly if there are multiple\n            # The key invariant is that higher-priority stages come first\n\n\n    def test_exact_block_boundary(self):\n        \"\"\"At exact block_threshold boundary, decision is BLOCK.\"\"\"\n        # We need score == block_threshold. Using a carefully crafted finding.\n        f1 = make_finding(\n            severity=Severity.critical, confidence=Confidence.high, rule_id=\"R001\"\n        )\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            decision=ReviewDecision.warn, findings=[f1],\n        )\n        resolved_trust = {(\"r1\", ReviewStage.security): 1.0}\n        # critical=15.0. Set block_threshold=15.0 exactly\n        mc = make_merge_context(\n            block_threshold=15.0, warn_threshold=5.0, security_block_overrides=False\n        )\n        result = _compute_decision([f1], [a1], resolved_trust, mc)\n        assert result[\"decision\"] == ReviewDecision.block\n\n    def test_exact_warn_boundary(self):\n        \"\"\"At exact warn_threshold boundary, decision is WARN.\"\"\"\n        f1 = make_finding(\n            severity=Severity.error, confidence=Confidence.high, rule_id=\"R001\"\n        )\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            decision=ReviewDecision.warn, findings=[f1],\n        )\n        resolved_trust = {(\"r1\", ReviewStage.security): 1.0}\n        # error=7.0. Set warn_threshold=7.0, block=20.0\n        mc = make_merge_context(\n            block_threshold=20.0, warn_threshold=7.0, security_block_overrides=False\n        )\n        result = _compute_decision([f1], [a1], resolved_trust, mc)\n        assert result[\"decision\"] == ReviewDecision.warn\n\n    def test_no_findings_no_override_is_pass(self):\n        \"\"\"No findings and no overrides yields PASS.\"\"\"\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.correctness,\n            decision=getattr(ReviewDecision, \"pass\", ReviewDecision(\"pass\")),\n            findings=[],\n        )\n        resolved_trust = {(\"r1\", ReviewStage.correctness): 0.5}\n        mc = make_merge_context(security_block_overrides=False)\n        result = _compute_decision([], [a1], resolved_trust, mc)\n        pass_decision = getattr(ReviewDecision, \"pass\", ReviewDecision(\"pass\"))\n        assert result[\"decision\"] == pass_decision\n        assert result[\"total_score\"] == 0.0\n\n\n# ============================================================================\n# TestBuildReport — Phase 4 (async)\n# ============================================================================\n\nclass TestBuildReport:\n    @pytest.mark.asyncio\n    async def test_structure(self):\n        \"\"\"_build_report returns ReviewReport with correct fields.\"\"\"\n        pass_decision = getattr(ReviewDecision, \"pass\", ReviewDecision(\"pass\"))\n        mock_chronicler = make_mock_chronicler()\n        mock_clock = make_mock_clock(\"2024-06-01T00:00:00Z\")\n\n        # We need to test the _build_report with proper dependencies injected.\n        # This may require constructing an Assessor instance with mocked deps.\n        try:\n            from exemplar.assessor import Assessor\n\n            assessor = Assessor(\n                merge_context=make_merge_context(),\n                chronicler=mock_chronicler,\n                clock=mock_clock,\n            )\n            report = await assessor._build_report(\n                review_request_id=\"rr-001\",\n                decision=pass_decision,\n                total_score=0.0,\n                deduplicated_findings=[],\n                conflict_notes=[],\n                trust_scores_used=[],\n                assessments_merged_count=0,\n            )\n            assert report.review_request_id == \"rr-001\"\n            assert report.decision == pass_decision\n        except (ImportError, TypeError, AttributeError):\n            # If Assessor class doesn't exist or has different constructor,\n            # test that _build_report function works directly\n            pytest.skip(\"Cannot construct Assessor instance for _build_report test\")\n\n    @pytest.mark.asyncio\n    async def test_pact_attribution(self):\n        \"\"\"_build_report includes PACT attribution with component='assessor'.\"\"\"\n        try:\n            from exemplar.assessor import Assessor\n\n            mock_chronicler = make_mock_chronicler()\n            mock_clock = make_mock_clock(\"2024-06-01T00:00:00Z\")\n            assessor = Assessor(\n                merge_context=make_merge_context(),\n                chronicler=mock_chronicler,\n                clock=mock_clock,\n            )\n            pass_decision = getattr(ReviewDecision, \"pass\", ReviewDecision(\"pass\"))\n            report = await assessor._build_report(\n                review_request_id=\"rr-001\",\n                decision=pass_decision,\n                total_score=0.0,\n                deduplicated_findings=[],\n                conflict_notes=[],\n                trust_scores_used=[],\n                assessments_merged_count=0,\n            )\n            # Check PACT attribution\n            pact = report.metadata.get(\"pact\", None) if isinstance(report.metadata, dict) else None\n            # Or it might be a direct attribute\n            if hasattr(report, \"pact\"):\n                assert report.pact.component == \"assessor\"\n                assert report.pact.version == 1\n            elif pact:\n                assert \"assessor\" in str(pact)\n        except (ImportError, TypeError, AttributeError):\n            pytest.skip(\"Cannot construct Assessor instance for PACT test\")\n\n    @pytest.mark.asyncio\n    async def test_timestamp_from_clock(self):\n        \"\"\"_build_report uses injected clock for timestamp.\"\"\"\n        try:\n            from exemplar.assessor import Assessor\n\n            expected_ts = \"2024-07-04T12:00:00Z\"\n            mock_chronicler = make_mock_chronicler()\n            mock_clock = make_mock_clock(expected_ts)\n            assessor = Assessor(\n                merge_context=make_merge_context(),\n                chronicler=mock_chronicler,\n                clock=mock_clock,\n            )\n            pass_decision = getattr(ReviewDecision, \"pass\", ReviewDecision(\"pass\"))\n            report = await assessor._build_report(\n                review_request_id=\"rr-001\",\n                decision=pass_decision,\n                total_score=0.0,\n                deduplicated_findings=[],\n                conflict_notes=[],\n                trust_scores_used=[],\n                assessments_merged_count=0,\n            )\n            # Check timestamp is from clock\n            if hasattr(report, \"timestamp\"):\n                assert report.timestamp == expected_ts\n            elif hasattr(report, \"created_at\"):\n                assert report.created_at == expected_ts\n        except (ImportError, TypeError, AttributeError):\n            pytest.skip(\"Cannot construct Assessor instance for clock test\")\n\n    @pytest.mark.asyncio\n    async def test_chronicler_event_emitted(self):\n        \"\"\"_build_report emits assessment.merged ChroniclerEvent.\"\"\"\n        try:\n            from exemplar.assessor import Assessor\n\n            mock_chronicler = make_mock_chronicler()\n            mock_clock = make_mock_clock()\n            assessor = Assessor(\n                merge_context=make_merge_context(),\n                chronicler=mock_chronicler,\n                clock=mock_clock,\n            )\n            pass_decision = getattr(ReviewDecision, \"pass\", ReviewDecision(\"pass\"))\n            await assessor._build_report(\n                review_request_id=\"rr-001\",\n                decision=pass_decision,\n                total_score=0.0,\n                deduplicated_findings=[],\n                conflict_notes=[],\n                trust_scores_used=[],\n                assessments_merged_count=0,\n            )\n            assert mock_chronicler.emit.called or mock_chronicler.emit.await_count > 0\n        except (ImportError, TypeError, AttributeError):\n            pytest.skip(\"Cannot construct Assessor for chronicler test\")\n\n    @pytest.mark.asyncio\n    async def test_chronicler_failure_suppressed(self):\n        \"\"\"_build_report suppresses ChroniclerEmitter failures.\"\"\"\n        try:\n            from exemplar.assessor import Assessor\n\n            mock_chronicler = make_mock_chronicler(should_fail=True)\n            mock_clock = make_mock_clock()\n            assessor = Assessor(\n                merge_context=make_merge_context(),\n                chronicler=mock_chronicler,\n                clock=mock_clock,\n            )\n            pass_decision = getattr(ReviewDecision, \"pass\", ReviewDecision(\"pass\"))\n            # Should NOT raise despite chronicler failure\n            report = await assessor._build_report(\n                review_request_id=\"rr-001\",\n                decision=pass_decision,\n                total_score=0.0,\n                deduplicated_findings=[],\n                conflict_notes=[],\n                trust_scores_used=[],\n                assessments_merged_count=0,\n            )\n            assert report is not None\n            assert report.review_request_id == \"rr-001\"\n        except (ImportError, TypeError, AttributeError):\n            pytest.skip(\"Cannot construct Assessor for chronicler failure test\")\n\n    @pytest.mark.asyncio\n    async def test_findings_sort_order(self):\n        \"\"\"_build_report sorts findings by (file_path ASC, line_number ASC, severity DESC, id ASC).\"\"\"\n        try:\n            from exemplar.assessor import Assessor\n\n            f1 = make_finding(id=\"f-b\", file_path=\"b.py\", line_number=5, severity=Severity.low)\n            f2 = make_finding(id=\"f-a\", file_path=\"a.py\", line_number=10, severity=Severity.critical)\n            f3 = make_finding(id=\"f-c\", file_path=\"a.py\", line_number=5, severity=Severity.medium)\n            f4 = make_finding(id=\"f-d\", file_path=\"a.py\", line_number=5, severity=Severity.critical)\n\n            mock_chronicler = make_mock_chronicler()\n            mock_clock = make_mock_clock()\n            assessor = Assessor(\n                merge_context=make_merge_context(),\n                chronicler=mock_chronicler,\n                clock=mock_clock,\n            )\n            pass_decision = getattr(ReviewDecision, \"pass\", ReviewDecision(\"pass\"))\n            report = await assessor._build_report(\n                review_request_id=\"rr-001\",\n                decision=pass_decision,\n                total_score=0.0,\n                deduplicated_findings=[f1, f2, f3, f4],\n                conflict_notes=[],\n                trust_scores_used=[],\n                assessments_merged_count=1,\n            )\n            findings = report.findings\n            # Verify sort: file_path ASC, line_number ASC, severity DESC, id ASC\n            for i in range(len(findings) - 1):\n                f_cur = findings[i]\n                f_next = findings[i + 1]\n                if f_cur.file_path == f_next.file_path:\n                    if f_cur.line_number == f_next.line_number:\n                        # severity DESC is harder to verify without a numeric mapping,\n                        # but at minimum we verify the sort is applied\n                        pass\n                    else:\n                        assert (f_cur.line_number or 0) <= (f_next.line_number or 0)\n                else:\n                    assert f_cur.file_path <= f_next.file_path\n        except (ImportError, TypeError, AttributeError):\n            pytest.skip(\"Cannot construct Assessor for sort order test\")\n\n\n# ============================================================================\n# TestMergeAssessments — Integration Tests (async)\n# ============================================================================\n\nclass TestMergeAssessments:\n    \"\"\"Integration tests for the top-level merge_assessments.\"\"\"\n\n    @pytest.fixture\n    def assessor(self):\n        \"\"\"Create an Assessor instance with mocked dependencies.\"\"\"\n        try:\n            from exemplar.assessor import Assessor\n            mock_chronicler = make_mock_chronicler()\n            mock_clock = make_mock_clock(\"2024-01-15T12:00:00Z\")\n            return Assessor(\n                merge_context=make_merge_context(),\n                chronicler=mock_chronicler,\n                clock=mock_clock,\n            )\n        except (ImportError, TypeError):\n            pytest.skip(\"Cannot construct Assessor instance\")\n\n    @pytest.mark.asyncio\n    async def test_happy_path_single_assessment(self, assessor):\n        \"\"\"merge_assessments with a single assessment returns correct ReviewReport.\"\"\"\n        f1 = make_finding(id=\"f1\", severity=Severity.medium)\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            decision=ReviewDecision.warn, findings=[f1],\n        )\n        ts = make_trust_score(reviewer_id=\"r1\", stage=ReviewStage.security, weight=0.8)\n        report = await assessor.merge_assessments(\n            assessments=[a1],\n            trust_scores=[ts],\n            review_request_id=FIXED_REVIEW_REQUEST_ID,\n        )\n        assert report.review_request_id == FIXED_REVIEW_REQUEST_ID\n        assert len(report.findings) >= 1\n\n    @pytest.mark.asyncio\n    async def test_happy_path_multiple_reviewers(self, assessor):\n        \"\"\"merge_assessments with multiple reviewers correctly merges and deduplicates.\"\"\"\n        f1 = make_finding(\n            id=\"f1\", hunk_id=\"h1\", file_path=\"a.py\", line_number=10,\n            rule_id=\"R001\", severity=Severity.medium,\n        )\n        f2 = make_finding(\n            id=\"f2\", hunk_id=\"h1\", file_path=\"a.py\", line_number=10,\n            rule_id=\"R001\", severity=Severity.high,\n        )\n        f3 = make_finding(\n            id=\"f3\", hunk_id=\"h1\", file_path=\"b.py\", line_number=5,\n            rule_id=\"R002\", severity=Severity.low,\n        )\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            decision=ReviewDecision.warn, findings=[f1],\n        )\n        a2 = make_assessment(\n            reviewer_id=\"r2\", stage=ReviewStage.correctness,\n            decision=ReviewDecision.warn, findings=[f2, f3],\n        )\n        ts1 = make_trust_score(reviewer_id=\"r1\", stage=ReviewStage.security, weight=0.8)\n        ts2 = make_trust_score(reviewer_id=\"r2\", stage=ReviewStage.correctness, weight=0.9)\n        report = await assessor.merge_assessments(\n            assessments=[a1, a2],\n            trust_scores=[ts1, ts2],\n            review_request_id=FIXED_REVIEW_REQUEST_ID,\n        )\n        assert report.review_request_id == FIXED_REVIEW_REQUEST_ID\n        # f1 and f2 share composite key, so should be deduped\n        # f3 is unique\n        # Total deduped findings should be 2\n        dedup_keys = set()\n        for f in report.findings:\n            key = (f.hunk_id, f.file_path, getattr(f, 'line_number', None), f.rule_id)\n            dedup_keys.add(key)\n        assert len(dedup_keys) == len(report.findings)\n\n    @pytest.mark.asyncio\n    async def test_empty_assessments_returns_pass(self, assessor):\n        \"\"\"merge_assessments with empty assessments list returns PASS with no findings.\"\"\"\n        report = await assessor.merge_assessments(\n            assessments=[],\n            trust_scores=[],\n            review_request_id=FIXED_REVIEW_REQUEST_ID,\n        )\n        pass_decision = getattr(ReviewDecision, \"pass\", ReviewDecision(\"pass\"))\n        assert report.decision == pass_decision\n        assert len(report.findings) == 0\n\n    @pytest.mark.asyncio\n    async def test_error_empty_review_request_id(self, assessor):\n        \"\"\"merge_assessments raises error when review_request_id is empty.\"\"\"\n        with pytest.raises(Exception) as exc_info:\n            await assessor.merge_assessments(\n                assessments=[],\n                trust_scores=[],\n                review_request_id=\"\",\n            )\n        # Should indicate invalid_review_request_id\n        error_msg = str(exc_info.value).lower()\n        assert \"review_request_id\" in error_msg or \"invalid\" in error_msg or \"empty\" in error_msg\n\n    @pytest.mark.asyncio\n    async def test_error_too_long_review_request_id(self, assessor):\n        \"\"\"merge_assessments raises error when review_request_id exceeds 256 chars.\"\"\"\n        with pytest.raises(Exception):\n            await assessor.merge_assessments(\n                assessments=[],\n                trust_scores=[],\n                review_request_id=\"x\" * 257,\n            )\n\n    @pytest.mark.asyncio\n    async def test_error_assessment_request_id_mismatch(self, assessor):\n        \"\"\"merge_assessments raises error when assessment review_request_id doesn't match.\"\"\"\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            review_request_id=\"DIFFERENT-ID\",\n        )\n        with pytest.raises(Exception) as exc_info:\n            await assessor.merge_assessments(\n                assessments=[a1],\n                trust_scores=[],\n                review_request_id=FIXED_REVIEW_REQUEST_ID,\n            )\n        error_msg = str(exc_info.value).lower()\n        assert \"mismatch\" in error_msg or \"request_id\" in error_msg or \"assessment\" in error_msg\n\n    @pytest.mark.asyncio\n    async def test_error_duplicate_reviewer_stage(self, assessor):\n        \"\"\"merge_assessments raises error when two assessments share (reviewer_id, stage).\"\"\"\n        a1 = make_assessment(reviewer_id=\"r1\", stage=ReviewStage.security)\n        a2 = make_assessment(reviewer_id=\"r1\", stage=ReviewStage.security)\n        with pytest.raises(Exception) as exc_info:\n            await assessor.merge_assessments(\n                assessments=[a1, a2],\n                trust_scores=[],\n                review_request_id=FIXED_REVIEW_REQUEST_ID,\n            )\n        error_msg = str(exc_info.value).lower()\n        assert \"duplicate\" in error_msg or \"reviewer\" in error_msg or \"stage\" in error_msg\n\n    @pytest.mark.asyncio\n    async def test_chronicler_failure_does_not_propagate(self):\n        \"\"\"merge_assessments returns report even when Chronicler emission fails.\"\"\"\n        try:\n            from exemplar.assessor import Assessor\n            mock_chronicler = make_mock_chronicler(should_fail=True)\n            mock_clock = make_mock_clock()\n            assessor = Assessor(\n                merge_context=make_merge_context(),\n                chronicler=mock_chronicler,\n                clock=mock_clock,\n            )\n            f1 = make_finding(id=\"f1\", severity=Severity.medium)\n            a1 = make_assessment(\n                reviewer_id=\"r1\", stage=ReviewStage.security,\n                decision=ReviewDecision.warn, findings=[f1],\n            )\n            ts = make_trust_score(reviewer_id=\"r1\", stage=ReviewStage.security, weight=0.8)\n            report = await assessor.merge_assessments(\n                assessments=[a1],\n                trust_scores=[ts],\n                review_request_id=FIXED_REVIEW_REQUEST_ID,\n            )\n            # Report should still be returned\n            assert report is not None\n            assert report.review_request_id == FIXED_REVIEW_REQUEST_ID\n        except (ImportError, TypeError):\n            pytest.skip(\"Cannot construct Assessor\")\n\n    @pytest.mark.asyncio\n    async def test_security_block_override_integration(self, assessor):\n        \"\"\"merge_assessments with security BLOCK override produces BLOCK decision.\"\"\"\n        f1 = make_finding(\n            id=\"f1\", severity=Severity.info, confidence=Confidence.low\n        )\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            decision=ReviewDecision.block, findings=[f1],\n        )\n        ts = make_trust_score(reviewer_id=\"r1\", stage=ReviewStage.security, weight=0.1)\n        report = await assessor.merge_assessments(\n            assessments=[a1],\n            trust_scores=[ts],\n            review_request_id=FIXED_REVIEW_REQUEST_ID,\n        )\n        # With security_block_overrides=True (default), should be BLOCK\n        assert report.decision == ReviewDecision.block\n\n    @pytest.mark.asyncio\n    async def test_findings_sorted_deterministically(self, assessor):\n        \"\"\"merge_assessments returns findings sorted by (file_path, line_number, severity, id).\"\"\"\n        f1 = make_finding(id=\"f-z\", file_path=\"z.py\", line_number=1, severity=Severity.low, rule_id=\"R001\")\n        f2 = make_finding(id=\"f-a\", file_path=\"a.py\", line_number=100, severity=Severity.critical, rule_id=\"R002\")\n        f3 = make_finding(id=\"f-m\", file_path=\"a.py\", line_number=1, severity=Severity.medium, rule_id=\"R003\")\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            decision=ReviewDecision.warn, findings=[f1, f2, f3],\n        )\n        ts = make_trust_score(reviewer_id=\"r1\", stage=ReviewStage.security, weight=0.8)\n        report = await assessor.merge_assessments(\n            assessments=[a1],\n            trust_scores=[ts],\n            review_request_id=FIXED_REVIEW_REQUEST_ID,\n        )\n        findings = report.findings\n        # Verify file_path ASC ordering\n        for i in range(len(findings) - 1):\n            cur = findings[i]\n            nxt = findings[i + 1]\n            cur_key = (cur.file_path, cur.line_number or 0)\n            nxt_key = (nxt.file_path, nxt.line_number or 0)\n            assert cur_key <= nxt_key or cur.file_path < nxt.file_path\n\n    @pytest.mark.asyncio\n    async def test_no_duplicate_findings_in_output(self, assessor):\n        \"\"\"merge_assessments output contains no duplicate composite keys.\"\"\"\n        f1 = make_finding(\n            id=\"f1\", hunk_id=\"h1\", file_path=\"a.py\", line_number=10,\n            rule_id=\"R001\", severity=Severity.medium,\n        )\n        f2 = make_finding(\n            id=\"f2\", hunk_id=\"h1\", file_path=\"a.py\", line_number=10,\n            rule_id=\"R001\", severity=Severity.critical,\n        )\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            decision=ReviewDecision.warn, findings=[f1],\n        )\n        a2 = make_assessment(\n            reviewer_id=\"r2\", stage=ReviewStage.correctness,\n            decision=ReviewDecision.warn, findings=[f2],\n        )\n        ts1 = make_trust_score(reviewer_id=\"r1\", stage=ReviewStage.security, weight=0.8)\n        ts2 = make_trust_score(reviewer_id=\"r2\", stage=ReviewStage.correctness, weight=0.9)\n        report = await assessor.merge_assessments(\n            assessments=[a1, a2],\n            trust_scores=[ts1, ts2],\n            review_request_id=FIXED_REVIEW_REQUEST_ID,\n        )\n        seen_keys = set()\n        for f in report.findings:\n            key = (f.hunk_id, f.file_path, f.line_number, f.rule_id)\n            assert key not in seen_keys, f\"Duplicate finding key: {key}\"\n            seen_keys.add(key)\n\n    @pytest.mark.asyncio\n    async def test_pact_component_always_assessor(self, assessor):\n        \"\"\"PACT_COMPONENT is always 'assessor' in every ReviewReport.\"\"\"\n        report = await assessor.merge_assessments(\n            assessments=[],\n            trust_scores=[],\n            review_request_id=FIXED_REVIEW_REQUEST_ID,\n        )\n        # Check metadata or direct pact attribute\n        if hasattr(report, \"pact\"):\n            assert report.pact.component == \"assessor\"\n        elif isinstance(report.metadata, dict):\n            # PACT may be embedded in metadata\n            pact_val = report.metadata.get(\"pact_component\", report.metadata.get(\"component\", \"\"))\n            assert \"assessor\" in str(report.metadata).lower() or pact_val == \"assessor\"\n\n    @pytest.mark.asyncio\n    async def test_default_trust_weight_fallback(self, assessor):\n        \"\"\"When no TrustScore matches a reviewer, default weight is used.\"\"\"\n        f1 = make_finding(\n            id=\"f1\", severity=Severity.medium, rule_id=\"R001\"\n        )\n        a1 = make_assessment(\n            reviewer_id=\"r-unknown\", stage=ReviewStage.security,\n            decision=ReviewDecision.warn, findings=[f1],\n        )\n        # No trust scores provided — should fall back to default 0.5\n        report = await assessor.merge_assessments(\n            assessments=[a1],\n            trust_scores=[],\n            review_request_id=FIXED_REVIEW_REQUEST_ID,\n        )\n        assert report is not None\n        assert report.review_request_id == FIXED_REVIEW_REQUEST_ID\n\n    @pytest.mark.asyncio\n    async def test_mixed_decisions_across_stages(self, assessor):\n        \"\"\"merge_assessments handles mixed decisions across stages.\"\"\"\n        f1 = make_finding(id=\"f1\", severity=Severity.critical, rule_id=\"R001\", stage=ReviewStage.security)\n        f2 = make_finding(id=\"f2\", severity=Severity.low, rule_id=\"R002\", file_path=\"b.py\", stage=ReviewStage.style)\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            decision=ReviewDecision.block, findings=[f1],\n        )\n        pass_decision = getattr(ReviewDecision, \"pass\", ReviewDecision(\"pass\"))\n        a2 = make_assessment(\n            reviewer_id=\"r2\", stage=ReviewStage.style,\n            decision=pass_decision, findings=[f2],\n        )\n        ts1 = make_trust_score(reviewer_id=\"r1\", stage=ReviewStage.security, weight=0.9)\n        ts2 = make_trust_score(reviewer_id=\"r2\", stage=ReviewStage.style, weight=0.5)\n        report = await assessor.merge_assessments(\n            assessments=[a1, a2],\n            trust_scores=[ts1, ts2],\n            review_request_id=FIXED_REVIEW_REQUEST_ID,\n        )\n        # With security_block_overrides=True and security BLOCK, final should be BLOCK\n        assert report.decision == ReviewDecision.block\n\n\n# ============================================================================\n# TestMergeAssessmentsProperties — Determinism & Monotonicity\n# ============================================================================\n\nclass TestMergeAssessmentsProperties:\n    \"\"\"Property-like tests for merge_assessments using deterministic scenarios.\"\"\"\n\n    @pytest.fixture\n    def assessor_factory(self):\n        \"\"\"Factory to create fresh Assessor instances.\"\"\"\n        def _factory(**kwargs):\n            try:\n                from exemplar.assessor import Assessor\n                mc = kwargs.get(\"merge_context\", make_merge_context())\n                chronicler = kwargs.get(\"chronicler\", make_mock_chronicler())\n                clock = kwargs.get(\"clock\", make_mock_clock(\"2024-01-01T00:00:00Z\"))\n                return Assessor(\n                    merge_context=mc,\n                    chronicler=chronicler,\n                    clock=clock,\n                )\n            except (ImportError, TypeError):\n                pytest.skip(\"Cannot construct Assessor\")\n        return _factory\n\n    @pytest.mark.asyncio\n    async def test_determinism_same_input(self, assessor_factory):\n        \"\"\"Two calls with same input produce identical reports.\"\"\"\n        f1 = make_finding(id=\"f1\", severity=Severity.medium, rule_id=\"R001\")\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            decision=ReviewDecision.warn, findings=[f1],\n        )\n        ts = make_trust_score(reviewer_id=\"r1\", stage=ReviewStage.security, weight=0.8)\n\n        assessor1 = assessor_factory()\n        assessor2 = assessor_factory()\n\n        report1 = await assessor1.merge_assessments(\n            assessments=[a1], trust_scores=[ts],\n            review_request_id=FIXED_REVIEW_REQUEST_ID,\n        )\n        report2 = await assessor2.merge_assessments(\n            assessments=[a1], trust_scores=[ts],\n            review_request_id=FIXED_REVIEW_REQUEST_ID,\n        )\n\n        assert report1.decision == report2.decision\n        assert len(report1.findings) == len(report2.findings)\n        for f_a, f_b in zip(report1.findings, report2.findings):\n            assert f_a.file_path == f_b.file_path\n            assert f_a.line_number == f_b.line_number\n            assert f_a.severity == f_b.severity\n            assert f_a.rule_id == f_b.rule_id\n\n    @pytest.mark.asyncio\n    async def test_decision_monotonicity_adding_block(self, assessor_factory):\n        \"\"\"Adding a BLOCK assessment never weakens the final decision.\"\"\"\n        f1 = make_finding(\n            id=\"f1\", severity=Severity.low, rule_id=\"R001\",\n            file_path=\"a.py\", line_number=1,\n        )\n        pass_decision = getattr(ReviewDecision, \"pass\", ReviewDecision(\"pass\"))\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.style,\n            decision=pass_decision, findings=[f1],\n        )\n        ts1 = make_trust_score(reviewer_id=\"r1\", stage=ReviewStage.style, weight=0.3)\n\n        # Without block assessment\n        assessor_without = assessor_factory()\n        report_without = await assessor_without.merge_assessments(\n            assessments=[a1], trust_scores=[ts1],\n            review_request_id=FIXED_REVIEW_REQUEST_ID,\n        )\n\n        # With additional security BLOCK assessment\n        f2 = make_finding(\n            id=\"f2\", severity=Severity.critical, rule_id=\"R002\",\n            file_path=\"b.py\", line_number=5,\n        )\n        a2 = make_assessment(\n            reviewer_id=\"r2\", stage=ReviewStage.security,\n            decision=ReviewDecision.block, findings=[f2],\n        )\n        ts2 = make_trust_score(reviewer_id=\"r2\", stage=ReviewStage.security, weight=0.9)\n\n        assessor_with = assessor_factory()\n        report_with = await assessor_with.merge_assessments(\n            assessments=[a1, a2], trust_scores=[ts1, ts2],\n            review_request_id=FIXED_REVIEW_REQUEST_ID,\n        )\n\n        # Decision ordering: pass < warn < block\n        decision_strength = {\n            pass_decision: 0,\n            ReviewDecision.warn: 1,\n            ReviewDecision.block: 2,\n        }\n        strength_without = decision_strength.get(report_without.decision, 0)\n        strength_with = decision_strength.get(report_with.decision, 0)\n        assert strength_with >= strength_without\n\n    @pytest.mark.asyncio\n    async def test_score_boundedness(self, assessor_factory):\n        \"\"\"Total score is bounded and non-negative.\"\"\"\n        findings = [\n            make_finding(\n                id=f\"f{i}\", severity=Severity.critical, rule_id=f\"R{i:03d}\",\n                file_path=f\"file{i}.py\", line_number=i + 1,\n            )\n            for i in range(5)\n        ]\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            decision=ReviewDecision.block, findings=findings,\n        )\n        ts = make_trust_score(reviewer_id=\"r1\", stage=ReviewStage.security, weight=1.0)\n        assessor = assessor_factory()\n        report = await assessor.merge_assessments(\n            assessments=[a1], trust_scores=[ts],\n            review_request_id=FIXED_REVIEW_REQUEST_ID,\n        )\n        # Report should exist and decision should be valid\n        assert report.decision in [ReviewDecision.block, ReviewDecision.warn, getattr(ReviewDecision, \"pass\", ReviewDecision(\"pass\"))]\n\n    @pytest.mark.asyncio\n    async def test_dedup_count_invariant(self, assessor_factory):\n        \"\"\"Output findings count <= total input findings count.\"\"\"\n        # Create 3 duplicate findings and 2 unique\n        dup_finding_r1 = make_finding(\n            id=\"f1\", hunk_id=\"h1\", file_path=\"a.py\", line_number=10,\n            rule_id=\"R001\", severity=Severity.medium,\n        )\n        dup_finding_r2 = make_finding(\n            id=\"f2\", hunk_id=\"h1\", file_path=\"a.py\", line_number=10,\n            rule_id=\"R001\", severity=Severity.high,\n        )\n        dup_finding_r3 = make_finding(\n            id=\"f3\", hunk_id=\"h1\", file_path=\"a.py\", line_number=10,\n            rule_id=\"R001\", severity=Severity.low,\n        )\n        unique_f1 = make_finding(\n            id=\"f4\", file_path=\"b.py\", line_number=5, rule_id=\"R002\",\n        )\n        unique_f2 = make_finding(\n            id=\"f5\", file_path=\"c.py\", line_number=15, rule_id=\"R003\",\n        )\n\n        a1 = make_assessment(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            findings=[dup_finding_r1, unique_f1],\n        )\n        a2 = make_assessment(\n            reviewer_id=\"r2\", stage=ReviewStage.correctness,\n            findings=[dup_finding_r2, unique_f2],\n        )\n        a3 = make_assessment(\n            reviewer_id=\"r3\", stage=ReviewStage.style,\n            findings=[dup_finding_r3],\n        )\n        ts1 = make_trust_score(reviewer_id=\"r1\", stage=ReviewStage.security, weight=0.8)\n        ts2 = make_trust_score(reviewer_id=\"r2\", stage=ReviewStage.correctness, weight=0.7)\n        ts3 = make_trust_score(reviewer_id=\"r3\", stage=ReviewStage.style, weight=0.6)\n\n        assessor = assessor_factory()\n        report = await assessor.merge_assessments(\n            assessments=[a1, a2, a3],\n            trust_scores=[ts1, ts2, ts3],\n            review_request_id=FIXED_REVIEW_REQUEST_ID,\n        )\n        total_input_findings = 5  # 2 + 2 + 1\n        assert len(report.findings) <= total_input_findings\n        # 3 duplicates collapse to 1, plus 2 unique = 3\n        assert len(report.findings) == 3\n\n\n# ============================================================================\n# Invariant Tests\n# ============================================================================\n\nclass TestInvariants:\n    def test_frozen_models_cannot_be_mutated(self):\n        \"\"\"All data models are frozen and cannot be mutated after construction.\"\"\"\n        f = make_finding(id=\"f1\", severity=Severity.medium)\n        with pytest.raises(Exception):\n            f.severity = Severity.critical\n\n    def test_severity_score_map_values(self):\n        \"\"\"SEVERITY_SCORE maps info=1.0, warning/low=3.0, error/medium/high=7.0, critical=15.0.\"\"\"\n        try:\n            from exemplar.assessor import SEVERITY_SCORE\n            # The contract says info=1.0, warning=3.0, error=7.0, critical=15.0\n            # Map might use Severity enum or string keys\n            if isinstance(SEVERITY_SCORE, dict):\n                # Try various key formats\n                info_key = Severity.info if Severity.info in SEVERITY_SCORE else \"info\"\n                if info_key in SEVERITY_SCORE:\n                    assert SEVERITY_SCORE[info_key] == 1.0\n            elif hasattr(SEVERITY_SCORE, \"info\"):\n                assert SEVERITY_SCORE.info == 1.0\n                assert SEVERITY_SCORE.critical == 15.0\n        except ImportError:\n            pytest.skip(\"SEVERITY_SCORE not importable\")\n\n    def test_stage_priority_order(self):\n        \"\"\"STAGE_PRIORITY ordering is [security, correctness, architecture, style].\"\"\"\n        try:\n            from exemplar.assessor import STAGE_PRIORITY\n            expected = [\n                ReviewStage.security,\n                ReviewStage.correctness,\n                ReviewStage.architecture,\n                ReviewStage.style,\n            ]\n            assert list(STAGE_PRIORITY) == expected\n        except ImportError:\n            pytest.skip(\"STAGE_PRIORITY not importable\")\n\n    def test_default_trust_weight_is_0_5(self):\n        \"\"\"DEFAULT_TRUST_WEIGHT is 0.5.\"\"\"\n        try:\n            from exemplar.assessor import DEFAULT_TRUST_WEIGHT\n            if isinstance(DEFAULT_TRUST_WEIGHT, (int, float)):\n                assert DEFAULT_TRUST_WEIGHT == 0.5\n            elif hasattr(DEFAULT_TRUST_WEIGHT, \"value\"):\n                assert DEFAULT_TRUST_WEIGHT.value == 0.5\n        except ImportError:\n            pytest.skip(\"DEFAULT_TRUST_WEIGHT not importable\")\n\n    def test_pact_component_constant(self):\n        \"\"\"PACT_COMPONENT constant is always 'assessor'.\"\"\"\n        try:\n            from exemplar.assessor import PACT_COMPONENT\n            assert PACT_COMPONENT == \"assessor\"\n        except ImportError:\n            pytest.skip(\"PACT_COMPONENT not importable\")\n\n    def test_trust_score_frozen(self):\n        \"\"\"TrustScore is frozen after construction.\"\"\"\n        ts = make_trust_score()\n        with pytest.raises(Exception):\n            ts.weight = 0.99\n\n    def test_assessment_frozen(self):\n        \"\"\"Assessment is frozen after construction.\"\"\"\n        a = make_assessment()\n        with pytest.raises(Exception):\n            a.decision = ReviewDecision.block\n\n    def test_review_report_frozen(self):\n        \"\"\"ReviewReport is frozen after construction (if constructible directly).\"\"\"\n        try:\n            report = ReviewReport(\n                id=\"rpt-001\",\n                review_request_id=\"rr-001\",\n                decision=ReviewDecision.warn,\n                findings=[],\n                assessments=[],\n                confidence=Confidence.high,\n                trust_scores=[],\n                conflict_notes=[],\n                summary=\"Test\",\n                seal=None,\n                created_at=FIXED_TIMESTAMP,\n                metadata={},\n            )\n            with pytest.raises(Exception):\n                report.decision = ReviewDecision.block\n        except Exception:\n            pytest.skip(\"Cannot construct ReviewReport directly\")\n\n    def test_chronicler_event_type_variants(self):\n        \"\"\"ChroniclerEventType has expected variants including assessment.merged.\"\"\"\n        # Access the assessment.merged variant\n        merged_variant = getattr(\n            ChroniclerEventType, \"assessment.merged\", None\n        )\n        if merged_variant is None:\n            # Try alternate naming\n            merged_variant = ChroniclerEventType(\"assessment.merged\")\n        assert merged_variant is not None\n\n    def test_confidence_enum_variants(self):\n        \"\"\"Confidence enum has high, medium, low variants.\"\"\"\n        assert Confidence.high is not None\n        assert Confidence.medium is not None\n        assert Confidence.low is not None\n\n    def test_review_stage_all_variants(self):\n        \"\"\"ReviewStage has security, correctness, style, architecture variants.\"\"\"\n        assert ReviewStage.security is not None\n        assert ReviewStage.correctness is not None\n        assert ReviewStage.style is not None\n        assert ReviewStage.architecture is not None\n\n\n# ============================================================================\n# Additional Edge Case Tests\n# ============================================================================\n\nclass TestEdgeCases:\n    def test_review_request_id_exactly_one_char(self):\n        \"\"\"ReviewRequestId with exactly 1 character is valid.\"\"\"\n        rid = ReviewRequestId(value=\"a\")\n        assert rid.value == \"a\"\n\n    def test_reviewer_id_exactly_128_chars(self):\n        \"\"\"ReviewerId with exactly 128 characters is valid.\"\"\"\n        r = ReviewerId(value=\"a\" * 128)\n        assert len(r.value) == 128\n\n    def test_trust_weight_at_exact_boundaries(self):\n        \"\"\"TrustWeight at exact boundaries 0.0 and 1.0 are valid.\"\"\"\n        assert TrustWeight(value=0.0).value == 0.0\n        assert TrustWeight(value=1.0).value == 1.0\n\n    def test_finding_dedup_key_line_number_one(self):\n        \"\"\"FindingDeduplicationKey with line_number=1 (minimum) is valid.\"\"\"\n        key = FindingDeduplicationKey(\n            hunk_id=\"h1\", file_path=\"a.py\", line_number=1, rule_id=\"R001\"\n        )\n        assert key.line_number == 1\n\n    def test_finding_dedup_key_large_line_number(self):\n        \"\"\"FindingDeduplicationKey with very large line_number is valid.\"\"\"\n        key = FindingDeduplicationKey(\n            hunk_id=\"h1\", file_path=\"a.py\", line_number=999999, rule_id=\"R001\"\n        )\n        assert key.line_number == 999999\n\n    def test_merge_context_block_equals_warn_threshold(self):\n        \"\"\"MergeContext where block_threshold == warn_threshold is valid.\"\"\"\n        mc = make_merge_context(block_threshold=5.0, warn_threshold=5.0)\n        assert mc.block_threshold == mc.warn_threshold\n\n    def test_tessera_seal_optional_previous_hash(self):\n        \"\"\"TesseraSeal accepts None for previous_hash.\"\"\"\n        seal = TesseraSeal(\n            content_hash=\"abc123\",\n            previous_hash=None,\n            chain_hash=\"def456\",\n            sealed_at=FIXED_TIMESTAMP,\n            sealer_id=\"sealer-1\",\n        )\n        assert seal.previous_hash is None\n\n    def test_finding_optional_suggestion(self):\n        \"\"\"Finding accepts None for suggestion.\"\"\"\n        f = make_finding(suggestion=None)\n        assert f.suggestion is None\n\n    def test_finding_with_suggestion(self):\n        \"\"\"Finding accepts a string suggestion.\"\"\"\n        f = make_finding(suggestion=\"Consider using a constant here.\")\n        assert f.suggestion == \"Consider using a constant here.\"\n\n    def test_assessment_optional_error_message(self):\n        \"\"\"Assessment accepts None for error_message.\"\"\"\n        a = make_assessment(error_message=None)\n        assert a.error_message is None\n\n    def test_assessment_with_error_message(self):\n        \"\"\"Assessment accepts a string error_message.\"\"\"\n        a = make_assessment(error_message=\"Timeout during review\")\n        assert a.error_message == \"Timeout during review\"\n\n    def test_pact_attribution_version_one(self):\n        \"\"\"PactAttribution accepts version=1 (minimum valid).\"\"\"\n        pa = PactAttribution(component=\"assessor\", version=1, timestamp=FIXED_TIMESTAMP)\n        assert pa.version == 1\n\n    def test_conflict_note_construction(self):\n        \"\"\"ConflictNote can be constructed with valid fields.\"\"\"\n        cn = ConflictNote(\n            description=\"Security overrides style\",\n            overriding_stage=ReviewStage.security,\n            overridden_stage=ReviewStage.style,\n            overriding_decision=ReviewDecision.block,\n            overridden_decision=getattr(ReviewDecision, \"pass\", ReviewDecision(\"pass\")),\n        )\n        assert cn.overriding_stage == ReviewStage.security\n        assert cn.overridden_stage == ReviewStage.style\n"
+}

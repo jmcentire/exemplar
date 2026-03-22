@@ -1,0 +1,91 @@
+pydantic_models:
+  base_patterns:
+    frozen: true
+    extra: "forbid"
+
+  enums:
+    Severity:
+      type: "StrEnum"
+      variants: ["info", "low", "medium", "high", "critical"]
+    Confidence:
+      type: "StrEnum"
+      variants: ["low", "medium", "high"]
+    ReviewStage:
+      type: "StrEnum"
+      variants: ["security", "correctness", "style", "architecture"]
+    AssessmentVerdict:
+      type: "StrEnum"
+      variants: ["approve", "comment", "request_changes", "block"]
+
+  core_models:
+    DiffHunk:
+      fields:
+        file_path: "str"
+        start_line: "int"
+        end_line: "int"
+        content: "str"
+        context_before: "str"
+        context_after: "str"
+        classification: "list[str]"
+      note: "classification populated by Ledger field rules"
+
+    ReviewRequest:
+      fields:
+        request_id: "str"
+        hunks: "list[DiffHunk]"
+        metadata: "dict[str, str]"
+        timestamp: "datetime"
+
+    Assessment:
+      fields:
+        reviewer_id: "str"
+        stage: "ReviewStage"
+        verdict: "AssessmentVerdict"
+        findings: "list[Finding]"
+        confidence: "Confidence"
+        trust_score: "float"
+      note: "trust_score populated by Arbiter"
+
+    Finding:
+      fields:
+        file_path: "str"
+        line: "int"
+        severity: "Severity"
+        message: "str"
+        suggestion: "str"
+        category: "str"
+
+    ReviewReport:
+      fields:
+        request_id: "str"
+        assessments: "list[Assessment]"
+        overall_verdict: "AssessmentVerdict"
+        overall_confidence: "Confidence"
+        findings_by_severity: "dict[str, int]"
+        seal: "str | None"
+      note: "seal is Tessera hash-chain proof"
+
+    ReviewerCredential:
+      fields:
+        reviewer_id: "str"
+        stages: "list[ReviewStage]"
+        policy_token: "str"
+        trust_tier: "str"
+      note: "Agent-Safe policy token + Signet credential"
+
+  configuration:
+    ExemplarConfig:
+      fields:
+        stages: "list[ReviewStage]"
+        severity_threshold: "Severity"
+        reviewers: "dict[str, ReviewerConfig]"
+        output_format: "str"
+        chronicler_enabled: "bool"
+        apprentice_mode: "str"
+
+protocol_definitions:
+  ReviewerProtocol:
+    runtime_checkable: true
+    methods:
+      - "async def review(hunks: list[DiffHunk]) -> Assessment"
+      - "def supported_stages() -> list[ReviewStage]"

@@ -1,0 +1,32 @@
+[
+  {
+    "ambiguity": "",
+    "decision": "",
+    "rationale": "The 16 governance libraries don't exist as installable packages. Rather than spreading thin implementations across every module or creating 16 tiny files, we consolidate all governance primitives (Tessera, Chronicler, Agent-Safe, Signet, Arbiter, Ledger, Stigmergy, Kindex) into one 'governance' component. Each is a focused class with a Protocol interface. This keeps integrations real and testable while avoiding excessive fragmentation. Cartographer lives in CLI (it's a subcommand), Constrain lives in config (it's constraint definitions), Pact is realized through Protocol-based contracts and contract tests, Sentinel is realized through Chronicler events + Stigmergy pattern detection."
+  },
+  {
+    "ambiguity": "",
+    "decision": "",
+    "rationale": "Per assumption AS5, these appear in the vision section but have no module assignment, no architecture slot, and no project structure entry. They are stretch goals. The component list and acceptance criteria don't reference them as required deliverables."
+  },
+  {
+    "ambiguity": "",
+    "decision": "",
+    "rationale": "The four reviewers share ReviewerProtocol, common heuristic infrastructure (regex helpers, AST walking utilities), and Agent-Safe scoping logic. They form one cohesive subsystem with a clean interface (ReviewerProtocol) even though they have 5 files (base.py + 4 implementations). Decomposing each reviewer into its own component would create unnecessary dependency management overhead with no architectural benefit."
+  },
+  {
+    "ambiguity": "",
+    "decision": "",
+    "rationale": "Per AS6, both are thin transport layers. They depend on the same core modules but have completely independent transport concerns (argparse+stdout vs JSON-RPC+stdio). Keeping them separate allows independent implementation and testing. The 'pipeline orchestration' logic (intake\u2192circuit\u2192assess\u2192report) will be a shared async function callable from both."
+  },
+  {
+    "ambiguity": "",
+    "decision": "",
+    "rationale": "Per AS3, Kindex, Stigmergy state, and Apprentice learning state all use JSON files in a configurable .exemplar/ directory. This is implemented within the governance component's KindexStore and StigmergyTracker classes. Keeps dependencies minimal and the system fully offline."
+  },
+  {
+    "ambiguity": "",
+    "decision": "",
+    "rationale": "The spec lists only pydantic, pyyaml, and aiohttp as dependencies. MCP stdio transport is simple JSON-RPC and can be implemented in ~100 lines using aiohttp patterns or raw asyncio. This avoids adding an undeclared dependency while keeping AC17 satisfied."
+  }
+]

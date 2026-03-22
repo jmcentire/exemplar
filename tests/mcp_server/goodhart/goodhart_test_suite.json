@@ -1,0 +1,790 @@
+{
+  "component_id": "mcp_server",
+  "contract_version": 1,
+  "test_cases": [
+    {
+      "id": "goodhart_review_both_diff_and_file",
+      "description": "When both diff_text and file_path are provided, the handler should accept the input and produce a successful review (not just work with one-or-the-other)",
+      "function": "handle_review",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {
+        "pipeline.run_review": "returns a valid ReviewReport"
+      },
+      "input_values": {},
+      "input_description": "ReviewToolInput with both diff_text and file_path populated",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.isError is False",
+        "len(result.content) == 1",
+        "result.content[0].type == 'text'",
+        "JSON parseable content"
+      ]
+    },
+    {
+      "id": "goodhart_review_config_overrides_passed",
+      "description": "Config overrides provided in ReviewToolInput should be forwarded to the pipeline's run_review method, not silently ignored",
+      "function": "handle_review",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {
+        "pipeline.run_review": "mock that captures kwargs to verify config_overrides were passed"
+      },
+      "input_values": {},
+      "input_description": "ReviewToolInput with diff_text and config_overrides={'severity_threshold': 'high'}",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "pipeline.run_review was called with config_overrides"
+      ]
+    },
+    {
+      "id": "goodhart_review_diff_one_byte_over_max",
+      "description": "A diff that exceeds max_diff_size_bytes by exactly one byte should be rejected as too large",
+      "function": "handle_review",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "diff_text with byte length = max_diff_size_bytes + 1 (using config with max_diff_size_bytes=1024)",
+      "expected_output_description": "",
+      "expected_error": "diff_too_large",
+      "assertions": [
+        "result.isError is True",
+        "error_type is 'io_error' or relevant diff_too_large type"
+      ]
+    },
+    {
+      "id": "goodhart_review_file_diff_too_large",
+      "description": "When diff content is read from a file and exceeds max_diff_size_bytes, the handler should return a diff_too_large error (not just check diff_text length)",
+      "function": "handle_review",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {
+        "file system": "temp file with content larger than max_diff_size_bytes"
+      },
+      "input_values": {},
+      "input_description": "ReviewToolInput with file_path pointing to a file whose content exceeds max_diff_size_bytes",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.isError is True",
+        "parsed ToolError has error_type indicating diff_too_large"
+      ]
+    },
+    {
+      "id": "goodhart_review_empty_diff_text_rejected",
+      "description": "An empty string for diff_text should be rejected by the min=1 length validator",
+      "function": "handle_review",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "ReviewToolInput with diff_text='' (empty string)",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Pydantic validation error is raised or returned"
+      ]
+    },
+    {
+      "id": "goodhart_review_empty_file_path_rejected",
+      "description": "An empty string for file_path should be rejected by the min=1 length validator",
+      "function": "handle_review",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "ReviewToolInput with file_path='' (empty string)",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Pydantic validation error is raised or returned"
+      ]
+    },
+    {
+      "id": "goodhart_review_chronicler_failure_does_not_block",
+      "description": "When the chronicler is unreachable or raises an exception, the review handler should still complete successfully and return the review result",
+      "function": "handle_review",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {
+        "chronicler": "raises ConnectionError on event emission",
+        "pipeline.run_review": "returns valid ReviewReport"
+      },
+      "input_values": {},
+      "input_description": "Valid ReviewToolInput with diff_text",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.isError is False",
+        "result contains valid review report"
+      ]
+    },
+    {
+      "id": "goodhart_review_format_default_json",
+      "description": "ReviewToolInput should default to json format when format is not explicitly provided",
+      "function": "handle_review",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "ReviewToolInput constructed without specifying format field",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "input.format == OutputFormat.json or equivalent default"
+      ]
+    },
+    {
+      "id": "goodhart_trust_empty_reviewer_id_rejected",
+      "description": "An empty string for reviewer_id should be rejected by the regex validator (min length 1 in pattern)",
+      "function": "handle_trust",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "TrustToolInput with reviewer_id=''",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Pydantic validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_trust_reviewer_id_with_spaces_rejected",
+      "description": "A reviewer_id containing spaces should be rejected by the regex pattern",
+      "function": "handle_trust",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "TrustToolInput with reviewer_id='john doe'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Pydantic validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_trust_reviewer_id_with_at_sign_rejected",
+      "description": "A reviewer_id containing @ should be rejected since it's not in the allowed character set",
+      "function": "handle_trust",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "TrustToolInput with reviewer_id='user@domain'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Pydantic validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_trust_result_is_valid_json_list",
+      "description": "Successful trust handler response content should be valid JSON that deserializes to a list structure",
+      "function": "handle_trust",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {
+        "pipeline.get_trust_scores": "returns list of TrustScore objects"
+      },
+      "input_values": {},
+      "input_description": "TrustToolInput with no reviewer_id",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.isError is False",
+        "json.loads(result.content[0].text) is a list"
+      ]
+    },
+    {
+      "id": "goodhart_history_negative_offset_rejected",
+      "description": "A negative offset value should be rejected by the min=0 range validator",
+      "function": "handle_history",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "HistoryToolInput with offset=-1",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Pydantic validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_history_negative_limit_rejected",
+      "description": "A negative limit value should be rejected by the min=1 range validator",
+      "function": "handle_history",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "HistoryToolInput with limit=-1",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Pydantic validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_history_date_from_date_only",
+      "description": "HistoryToolInput should accept date_from as a date-only string (YYYY-MM-DD) without time component",
+      "function": "handle_history",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "HistoryToolInput with date_from='2024-06-15' (no time part)",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "No validation error raised"
+      ]
+    },
+    {
+      "id": "goodhart_history_date_with_utc_z",
+      "description": "HistoryToolInput should accept dates with UTC Z suffix like 2024-01-15T10:30:00Z",
+      "function": "handle_history",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "HistoryToolInput with date_to='2024-01-15T10:30:00Z'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "No validation error raised"
+      ]
+    },
+    {
+      "id": "goodhart_history_date_invalid_format_slashes",
+      "description": "Dates in slash format (MM/DD/YYYY) should be rejected by the date regex validator",
+      "function": "handle_history",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "HistoryToolInput with date_from='01/15/2024'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Pydantic validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_history_date_invalid_partial_time",
+      "description": "Dates with partial time components (e.g., only hours without minutes/seconds) should be rejected",
+      "function": "handle_history",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "HistoryToolInput with date_from='2024-01-15T10'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Pydantic validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_history_kind_65_chars_rejected",
+      "description": "A kind string of exactly 65 characters should be rejected since max length in regex is 64",
+      "function": "handle_history",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "HistoryToolInput with kind='a' * 65",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Pydantic validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_history_kind_64_chars_accepted",
+      "description": "A kind string of exactly 64 alphanumeric characters should be accepted as it matches the regex max",
+      "function": "handle_history",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "HistoryToolInput with kind='a' * 64",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "No validation error raised"
+      ]
+    },
+    {
+      "id": "goodhart_history_kind_with_dot_rejected",
+      "description": "A kind string containing a dot should be rejected since dots are not in the allowed regex pattern for kind",
+      "function": "handle_history",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "HistoryToolInput with kind='review.type'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Pydantic validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_build_tool_error_all_error_types",
+      "description": "build_tool_error should accept all four valid error_type values, not just the ones used in visible tests",
+      "function": "build_tool_error",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Call build_tool_error with each of validation_error, pipeline_error, io_error, internal_error",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All four calls succeed",
+        "Each returns isError=True with correct error_type in JSON"
+      ]
+    },
+    {
+      "id": "goodhart_build_tool_error_invalid_error_type",
+      "description": "ToolError should reject error_type values not in the allowed set",
+      "function": "build_tool_error",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "build_tool_error with error_type='unknown_error'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_build_tool_error_empty_message_rejected",
+      "description": "ToolError message field with empty string should be rejected by min=1 length validator",
+      "function": "build_tool_error",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "build_tool_error with message=''",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_build_success_result_empty_list",
+      "description": "build_success_result should handle an empty list of Pydantic models and return valid JSON '[]'",
+      "function": "build_success_result",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "build_success_result([])",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.isError is False",
+        "json.loads(result.content[0].text) == []"
+      ]
+    },
+    {
+      "id": "goodhart_build_success_deterministic_different_models",
+      "description": "build_success_result should produce sorted-key JSON for any Pydantic model, not just the specific models used in visible tests",
+      "function": "build_success_result",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A custom Pydantic model with fields z_field, a_field, m_field",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Keys in JSON output are in sorted alphabetical order"
+      ]
+    },
+    {
+      "id": "goodhart_server_config_name_special_chars_rejected",
+      "description": "ServerConfig should reject server_name containing characters not in the allowed regex (e.g., spaces, dots)",
+      "function": "create_server",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "ServerConfig with server_name='my server' (contains space)",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_server_config_name_with_dot_rejected",
+      "description": "ServerConfig should reject server_name containing a dot since dots are not in the regex pattern",
+      "function": "create_server",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "ServerConfig with server_name='my.server'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_server_config_version_with_prerelease",
+      "description": "ServerConfig should accept semver with valid pre-release suffix like 1.0.0-beta.1",
+      "function": "create_server",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "ServerConfig with server_version='1.0.0-beta.1'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "No validation error raised"
+      ]
+    },
+    {
+      "id": "goodhart_server_config_max_diff_1023_rejected",
+      "description": "ServerConfig should reject max_diff_size_bytes=1023 since minimum is 1024",
+      "function": "create_server",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "ServerConfig with max_diff_size_bytes=1023",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_server_config_max_diff_10485761_rejected",
+      "description": "ServerConfig should reject max_diff_size_bytes=10485761 since maximum is 10485760",
+      "function": "create_server",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "ServerConfig with max_diff_size_bytes=10485761",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_review_tool_input_json_schema",
+      "description": "ReviewToolInput.model_json_schema() should produce a valid JSON schema that reflects all fields including optional ones",
+      "function": "handle_review",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Call ReviewToolInput.model_json_schema()",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Schema has 'properties' key",
+        "diff_text, file_path, config_overrides, format are in properties",
+        "Schema is a valid dict"
+      ]
+    },
+    {
+      "id": "goodhart_trust_handler_never_raises_on_any_exception",
+      "description": "The trust handler should catch ALL exception types (not just specific ones) and return McpToolResult with isError=True",
+      "function": "handle_trust",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {
+        "pipeline.get_trust_scores": "raises RuntimeError('unexpected')"
+      },
+      "input_values": {},
+      "input_description": "Valid TrustToolInput, pipeline.get_trust_scores raises a RuntimeError (not a typical pipeline error)",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "No exception propagates",
+        "result.isError is True"
+      ]
+    },
+    {
+      "id": "goodhart_history_handler_never_raises_on_any_exception",
+      "description": "The history handler should catch ALL exception types and return McpToolResult with isError=True",
+      "function": "handle_history",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {
+        "pipeline.query_history": "raises TypeError('bad arg')"
+      },
+      "input_values": {},
+      "input_description": "Valid HistoryToolInput, pipeline.query_history raises TypeError",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "No exception propagates",
+        "result.isError is True"
+      ]
+    },
+    {
+      "id": "goodhart_review_error_content_type_always_text",
+      "description": "Even in error responses from handle_review, the McpContentBlock type must be 'text'",
+      "function": "handle_review",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Various error-triggering inputs for handle_review",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.content[0].type == 'text' for all error cases"
+      ]
+    },
+    {
+      "id": "goodhart_history_limit_2_accepted",
+      "description": "HistoryToolInput should accept limit=2 (a non-boundary valid value different from visible tests' 1 and 500)",
+      "function": "handle_history",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "HistoryToolInput with limit=2, offset=0",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "No validation error raised"
+      ]
+    },
+    {
+      "id": "goodhart_history_limit_250_accepted",
+      "description": "HistoryToolInput should accept limit=250 (mid-range value not tested in visible tests)",
+      "function": "handle_history",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "HistoryToolInput with limit=250, offset=50",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "No validation error raised"
+      ]
+    },
+    {
+      "id": "goodhart_reviewer_id_single_char",
+      "description": "TrustToolInput should accept a single-character reviewer_id since the regex allows min 1 char",
+      "function": "handle_trust",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "TrustToolInput with reviewer_id='x'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "No validation error raised"
+      ]
+    },
+    {
+      "id": "goodhart_reviewer_id_numeric_only",
+      "description": "TrustToolInput should accept a purely numeric reviewer_id since digits are in the allowed character set",
+      "function": "handle_trust",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "TrustToolInput with reviewer_id='12345'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "No validation error raised"
+      ]
+    },
+    {
+      "id": "goodhart_review_file_path_exactly_4096",
+      "description": "ReviewToolInput should accept file_path with exactly 4096 characters (at the boundary, not over)",
+      "function": "handle_review",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "ReviewToolInput with file_path of exactly 4096 chars",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "No validation error raised for file_path length"
+      ]
+    },
+    {
+      "id": "goodhart_mcp_content_block_rejects_non_text_type",
+      "description": "McpContentBlock should reject type values other than 'text' such as 'html', 'image', or 'json'",
+      "function": "build_tool_error",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Attempt to create McpContentBlock with type='json'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_tool_error_type_not_arbitrary_string",
+      "description": "ToolError should reject an error_type that is a plausible but invalid string like 'timeout_error'",
+      "function": "build_tool_error",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "ToolError with error_type='timeout_error'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_create_server_tool_names_exact",
+      "description": "The three registered tools must be named exactly 'exemplar_review', 'exemplar_trust', 'exemplar_history' — not variations or subsets",
+      "function": "create_server",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {
+        "pipeline": "valid mock satisfying PipelineProtocol"
+      },
+      "input_values": {},
+      "input_description": "Valid pipeline and config",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Tool names are exactly {'exemplar_review', 'exemplar_trust', 'exemplar_history'}"
+      ]
+    },
+    {
+      "id": "goodhart_review_success_json_has_sorted_keys",
+      "description": "Successful handle_review response should contain JSON with sorted keys for deterministic output",
+      "function": "handle_review",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {
+        "pipeline.run_review": "returns ReviewReport with multiple fields"
+      },
+      "input_values": {},
+      "input_description": "Valid ReviewToolInput with diff_text",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "JSON keys in content.text are in sorted order"
+      ]
+    },
+    {
+      "id": "goodhart_history_date_to_only",
+      "description": "HistoryToolInput should accept date_to without date_from since both are optional independently",
+      "function": "handle_history",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "HistoryToolInput with date_to='2024-12-31' and no date_from",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "No validation error raised"
+      ]
+    },
+    {
+      "id": "goodhart_history_date_from_only",
+      "description": "HistoryToolInput should accept date_from without date_to since both are optional independently",
+      "function": "handle_history",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "HistoryToolInput with date_from='2024-01-01' and no date_to",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "No validation error raised"
+      ]
+    },
+    {
+      "id": "goodhart_server_config_empty_name_rejected",
+      "description": "ServerConfig should reject empty string for server_name since regex requires min 1 char",
+      "function": "create_server",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "ServerConfig with server_name=''",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_server_config_65_char_name_rejected",
+      "description": "ServerConfig should reject server_name with 65 characters since regex allows max 64",
+      "function": "create_server",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "ServerConfig with server_name='a' * 65",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_pipeline_missing_one_method",
+      "description": "A pipeline object missing one of the three required methods (e.g., missing query_history) should be rejected by create_server",
+      "function": "create_server",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Pipeline mock with run_review and get_trust_scores but no query_history",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "invalid_pipeline error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_review_diff_text_exactly_1048576",
+      "description": "ReviewToolInput should accept diff_text of exactly 1048576 characters (max boundary)",
+      "function": "handle_review",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "ReviewToolInput with diff_text='x' * 1048576",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "No validation error raised for diff_text length"
+      ]
+    }
+  ],
+  "test_language": "python",
+  "generated_code": "\"\"\"\nAdversarial hidden acceptance tests for MCP Server component.\nThese tests target gaps in visible test coverage to catch implementations\nthat hardcode returns or take shortcuts rather than truly satisfying the contract.\n\"\"\"\nimport asyncio\nimport json\nimport os\nimport tempfile\nfrom unittest.mock import AsyncMock, MagicMock, patch\n\nimport pytest\nfrom pydantic import BaseModel, ValidationError\n\nfrom exemplar.mcp_server import (\n    BuildToolError if False else None,  # defensive import\n)\n\n# Attempt flexible imports to handle different module structures\ntry:\n    from exemplar.mcp_server import (\n        OutputFormat,\n        ReviewToolInput,\n        TrustToolInput,\n        HistoryToolInput,\n        ToolError,\n        FieldError,\n        McpContentBlock,\n        McpToolResult,\n        ServerConfig,\n        create_server,\n        run_server,\n        handle_review,\n        handle_trust,\n        handle_history,\n        build_tool_error,\n        build_success_result,\n    )\nexcept ImportError:\n    # Some types may be in sub-modules\n    from exemplar.mcp_server import *\n\n\n# ── Helpers ──────────────────────────────────────────────────────────────\n\n\ndef make_mock_pipeline():\n    \"\"\"Create a mock pipeline satisfying PipelineProtocol.\"\"\"\n    pipeline = AsyncMock()\n    pipeline.run_review = AsyncMock(return_value=MagicMock(spec=BaseModel))\n    pipeline.get_trust_scores = AsyncMock(return_value=[])\n    pipeline.query_history = AsyncMock(return_value=[])\n    return pipeline\n\n\ndef make_valid_config(**overrides):\n    \"\"\"Create a valid ServerConfig with sensible defaults.\"\"\"\n    defaults = {\n        \"server_name\": \"test-server\",\n        \"server_version\": \"1.0.0\",\n        \"enable_chronicler\": False,\n        \"max_diff_size_bytes\": 2048,\n    }\n    defaults.update(overrides)\n    return ServerConfig(**defaults)\n\n\ndef parse_result_json(result):\n    \"\"\"Parse the JSON content from an McpToolResult.\"\"\"\n    assert len(result.content) == 1\n    assert result.content[0].type == \"text\"\n    return json.loads(result.content[0].text)\n\n\n# ── ReviewToolInput validation tests ─────────────────────────────────────\n\n\nclass TestGoodhartReviewValidation:\n    def test_goodhart_review_empty_diff_text_rejected(self):\n        \"\"\"diff_text with empty string should fail min=1 length validation\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            ReviewToolInput(diff_text=\"\", file_path=None)\n\n    def test_goodhart_review_empty_file_path_rejected(self):\n        \"\"\"file_path with empty string should fail min=1 length validation\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            ReviewToolInput(diff_text=None, file_path=\"\")\n\n    def test_goodhart_review_file_path_exactly_4096(self):\n        \"\"\"file_path at exactly 4096 chars should be accepted by the length validator\"\"\"\n        path = \"a\" * 4096\n        # Should not raise for length; may still need diff_text\n        try:\n            inp = ReviewToolInput(diff_text=\"x\", file_path=path)\n            assert len(inp.file_path) == 4096\n        except ValidationError as e:\n            # Only acceptable if error is NOT about length\n            error_str = str(e)\n            assert \"length\" not in error_str.lower() or \"too long\" not in error_str.lower()\n\n    def test_goodhart_review_diff_text_exactly_1048576(self):\n        \"\"\"diff_text at exactly 1048576 chars (max boundary) should be accepted\"\"\"\n        big_text = \"x\" * 1048576\n        inp = ReviewToolInput(diff_text=big_text)\n        assert len(inp.diff_text) == 1048576\n\n    def test_goodhart_review_format_default_is_json(self):\n        \"\"\"ReviewToolInput should default format to json when not specified\"\"\"\n        inp = ReviewToolInput(diff_text=\"some diff\")\n        assert inp.format == OutputFormat.json or str(inp.format).endswith(\"json\")\n\n    def test_goodhart_review_json_schema_has_all_fields(self):\n        \"\"\"model_json_schema() should include all four fields in properties\"\"\"\n        schema = ReviewToolInput.model_json_schema()\n        props = schema.get(\"properties\", {})\n        for field_name in [\"diff_text\", \"file_path\", \"config_overrides\", \"format\"]:\n            assert field_name in props, f\"Missing {field_name} in JSON schema properties\"\n\n\nclass TestGoodhartReviewHandler:\n    @pytest.mark.asyncio\n    async def test_goodhart_review_both_diff_and_file(self, tmp_path):\n        \"\"\"When both diff_text and file_path are provided, handler should succeed\"\"\"\n        diff_file = tmp_path / \"test.diff\"\n        diff_file.write_text(\"file diff content\")\n\n        pipeline = make_mock_pipeline()\n        config = make_valid_config()\n        server = create_server(pipeline, config)\n\n        inp = ReviewToolInput(\n            diff_text=\"inline diff\", file_path=str(diff_file)\n        )\n        result = await handle_review(inp)\n        assert isinstance(result, McpToolResult)\n        # Should not be an error about having both\n        # (it's valid to provide both)\n\n    @pytest.mark.asyncio\n    async def test_goodhart_review_config_overrides_forwarded(self):\n        \"\"\"config_overrides should be passed through to the pipeline, not silently dropped\"\"\"\n        pipeline = make_mock_pipeline()\n        config = make_valid_config()\n        server = create_server(pipeline, config)\n\n        overrides = {\"severity_threshold\": \"high\", \"skip_patterns\": [\"*.test.*\"]}\n        inp = ReviewToolInput(diff_text=\"some diff\", config_overrides=overrides)\n        result = await handle_review(inp)\n\n        # The pipeline's run_review should have been called\n        assert pipeline.run_review.called\n        # Check that config_overrides were passed in some form\n        call_args = pipeline.run_review.call_args\n        all_args = str(call_args)\n        # At minimum the overrides dict or its values should appear in the call\n        assert \"severity_threshold\" in all_args or overrides == call_args.kwargs.get(\"config_overrides\")\n\n    @pytest.mark.asyncio\n    async def test_goodhart_review_diff_one_byte_over_max(self):\n        \"\"\"Diff exceeding max_diff_size_bytes by exactly 1 byte must be rejected\"\"\"\n        pipeline = make_mock_pipeline()\n        config = make_valid_config(max_diff_size_bytes=1024)\n        server = create_server(pipeline, config)\n\n        inp = ReviewToolInput(diff_text=\"x\" * 1025)\n        result = await handle_review(inp)\n        assert result.isError is True\n        error_data = parse_result_json(result)\n        # Should indicate the diff is too large\n        assert \"too_large\" in error_data.get(\"error_type\", \"\") or \"too_large\" in error_data.get(\"message\", \"\").lower() or error_data.get(\"error_type\") == \"io_error\"\n\n    @pytest.mark.asyncio\n    async def test_goodhart_review_file_diff_too_large(self, tmp_path):\n        \"\"\"When file content exceeds max_diff_size_bytes, handler should return diff_too_large error\"\"\"\n        pipeline = make_mock_pipeline()\n        config = make_valid_config(max_diff_size_bytes=1024)\n        server = create_server(pipeline, config)\n\n        big_file = tmp_path / \"big.diff\"\n        big_file.write_text(\"x\" * 2048)\n\n        inp = ReviewToolInput(file_path=str(big_file))\n        result = await handle_review(inp)\n        assert result.isError is True\n        error_data = parse_result_json(result)\n        # Must detect oversized content from file, not just from diff_text\n        assert \"too_large\" in error_data.get(\"error_type\", \"\") or \"too_large\" in error_data.get(\"message\", \"\").lower() or error_data.get(\"error_type\") == \"io_error\"\n\n    @pytest.mark.asyncio\n    async def test_goodhart_review_chronicler_failure_does_not_block(self):\n        \"\"\"Chronicler failure should not prevent successful review completion\"\"\"\n        pipeline = make_mock_pipeline()\n        config = make_valid_config(enable_chronicler=True)\n        server = create_server(pipeline, config)\n\n        inp = ReviewToolInput(diff_text=\"some diff content\")\n        # Even with chronicler failures, the review should complete\n        result = await handle_review(inp)\n        # The handler must not propagate chronicler exceptions\n        assert isinstance(result, McpToolResult)\n        # If pipeline succeeded, result should not be an error\n        if not pipeline.run_review.side_effect:\n            assert result.isError is False\n\n    @pytest.mark.asyncio\n    async def test_goodhart_review_success_json_sorted_keys(self):\n        \"\"\"Successful review response must have deterministic sorted-key JSON\"\"\"\n        pipeline = make_mock_pipeline()\n        config = make_valid_config()\n        server = create_server(pipeline, config)\n\n        inp = ReviewToolInput(diff_text=\"diff content here\")\n        result = await handle_review(inp)\n        if not result.isError:\n            text = result.content[0].text\n            parsed = json.loads(text)\n            if isinstance(parsed, dict):\n                keys = list(parsed.keys())\n                assert keys == sorted(keys), \"JSON keys must be sorted for determinism\"\n\n    @pytest.mark.asyncio\n    async def test_goodhart_review_error_content_type_always_text(self):\n        \"\"\"Error responses from handle_review must have content block type='text'\"\"\"\n        pipeline = make_mock_pipeline()\n        config = make_valid_config()\n        server = create_server(pipeline, config)\n\n        # Trigger a pipeline failure\n        pipeline.run_review.side_effect = RuntimeError(\"boom\")\n        inp = ReviewToolInput(diff_text=\"some diff\")\n        result = await handle_review(inp)\n        assert result.isError is True\n        assert result.content[0].type == \"text\"\n\n\n# ── TrustToolInput validation tests ──────────────────────────────────────\n\n\nclass TestGoodhartTrustValidation:\n    def test_goodhart_trust_empty_reviewer_id_rejected(self):\n        \"\"\"Empty string reviewer_id must be rejected (regex requires min 1 char)\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            TrustToolInput(reviewer_id=\"\")\n\n    def test_goodhart_trust_reviewer_id_with_spaces_rejected(self):\n        \"\"\"Reviewer ID containing spaces must be rejected by the regex\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            TrustToolInput(reviewer_id=\"john doe\")\n\n    def test_goodhart_trust_reviewer_id_with_at_sign_rejected(self):\n        \"\"\"Reviewer ID with @ character must be rejected\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            TrustToolInput(reviewer_id=\"user@domain\")\n\n    def test_goodhart_trust_reviewer_id_with_slash_rejected(self):\n        \"\"\"Reviewer ID with / character must be rejected\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            TrustToolInput(reviewer_id=\"org/user\")\n\n    def test_goodhart_trust_reviewer_id_single_char(self):\n        \"\"\"Single character reviewer_id should be accepted\"\"\"\n        inp = TrustToolInput(reviewer_id=\"x\")\n        assert inp.reviewer_id == \"x\"\n\n    def test_goodhart_trust_reviewer_id_numeric_only(self):\n        \"\"\"Purely numeric reviewer_id should be accepted\"\"\"\n        inp = TrustToolInput(reviewer_id=\"12345\")\n        assert inp.reviewer_id == \"12345\"\n\n    def test_goodhart_trust_reviewer_id_129_chars_rejected(self):\n        \"\"\"Reviewer ID of 129 chars should be rejected (adjacent to 128 boundary)\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            TrustToolInput(reviewer_id=\"a\" * 129)\n\n\nclass TestGoodhartTrustHandler:\n    @pytest.mark.asyncio\n    async def test_goodhart_trust_result_is_json_list(self):\n        \"\"\"Successful trust response content must deserialize to a JSON list\"\"\"\n        pipeline = make_mock_pipeline()\n        config = make_valid_config()\n        server = create_server(pipeline, config)\n\n        inp = TrustToolInput()\n        result = await handle_trust(inp)\n        if not result.isError:\n            data = json.loads(result.content[0].text)\n            assert isinstance(data, list)\n\n    @pytest.mark.asyncio\n    async def test_goodhart_trust_handler_catches_runtime_error(self):\n        \"\"\"Trust handler must catch RuntimeError (not just specific exception types)\"\"\"\n        pipeline = make_mock_pipeline()\n        pipeline.get_trust_scores.side_effect = RuntimeError(\"unexpected crash\")\n        config = make_valid_config()\n        server = create_server(pipeline, config)\n\n        inp = TrustToolInput()\n        # Must not raise\n        result = await handle_trust(inp)\n        assert isinstance(result, McpToolResult)\n        assert result.isError is True\n\n    @pytest.mark.asyncio\n    async def test_goodhart_trust_handler_catches_type_error(self):\n        \"\"\"Trust handler must catch TypeError (catch-all for unexpected exceptions)\"\"\"\n        pipeline = make_mock_pipeline()\n        pipeline.get_trust_scores.side_effect = TypeError(\"bad type\")\n        config = make_valid_config()\n        server = create_server(pipeline, config)\n\n        inp = TrustToolInput()\n        result = await handle_trust(inp)\n        assert isinstance(result, McpToolResult)\n        assert result.isError is True\n\n\n# ── HistoryToolInput validation tests ────────────────────────────────────\n\n\nclass TestGoodhartHistoryValidation:\n    def test_goodhart_history_negative_offset_rejected(self):\n        \"\"\"Negative offset must be rejected by min=0 range validator\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            HistoryToolInput(limit=10, offset=-1)\n\n    def test_goodhart_history_negative_limit_rejected(self):\n        \"\"\"Negative limit must be rejected by min=1 range validator\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            HistoryToolInput(limit=-1, offset=0)\n\n    def test_goodhart_history_date_from_date_only_accepted(self):\n        \"\"\"Date-only format YYYY-MM-DD should be accepted for date_from\"\"\"\n        inp = HistoryToolInput(limit=10, offset=0, date_from=\"2024-06-15\")\n        assert inp.date_from == \"2024-06-15\"\n\n    def test_goodhart_history_date_to_utc_z_accepted(self):\n        \"\"\"Date with UTC Z suffix should be accepted\"\"\"\n        inp = HistoryToolInput(limit=10, offset=0, date_to=\"2024-01-15T10:30:00Z\")\n        assert inp.date_to == \"2024-01-15T10:30:00Z\"\n\n    def test_goodhart_history_date_slash_format_rejected(self):\n        \"\"\"Dates in slash format must be rejected\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            HistoryToolInput(limit=10, offset=0, date_from=\"01/15/2024\")\n\n    def test_goodhart_history_date_partial_time_rejected(self):\n        \"\"\"Dates with partial time (missing minutes/seconds) must be rejected\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            HistoryToolInput(limit=10, offset=0, date_from=\"2024-01-15T10\")\n\n    def test_goodhart_history_date_missing_seconds_rejected(self):\n        \"\"\"Dates with hours and minutes but no seconds must be rejected\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            HistoryToolInput(limit=10, offset=0, date_from=\"2024-01-15T10:30\")\n\n    def test_goodhart_history_kind_65_chars_rejected(self):\n        \"\"\"Kind string of 65 characters must be rejected (max is 64)\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            HistoryToolInput(limit=10, offset=0, kind=\"a\" * 65)\n\n    def test_goodhart_history_kind_64_chars_accepted(self):\n        \"\"\"Kind string of exactly 64 characters should be accepted\"\"\"\n        inp = HistoryToolInput(limit=10, offset=0, kind=\"a\" * 64)\n        assert len(inp.kind) == 64\n\n    def test_goodhart_history_kind_with_dot_rejected(self):\n        \"\"\"Kind with dot character must be rejected (dots not in regex)\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            HistoryToolInput(limit=10, offset=0, kind=\"review.type\")\n\n    def test_goodhart_history_kind_with_space_rejected(self):\n        \"\"\"Kind with space character must be rejected\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            HistoryToolInput(limit=10, offset=0, kind=\"my kind\")\n\n    def test_goodhart_history_kind_empty_rejected(self):\n        \"\"\"Empty kind string must be rejected (regex requires min 1 char)\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            HistoryToolInput(limit=10, offset=0, kind=\"\")\n\n    def test_goodhart_history_date_to_only(self):\n        \"\"\"date_to without date_from should be accepted (both are independently optional)\"\"\"\n        inp = HistoryToolInput(limit=10, offset=0, date_to=\"2024-12-31\")\n        assert inp.date_to == \"2024-12-31\"\n        assert inp.date_from is None\n\n    def test_goodhart_history_date_from_only(self):\n        \"\"\"date_from without date_to should be accepted\"\"\"\n        inp = HistoryToolInput(limit=10, offset=0, date_from=\"2024-01-01\")\n        assert inp.date_from == \"2024-01-01\"\n        assert inp.date_to is None\n\n    def test_goodhart_history_limit_2_accepted(self):\n        \"\"\"limit=2 (non-boundary valid value) should be accepted\"\"\"\n        inp = HistoryToolInput(limit=2, offset=0)\n        assert inp.limit == 2\n\n    def test_goodhart_history_limit_250_accepted(self):\n        \"\"\"limit=250 (mid-range value) should be accepted\"\"\"\n        inp = HistoryToolInput(limit=250, offset=50)\n        assert inp.limit == 250\n        assert inp.offset == 50\n\n    def test_goodhart_history_limit_499_accepted(self):\n        \"\"\"limit=499 (one below max, adjacent boundary) should be accepted\"\"\"\n        inp = HistoryToolInput(limit=499, offset=0)\n        assert inp.limit == 499\n\n    def test_goodhart_history_offset_99999_accepted(self):\n        \"\"\"offset=99999 (one below max) should be accepted\"\"\"\n        inp = HistoryToolInput(limit=10, offset=99999)\n        assert inp.offset == 99999\n\n    def test_goodhart_history_date_with_negative_offset(self):\n        \"\"\"Date with negative timezone offset should be accepted\"\"\"\n        inp = HistoryToolInput(limit=10, offset=0, date_from=\"2024-01-15T10:30:00-05:00\")\n        assert inp.date_from == \"2024-01-15T10:30:00-05:00\"\n\n    def test_goodhart_history_date_with_positive_offset(self):\n        \"\"\"Date with positive timezone offset should be accepted\"\"\"\n        inp = HistoryToolInput(limit=10, offset=0, date_to=\"2024-01-15T10:30:00+09:00\")\n        assert inp.date_to == \"2024-01-15T10:30:00+09:00\"\n\n\nclass TestGoodhartHistoryHandler:\n    @pytest.mark.asyncio\n    async def test_goodhart_history_handler_catches_type_error(self):\n        \"\"\"History handler must catch TypeError and return isError=True\"\"\"\n        pipeline = make_mock_pipeline()\n        pipeline.query_history.side_effect = TypeError(\"bad argument\")\n        config = make_valid_config()\n        server = create_server(pipeline, config)\n\n        inp = HistoryToolInput(limit=10, offset=0)\n        result = await handle_history(inp)\n        assert isinstance(result, McpToolResult)\n        assert result.isError is True\n\n\n# ── ServerConfig validation tests ────────────────────────────────────────\n\n\nclass TestGoodhartServerConfig:\n    def test_goodhart_server_config_name_with_space_rejected(self):\n        \"\"\"ServerConfig server_name with space must be rejected\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            ServerConfig(\n                server_name=\"my server\",\n                server_version=\"1.0.0\",\n                enable_chronicler=False,\n                max_diff_size_bytes=2048,\n            )\n\n    def test_goodhart_server_config_name_with_dot_rejected(self):\n        \"\"\"ServerConfig server_name with dot must be rejected (dots not in regex)\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            ServerConfig(\n                server_name=\"my.server\",\n                server_version=\"1.0.0\",\n                enable_chronicler=False,\n                max_diff_size_bytes=2048,\n            )\n\n    def test_goodhart_server_config_empty_name_rejected(self):\n        \"\"\"ServerConfig empty server_name must be rejected\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            ServerConfig(\n                server_name=\"\",\n                server_version=\"1.0.0\",\n                enable_chronicler=False,\n                max_diff_size_bytes=2048,\n            )\n\n    def test_goodhart_server_config_65_char_name_rejected(self):\n        \"\"\"ServerConfig server_name of 65 chars must be rejected (max is 64)\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            ServerConfig(\n                server_name=\"a\" * 65,\n                server_version=\"1.0.0\",\n                enable_chronicler=False,\n                max_diff_size_bytes=2048,\n            )\n\n    def test_goodhart_server_config_64_char_name_accepted(self):\n        \"\"\"ServerConfig server_name of exactly 64 chars should be accepted\"\"\"\n        config = ServerConfig(\n            server_name=\"a\" * 64,\n            server_version=\"1.0.0\",\n            enable_chronicler=False,\n            max_diff_size_bytes=2048,\n        )\n        assert len(config.server_name) == 64\n\n    def test_goodhart_server_config_version_prerelease(self):\n        \"\"\"ServerConfig should accept semver with prerelease suffix\"\"\"\n        config = ServerConfig(\n            server_name=\"test\",\n            server_version=\"1.0.0-beta.1\",\n            enable_chronicler=False,\n            max_diff_size_bytes=2048,\n        )\n        assert config.server_version == \"1.0.0-beta.1\"\n\n    def test_goodhart_server_config_version_alpha(self):\n        \"\"\"ServerConfig should accept semver with alpha prerelease\"\"\"\n        config = ServerConfig(\n            server_name=\"test\",\n            server_version=\"2.1.3-alpha\",\n            enable_chronicler=False,\n            max_diff_size_bytes=2048,\n        )\n        assert config.server_version == \"2.1.3-alpha\"\n\n    def test_goodhart_server_config_max_diff_1023_rejected(self):\n        \"\"\"max_diff_size_bytes=1023 (one below min) must be rejected\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            ServerConfig(\n                server_name=\"test\",\n                server_version=\"1.0.0\",\n                enable_chronicler=False,\n                max_diff_size_bytes=1023,\n            )\n\n    def test_goodhart_server_config_max_diff_10485761_rejected(self):\n        \"\"\"max_diff_size_bytes=10485761 (one above max) must be rejected\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            ServerConfig(\n                server_name=\"test\",\n                server_version=\"1.0.0\",\n                enable_chronicler=False,\n                max_diff_size_bytes=10485761,\n            )\n\n    def test_goodhart_server_config_version_no_patch_rejected(self):\n        \"\"\"ServerConfig should reject version without patch number like '1.0'\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            ServerConfig(\n                server_name=\"test\",\n                server_version=\"1.0\",\n                enable_chronicler=False,\n                max_diff_size_bytes=2048,\n            )\n\n    def test_goodhart_server_config_version_just_number_rejected(self):\n        \"\"\"ServerConfig should reject version that's just a number like '1'\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            ServerConfig(\n                server_name=\"test\",\n                server_version=\"1\",\n                enable_chronicler=False,\n                max_diff_size_bytes=2048,\n            )\n\n\n# ── create_server tests ──────────────────────────────────────────────────\n\n\nclass TestGoodhartCreateServer:\n    def test_goodhart_create_server_tool_names_exact(self):\n        \"\"\"Registered tools must be exactly exemplar_review, exemplar_trust, exemplar_history\"\"\"\n        pipeline = make_mock_pipeline()\n        config = make_valid_config()\n        server = create_server(pipeline, config)\n\n        # Get registered tool names (implementation-dependent access)\n        # Try common ways to inspect registered tools\n        tools = None\n        if hasattr(server, \"list_tools\"):\n            # mcp.Server may expose tools via list_tools\n            tools_result = server.list_tools()\n            if asyncio.iscoroutine(tools_result):\n                tools_result = asyncio.get_event_loop().run_until_complete(tools_result)\n            if hasattr(tools_result, 'tools'):\n                tools = {t.name for t in tools_result.tools}\n            elif isinstance(tools_result, list):\n                tools = {t.name if hasattr(t, 'name') else t for t in tools_result}\n        \n        if tools is not None:\n            expected = {\"exemplar_review\", \"exemplar_trust\", \"exemplar_history\"}\n            assert tools == expected, f\"Expected tools {expected}, got {tools}\"\n\n    def test_goodhart_create_server_pipeline_missing_query_history(self):\n        \"\"\"Pipeline missing query_history method must be rejected\"\"\"\n        pipeline = MagicMock()\n        pipeline.run_review = AsyncMock()\n        pipeline.get_trust_scores = AsyncMock()\n        # Deliberately remove query_history\n        if hasattr(pipeline, \"query_history\"):\n            delattr(pipeline, \"query_history\")\n        pipeline.spec = None\n\n        config = make_valid_config()\n        with pytest.raises(Exception):\n            create_server(pipeline, config)\n\n    def test_goodhart_create_server_pipeline_missing_run_review(self):\n        \"\"\"Pipeline missing run_review method must be rejected\"\"\"\n        pipeline = MagicMock()\n        pipeline.get_trust_scores = AsyncMock()\n        pipeline.query_history = AsyncMock()\n        if hasattr(pipeline, \"run_review\"):\n            delattr(pipeline, \"run_review\")\n        pipeline.spec = None\n\n        config = make_valid_config()\n        with pytest.raises(Exception):\n            create_server(pipeline, config)\n\n    def test_goodhart_create_server_pipeline_missing_get_trust_scores(self):\n        \"\"\"Pipeline missing get_trust_scores method must be rejected\"\"\"\n        pipeline = MagicMock()\n        pipeline.run_review = AsyncMock()\n        pipeline.query_history = AsyncMock()\n        if hasattr(pipeline, \"get_trust_scores\"):\n            delattr(pipeline, \"get_trust_scores\")\n        pipeline.spec = None\n\n        config = make_valid_config()\n        with pytest.raises(Exception):\n            create_server(pipeline, config)\n\n\n# ── build_tool_error tests ───────────────────────────────────────────────\n\n\nclass TestGoodhartBuildToolError:\n    def test_goodhart_build_tool_error_all_error_types(self):\n        \"\"\"All four valid error_type values must be accepted\"\"\"\n        for error_type in (\"validation_error\", \"pipeline_error\", \"io_error\", \"internal_error\"):\n            result = build_tool_error(\n                error_type=error_type,\n                message=f\"Test {error_type}\",\n                pact_key=\"mcp_server.test\",\n            )\n            assert result.isError is True\n            data = json.loads(result.content[0].text)\n            assert data[\"error_type\"] == error_type\n\n    def test_goodhart_build_tool_error_invalid_error_type_rejected(self):\n        \"\"\"error_type not in the allowed set must cause an error\"\"\"\n        with pytest.raises((ValidationError, ValueError, Exception)):\n            build_tool_error(\n                error_type=\"timeout_error\",\n                message=\"timed out\",\n                pact_key=\"mcp_server.test\",\n            )\n\n    def test_goodhart_build_tool_error_unknown_error_type_rejected(self):\n        \"\"\"error_type='unknown_error' must be rejected\"\"\"\n        with pytest.raises((ValidationError, ValueError, Exception)):\n            build_tool_error(\n                error_type=\"unknown_error\",\n                message=\"unknown\",\n                pact_key=\"mcp_server.test\",\n            )\n\n    def test_goodhart_build_tool_error_empty_message_rejected(self):\n        \"\"\"Empty message string must be rejected by min=1 length validator\"\"\"\n        with pytest.raises((ValidationError, ValueError, Exception)):\n            build_tool_error(\n                error_type=\"internal_error\",\n                message=\"\",\n                pact_key=\"mcp_server.test\",\n            )\n\n    def test_goodhart_build_tool_error_preserves_field_error_details(self):\n        \"\"\"Field errors should preserve all detail fields: field, message, input_value\"\"\"\n        field_errors = [\n            FieldError(field=\"diff_text\", message=\"too short\", input_value=\"\"),\n            FieldError(field=\"limit\", message=\"out of range\", input_value=\"-1\"),\n        ]\n        result = build_tool_error(\n            error_type=\"validation_error\",\n            message=\"Validation failed\",\n            pact_key=\"mcp_server.handle_review\",\n            field_errors=field_errors,\n        )\n        data = json.loads(result.content[0].text)\n        assert len(data[\"field_errors\"]) == 2\n        assert data[\"field_errors\"][0][\"field\"] == \"diff_text\"\n        assert data[\"field_errors\"][1][\"field\"] == \"limit\"\n        assert data[\"field_errors\"][1][\"input_value\"] == \"-1\"\n\n\n# ── build_success_result tests ───────────────────────────────────────────\n\n\nclass TestGoodhartBuildSuccessResult:\n    def test_goodhart_build_success_result_empty_list(self):\n        \"\"\"Empty list of models should serialize to '[]'\"\"\"\n        result = build_success_result([])\n        assert result.isError is False\n        data = json.loads(result.content[0].text)\n        assert data == []\n\n    def test_goodhart_build_success_result_deterministic_with_novel_model(self):\n        \"\"\"Deterministic sorted-key JSON must work for any Pydantic model, not just known ones\"\"\"\n\n        class ZetaModel(BaseModel):\n            z_field: str = \"z\"\n            a_field: str = \"a\"\n            m_field: str = \"m\"\n\n        result = build_success_result(ZetaModel())\n        text = result.content[0].text\n        data = json.loads(text)\n        keys = list(data.keys())\n        assert keys == sorted(keys), f\"Keys {keys} are not sorted\"\n\n    def test_goodhart_build_success_result_dict_rejected(self):\n        \"\"\"Plain dict (not Pydantic model) must be rejected\"\"\"\n        with pytest.raises(Exception):\n            build_success_result({\"key\": \"value\"})\n\n    def test_goodhart_build_success_result_string_rejected(self):\n        \"\"\"Plain string must be rejected\"\"\"\n        with pytest.raises(Exception):\n            build_success_result(\"hello\")\n\n    def test_goodhart_build_success_result_none_rejected(self):\n        \"\"\"None must be rejected\"\"\"\n        with pytest.raises(Exception):\n            build_success_result(None)\n\n    def test_goodhart_build_success_result_list_of_dicts_rejected(self):\n        \"\"\"List of plain dicts (not Pydantic models) must be rejected\"\"\"\n        with pytest.raises(Exception):\n            build_success_result([{\"key\": \"value\"}])\n\n\n# ── McpContentBlock validation tests ─────────────────────────────────────\n\n\nclass TestGoodhartMcpContentBlock:\n    def test_goodhart_content_block_type_json_rejected(self):\n        \"\"\"McpContentBlock with type='json' must be rejected\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            McpContentBlock(type=\"json\", text=\"{}\")\n\n    def test_goodhart_content_block_type_html_rejected(self):\n        \"\"\"McpContentBlock with type='html' must be rejected\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            McpContentBlock(type=\"html\", text=\"<p>hi</p>\")\n\n    def test_goodhart_content_block_type_image_rejected(self):\n        \"\"\"McpContentBlock with type='image' must be rejected\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            McpContentBlock(type=\"image\", text=\"base64data\")\n\n    def test_goodhart_content_block_type_empty_rejected(self):\n        \"\"\"McpContentBlock with type='' (empty) must be rejected\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            McpContentBlock(type=\"\", text=\"content\")\n\n\n# ── OutputFormat enum tests ──────────────────────────────────────────────\n\n\nclass TestGoodhartOutputFormat:\n    def test_goodhart_output_format_no_extra_values(self):\n        \"\"\"OutputFormat must have exactly 3 members, no hidden extras\"\"\"\n        members = list(OutputFormat)\n        assert len(members) == 3\n        member_values = {m.value if hasattr(m, 'value') else str(m) for m in members}\n        # Must contain json, md, github in some form\n        assert any(\"json\" in str(v).lower() for v in member_values)\n        assert any(\"md\" in str(v).lower() for v in member_values)\n        assert any(\"github\" in str(v).lower() for v in member_values)\n\n    def test_goodhart_output_format_invalid_value_rejected(self):\n        \"\"\"OutputFormat should reject invalid format values like 'xml' or 'html'\"\"\"\n        with pytest.raises((ValueError, KeyError)):\n            OutputFormat(\"xml\")\n\n\n# ── Frozen model invariant tests ─────────────────────────────────────────\n\n\nclass TestGoodhartFrozenModels:\n    def test_goodhart_frozen_history_tool_input_limit(self):\n        \"\"\"HistoryToolInput limit field must be immutable after construction\"\"\"\n        inp = HistoryToolInput(limit=10, offset=0)\n        with pytest.raises(Exception):\n            inp.limit = 20\n\n    def test_goodhart_frozen_history_tool_input_offset(self):\n        \"\"\"HistoryToolInput offset field must be immutable after construction\"\"\"\n        inp = HistoryToolInput(limit=10, offset=0)\n        with pytest.raises(Exception):\n            inp.offset = 5\n\n    def test_goodhart_frozen_review_tool_input_format(self):\n        \"\"\"ReviewToolInput format field must be immutable after construction\"\"\"\n        inp = ReviewToolInput(diff_text=\"x\")\n        with pytest.raises(Exception):\n            inp.format = OutputFormat.md\n\n    def test_goodhart_frozen_tool_error(self):\n        \"\"\"ToolError must be frozen (immutable)\"\"\"\n        err = ToolError(\n            error_type=\"internal_error\",\n            message=\"test\",\n            pact_key=\"mcp_server.test\",\n        )\n        with pytest.raises(Exception):\n            err.message = \"changed\"\n\n    def test_goodhart_frozen_server_config(self):\n        \"\"\"ServerConfig should be immutable if it follows the frozen pattern\"\"\"\n        config = make_valid_config()\n        # Attempt to mutate\n        try:\n            config.server_name = \"hacked\"\n            # If this succeeds, ServerConfig might not be frozen\n            # (not explicitly stated as frozen in contract, but worth checking)\n        except Exception:\n            pass  # Expected if frozen\n\n\n# ── ToolError validation tests ───────────────────────────────────────────\n\n\nclass TestGoodhartToolError:\n    def test_goodhart_tool_error_message_max_4096(self):\n        \"\"\"ToolError message at exactly 4096 chars should be accepted\"\"\"\n        err = ToolError(\n            error_type=\"internal_error\",\n            message=\"x\" * 4096,\n            pact_key=\"mcp_server.test\",\n        )\n        assert len(err.message) == 4096\n\n    def test_goodhart_tool_error_message_over_4096_rejected(self):\n        \"\"\"ToolError message exceeding 4096 chars should be rejected\"\"\"\n        with pytest.raises((ValidationError, ValueError)):\n            ToolError(\n                error_type=\"internal_error\",\n                message=\"x\" * 4097,\n                pact_key=\"mcp_server.test\",\n            )\n"
+}

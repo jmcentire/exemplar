@@ -1,0 +1,671 @@
+{
+  "component_id": "config",
+  "contract_version": 2,
+  "test_cases": [
+    {
+      "id": "goodhart_default_config_returns_new_instance_each_call",
+      "description": "default_config() should return a fresh instance on each call, not a cached singleton that could be accidentally shared/mutated across callers",
+      "function": "default_config",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "default_config() is not default_config() or both are equal but distinct objects"
+      ]
+    },
+    {
+      "id": "goodhart_default_config_reviewer_trust_weight_exactly_one",
+      "description": "Each of the four default reviewers must have default_trust_weight of exactly 1.0, not just be enabled",
+      "function": "default_config",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "all reviewer trust weights are 1.0"
+      ]
+    },
+    {
+      "id": "goodhart_default_config_has_exactly_four_reviewers",
+      "description": "The default config reviewers dict must contain exactly the four canonical reviewer keys and no extras",
+      "function": "default_config",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "reviewer keys are exactly {security, correctness, style, architecture}"
+      ]
+    },
+    {
+      "id": "goodhart_default_config_ledger_default_label",
+      "description": "The default LedgerConfig should have a sensible default_label for unmatched fields (public)",
+      "function": "default_config",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "default_label is a valid ClassificationLabel"
+      ]
+    },
+    {
+      "id": "goodhart_default_config_circuit_timeout_positive",
+      "description": "The default CircuitConfig must have a positive stage_timeout_ms value",
+      "function": "default_config",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "stage_timeout_ms > 0"
+      ]
+    },
+    {
+      "id": "goodhart_default_config_apprentice_thresholds_valid",
+      "description": "Default ApprenticeConfig thresholds must both be in [0.0, 1.0] range",
+      "function": "default_config",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "0.0 <= shadow_to_canary_threshold <= 1.0",
+        "0.0 <= canary_to_primary_threshold <= 1.0"
+      ]
+    },
+    {
+      "id": "goodhart_default_config_string_paths_nonempty",
+      "description": "Default config string path fields (chronicle_log_path, kindex_store_path, stigmergy_store_path, seal_chain_path) should be non-empty strings",
+      "function": "default_config",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "all path strings are non-empty"
+      ]
+    },
+    {
+      "id": "goodhart_default_config_apprentice_storage_path_nonempty",
+      "description": "Default ApprenticeConfig storage_path should be a non-empty string",
+      "function": "default_config",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "storage_path is a non-empty string"
+      ]
+    },
+    {
+      "id": "goodhart_resolve_env_var_whitespace_only",
+      "description": "When EXEMPLAR_CONFIG env var is set to whitespace-only string, it should either be treated as a valid path or fall through to conventional, but must not crash",
+      "function": "resolve_config_path",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "explicit=None, EXEMPLAR_CONFIG=' '",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returns a valid ResolvedConfigPath without error"
+      ]
+    },
+    {
+      "id": "goodhart_resolve_env_var_with_explicit_none",
+      "description": "When explicit is explicitly passed as None and env var is set to a real path string, env_var source must be returned",
+      "function": "resolve_config_path",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "explicit=None, EXEMPLAR_CONFIG='/some/other/path.yaml'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "source is ConfigSource.env_var",
+        "path matches the env var value"
+      ]
+    },
+    {
+      "id": "goodhart_resolve_explicit_nonexistent_path",
+      "description": "resolve_config_path should return the explicit path even if it does not exist on the filesystem, since existence checking is load_config's responsibility",
+      "function": "resolve_config_path",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "explicit=Path('/nonexistent/path/config.yaml')",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "source is ConfigSource.explicit",
+        "path matches the explicit input"
+      ]
+    },
+    {
+      "id": "goodhart_resolve_conventional_returns_absolute_path",
+      "description": "When resolving via conventional source, the returned path should be an absolute path rooted in CWD",
+      "function": "resolve_config_path",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returned path is absolute",
+        "path ends with .exemplar/config.yaml"
+      ]
+    },
+    {
+      "id": "goodhart_resolve_env_var_takes_priority_over_conventional",
+      "description": "When env var is set and conventional file exists, env_var source must take priority over conventional",
+      "function": "resolve_config_path",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "explicit=None, EXEMPLAR_CONFIG set, .exemplar/config.yaml exists",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "source is ConfigSource.env_var"
+      ]
+    },
+    {
+      "id": "goodhart_load_config_deep_merge_preserves_unmentioned_defaults",
+      "description": "When a partial YAML overrides only one reviewer's enabled flag, all other reviewers and all other config sections must retain their default values",
+      "function": "load_config",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "YAML with only reviewers.style.enabled=false",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "style reviewer is disabled",
+        "security reviewer remains enabled with default trust_weight",
+        "circuit config equals default",
+        "apprentice config equals default",
+        "ledger config equals default"
+      ]
+    },
+    {
+      "id": "goodhart_load_config_deep_merge_single_field_override",
+      "description": "Deep merge must allow overriding a single nested field (e.g., apprentice.phase) while preserving all sibling fields at defaults",
+      "function": "load_config",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "YAML with only apprentice.phase set to canary",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "apprentice phase is canary",
+        "apprentice thresholds remain at defaults",
+        "apprentice storage_path remains at default"
+      ]
+    },
+    {
+      "id": "goodhart_load_config_env_var_file_not_found",
+      "description": "When EXEMPLAR_CONFIG points to a nonexistent file, load_config should raise ConfigFileNotFoundError (not just for explicit paths)",
+      "function": "load_config",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "No explicit path, EXEMPLAR_CONFIG=/nonexistent/config.yaml",
+      "expected_output_description": "",
+      "expected_error": "ConfigFileNotFoundError",
+      "assertions": [
+        "error includes the path from env var"
+      ]
+    },
+    {
+      "id": "goodhart_load_config_error_includes_path",
+      "description": "ConfigFileNotFoundError raised by load_config must include the resolved path in its path field for diagnostics",
+      "function": "load_config",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Explicit path to nonexistent file",
+      "expected_output_description": "",
+      "expected_error": "ConfigFileNotFoundError",
+      "assertions": [
+        "error.path matches the explicit path provided"
+      ]
+    },
+    {
+      "id": "goodhart_load_config_yaml_only_comment",
+      "description": "A YAML file containing only comments (no data) should be treated as an empty/null document and return default_config()",
+      "function": "load_config",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "YAML file content: '# just a comment\\n'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result equals default_config()"
+      ]
+    },
+    {
+      "id": "goodhart_load_config_yaml_with_only_whitespace",
+      "description": "A YAML file containing only whitespace should be treated as an empty/null document and return default_config()",
+      "function": "load_config",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "YAML file content: '   \\n\\n  \\n'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result equals default_config()"
+      ]
+    },
+    {
+      "id": "goodhart_load_config_invalid_trust_weight",
+      "description": "YAML specifying a reviewer trust_weight of 1.5 (above valid range) must raise ConfigValidationError",
+      "function": "load_config",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "YAML with reviewers.security.default_trust_weight=1.5",
+      "expected_output_description": "",
+      "expected_error": "ConfigValidationError",
+      "assertions": [
+        "raises ConfigValidationError"
+      ]
+    },
+    {
+      "id": "goodhart_load_config_negative_timeout",
+      "description": "YAML specifying a negative stage_timeout_ms must raise ConfigValidationError",
+      "function": "load_config",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "YAML with circuit.stage_timeout_ms=-100",
+      "expected_output_description": "",
+      "expected_error": "ConfigValidationError",
+      "assertions": [
+        "raises ConfigValidationError"
+      ]
+    },
+    {
+      "id": "goodhart_load_config_invalid_regex_in_ledger_rule",
+      "description": "YAML specifying an invalid regex pattern in a ledger rule must raise ConfigValidationError or be caught during validation",
+      "function": "load_config",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "YAML with ledger rule pattern='[invalid('",
+      "expected_output_description": "",
+      "expected_error": "ConfigValidationError",
+      "assertions": [
+        "raises ConfigValidationError or equivalent config error"
+      ]
+    },
+    {
+      "id": "goodhart_config_to_yaml_roundtrip_with_modified_config",
+      "description": "config_to_yaml roundtrip should work not just with default_config but with a config that has non-default values",
+      "function": "config_to_yaml",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A config loaded from YAML with modified apprentice phase and disabled style reviewer",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "roundtrip produces equivalent config"
+      ]
+    },
+    {
+      "id": "goodhart_config_to_yaml_preserves_ledger_rules",
+      "description": "config_to_yaml serialization must preserve all ledger rules including their patterns, labels, and descriptions through a roundtrip",
+      "function": "config_to_yaml",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "all ledger rules survive roundtrip with identical pattern, label, description"
+      ]
+    },
+    {
+      "id": "goodhart_config_to_yaml_output_is_string",
+      "description": "config_to_yaml must return a str type, not bytes or other types",
+      "function": "config_to_yaml",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "return type is str"
+      ]
+    },
+    {
+      "id": "goodhart_config_error_is_exception",
+      "description": "ConfigError and its subclasses must be actual Exception subclasses that can be raised and caught",
+      "function": "ConfigError",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ConfigError is subclass of Exception",
+        "ConfigFileNotFoundError is subclass of ConfigError",
+        "ConfigValidationError is subclass of ConfigError",
+        "ConfigParseError is subclass of ConfigError"
+      ]
+    },
+    {
+      "id": "goodhart_config_file_not_found_is_subclass",
+      "description": "ConfigFileNotFoundError must be catchable as ConfigError for unified error handling",
+      "function": "ConfigFileNotFoundError",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "isinstance check passes for ConfigError base"
+      ]
+    },
+    {
+      "id": "goodhart_config_validation_error_is_subclass",
+      "description": "ConfigValidationError must be catchable as ConfigError for unified error handling",
+      "function": "ConfigValidationError",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "isinstance check passes for ConfigError base"
+      ]
+    },
+    {
+      "id": "goodhart_config_parse_error_is_subclass",
+      "description": "ConfigParseError must be catchable as ConfigError for unified error handling",
+      "function": "ConfigParseError",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "isinstance check passes for ConfigError base"
+      ]
+    },
+    {
+      "id": "goodhart_config_source_is_str_enum",
+      "description": "ConfigSource values should be usable as strings (StrEnum behavior) for serialization compatibility",
+      "function": "ConfigSource",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ConfigSource.explicit == 'explicit'",
+        "str(ConfigSource.env_var) contains 'env_var'"
+      ]
+    },
+    {
+      "id": "goodhart_reviewer_config_trust_weight_mid_range",
+      "description": "ReviewerConfig should accept trust_weight values in the interior of the valid range, not just boundaries",
+      "function": "ReviewerConfig",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "trust_weight=0.5",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "construction succeeds",
+        "default_trust_weight == 0.5"
+      ]
+    },
+    {
+      "id": "goodhart_reviewer_config_trust_weight_just_above_one",
+      "description": "ReviewerConfig must reject trust_weight=1.0001 (just barely above the upper bound)",
+      "function": "ReviewerConfig",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "trust_weight=1.0001",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "raises validation error"
+      ]
+    },
+    {
+      "id": "goodhart_reviewer_config_trust_weight_just_below_zero",
+      "description": "ReviewerConfig must reject trust_weight=-0.0001 (just barely below the lower bound)",
+      "function": "ReviewerConfig",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "trust_weight=-0.0001",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "raises validation error"
+      ]
+    },
+    {
+      "id": "goodhart_circuit_config_timeout_zero",
+      "description": "CircuitConfig must reject stage_timeout_ms=0 (boundary: must be strictly positive)",
+      "function": "CircuitConfig",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "stage_timeout_ms=0",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "raises validation error"
+      ]
+    },
+    {
+      "id": "goodhart_circuit_config_timeout_one",
+      "description": "CircuitConfig must accept stage_timeout_ms=1 (minimum valid positive integer)",
+      "function": "CircuitConfig",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "stage_timeout_ms=1",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "construction succeeds"
+      ]
+    },
+    {
+      "id": "goodhart_apprentice_threshold_boundary_just_above",
+      "description": "ApprenticeConfig must reject shadow_to_canary_threshold=1.001 (just above upper bound)",
+      "function": "ApprenticeConfig",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "shadow_to_canary_threshold=1.001",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "raises validation error"
+      ]
+    },
+    {
+      "id": "goodhart_load_config_merge_overrides_chronicle_path",
+      "description": "Deep merge must support overriding top-level string fields like chronicle_log_path",
+      "function": "load_config",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "YAML with chronicle_log_path=/custom/log.jsonl",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "chronicle_log_path is /custom/log.jsonl",
+        "other paths remain at defaults"
+      ]
+    },
+    {
+      "id": "goodhart_default_config_ledger_rules_have_descriptions",
+      "description": "All default LedgerFieldRule instances should have non-empty description strings for documentation purposes",
+      "function": "default_config",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "every rule has a non-empty description"
+      ]
+    },
+    {
+      "id": "goodhart_default_config_ledger_secret_rule_matches_secrets",
+      "description": "Default ledger SECRET rules should actually match common secret patterns (e.g., API keys, passwords) to verify they are functional regex patterns, not just valid ones",
+      "function": "default_config",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "at least one SECRET rule pattern matches a typical secret-like string"
+      ]
+    },
+    {
+      "id": "goodhart_load_config_uses_resolve_config_path",
+      "description": "load_config must use the resolution chain: when called with None and env var is set, it should use the env var path",
+      "function": "load_config",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "path=None, EXEMPLAR_CONFIG points to a valid YAML file",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "config is loaded from the env var path, not defaults"
+      ]
+    },
+    {
+      "id": "goodhart_config_validation_error_has_validation_errors_list",
+      "description": "ConfigValidationError must carry a non-empty validation_errors list when raised from actual validation failures",
+      "function": "load_config",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "YAML with invalid field values",
+      "expected_output_description": "",
+      "expected_error": "ConfigValidationError",
+      "assertions": [
+        "error.validation_errors is a list",
+        "error.validation_errors is non-empty"
+      ]
+    },
+    {
+      "id": "goodhart_immutability_ledger_config",
+      "description": "LedgerConfig within default_config must be frozen and reject attribute mutation",
+      "function": "default_config",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "attempting to set default_label raises an error"
+      ]
+    },
+    {
+      "id": "goodhart_default_config_reviewer_stages_match_keys",
+      "description": "Each reviewer in default_config should have a stage field matching its key name",
+      "function": "default_config",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "reviewers['security'].stage corresponds to security stage",
+        "reviewers['correctness'].stage corresponds to correctness stage"
+      ]
+    }
+  ],
+  "test_language": "python",
+  "generated_code": "\"\"\"\nAdversarial hidden acceptance tests for the Configuration System.\nThese tests catch implementations that pass visible tests through shortcuts\n(hardcoded returns, missing validation, etc.) rather than truly satisfying the contract.\n\"\"\"\n\nimport os\nimport re\nimport tempfile\nimport textwrap\nfrom pathlib import Path\nfrom unittest.mock import patch\n\nimport pytest\nimport yaml\n\nfrom exemplar.config import (\n    ApprenticeConfig,\n    CircuitConfig,\n    ClassificationLabel,\n    ConfigError,\n    ConfigFileNotFoundError,\n    ConfigParseError,\n    ConfigSource,\n    ConfigValidationError,\n    ExemplarConfig,\n    LearnerPhase,\n    LedgerConfig,\n    LedgerFieldRule,\n    ResolvedConfigPath,\n    ReviewerConfig,\n    ReviewStage,\n    Severity,\n    config_to_yaml,\n    default_config,\n    load_config,\n    resolve_config_path,\n)\n\n\n# ──────────────────────────────────────────────\n# default_config() adversarial tests\n# ──────────────────────────────────────────────\n\nclass TestGoodhartDefaultConfig:\n\n    def test_goodhart_default_config_returns_new_instance_each_call(self):\n        \"\"\"default_config() should return independent instances on each call, not a shared mutable singleton.\"\"\"\n        c1 = default_config()\n        c2 = default_config()\n        # They should be equal in value\n        assert c1 == c2\n        # But ideally distinct objects (or at least frozen so sharing is safe)\n        # The key contract point: both are valid\n        assert isinstance(c1, ExemplarConfig)\n        assert isinstance(c2, ExemplarConfig)\n\n    def test_goodhart_default_config_reviewer_trust_weight_exactly_one(self):\n        \"\"\"Each of the four default reviewers must have default_trust_weight of exactly 1.0.\"\"\"\n        cfg = default_config()\n        for name in (\"security\", \"correctness\", \"style\", \"architecture\"):\n            reviewer = cfg.reviewers[name]\n            assert reviewer.default_trust_weight == 1.0, (\n                f\"Reviewer '{name}' has trust_weight={reviewer.default_trust_weight}, expected 1.0\"\n            )\n\n    def test_goodhart_default_config_has_exactly_four_reviewers(self):\n        \"\"\"The default config reviewers dict must contain exactly the four canonical reviewer keys.\"\"\"\n        cfg = default_config()\n        expected_keys = {\"security\", \"correctness\", \"style\", \"architecture\"}\n        assert set(cfg.reviewers.keys()) == expected_keys, (\n            f\"Expected reviewer keys {expected_keys}, got {set(cfg.reviewers.keys())}\"\n        )\n\n    def test_goodhart_default_config_ledger_default_label(self):\n        \"\"\"The default LedgerConfig should have a valid ClassificationLabel as default_label.\"\"\"\n        cfg = default_config()\n        assert isinstance(cfg.ledger.default_label, ClassificationLabel)\n\n    def test_goodhart_default_config_circuit_timeout_positive(self):\n        \"\"\"The default CircuitConfig must have a positive stage_timeout_ms value.\"\"\"\n        cfg = default_config()\n        assert cfg.circuit.stage_timeout_ms > 0\n\n    def test_goodhart_default_config_apprentice_thresholds_valid(self):\n        \"\"\"Default ApprenticeConfig thresholds must both be in [0.0, 1.0] range.\"\"\"\n        cfg = default_config()\n        assert 0.0 <= cfg.apprentice.shadow_to_canary_threshold <= 1.0\n        assert 0.0 <= cfg.apprentice.canary_to_primary_threshold <= 1.0\n\n    def test_goodhart_default_config_string_paths_nonempty(self):\n        \"\"\"Default config string path fields should be non-empty strings.\"\"\"\n        cfg = default_config()\n        assert isinstance(cfg.chronicle_log_path, str) and len(cfg.chronicle_log_path) > 0\n        assert isinstance(cfg.kindex_store_path, str) and len(cfg.kindex_store_path) > 0\n        assert isinstance(cfg.stigmergy_store_path, str) and len(cfg.stigmergy_store_path) > 0\n        assert isinstance(cfg.seal_chain_path, str) and len(cfg.seal_chain_path) > 0\n\n    def test_goodhart_default_config_apprentice_storage_path_nonempty(self):\n        \"\"\"Default ApprenticeConfig storage_path should be a non-empty string.\"\"\"\n        cfg = default_config()\n        assert isinstance(cfg.apprentice.storage_path, str) and len(cfg.apprentice.storage_path) > 0\n\n    def test_goodhart_default_config_ledger_rules_have_descriptions(self):\n        \"\"\"All default LedgerFieldRule instances should have non-empty description strings.\"\"\"\n        cfg = default_config()\n        for rule in cfg.ledger.rules:\n            assert isinstance(rule.description, str) and len(rule.description) > 0, (\n                f\"Rule with pattern '{rule.pattern}' has empty or missing description\"\n            )\n\n    def test_goodhart_default_config_ledger_secret_rule_matches_secrets(self):\n        \"\"\"Default ledger SECRET rules should actually match common secret-like strings.\"\"\"\n        cfg = default_config()\n        secret_rules = [r for r in cfg.ledger.rules if r.label == ClassificationLabel.secret]\n        assert len(secret_rules) > 0, \"No secret rules found\"\n\n        # Common secret patterns that at least one rule should match\n        test_strings = [\n            \"password\", \"api_key\", \"secret_key\", \"AWS_SECRET_ACCESS_KEY\",\n            \"PRIVATE_KEY\", \"token\", \"PASSWORD\", \"apikey\",\n        ]\n        matched_any = False\n        for test_str in test_strings:\n            for rule in secret_rules:\n                if re.search(rule.pattern, test_str, re.IGNORECASE):\n                    matched_any = True\n                    break\n            if matched_any:\n                break\n        assert matched_any, \"No SECRET rule matched any common secret-like test string\"\n\n    def test_goodhart_default_config_reviewer_stages_match_keys(self):\n        \"\"\"Each reviewer in default_config should have a stage field corresponding to its key name.\"\"\"\n        cfg = default_config()\n        for name, reviewer in cfg.reviewers.items():\n            assert reviewer.stage.value == name or reviewer.stage == name, (\n                f\"Reviewer '{name}' has stage={reviewer.stage}, expected it to match key\"\n            )\n\n    def test_goodhart_immutability_ledger_config(self):\n        \"\"\"LedgerConfig within default_config must be frozen and reject attribute mutation.\"\"\"\n        cfg = default_config()\n        with pytest.raises((AttributeError, TypeError, Exception)):\n            cfg.ledger.default_label = ClassificationLabel.secret\n\n\n# ──────────────────────────────────────────────\n# resolve_config_path() adversarial tests\n# ──────────────────────────────────────────────\n\nclass TestGoodhartResolveConfigPath:\n\n    def test_goodhart_resolve_env_var_whitespace_only(self):\n        \"\"\"When EXEMPLAR_CONFIG is set to whitespace-only, the function must handle it gracefully.\"\"\"\n        with patch.dict(os.environ, {\"EXEMPLAR_CONFIG\": \"   \"}):\n            result = resolve_config_path(None)\n            assert isinstance(result, ResolvedConfigPath)\n            assert result.source is not None\n\n    def test_goodhart_resolve_env_var_with_explicit_none(self):\n        \"\"\"When explicit is None and env var is set to a real path, env_var source must be returned.\"\"\"\n        test_path = \"/tmp/test_exemplar_config.yaml\"\n        with patch.dict(os.environ, {\"EXEMPLAR_CONFIG\": test_path}):\n            result = resolve_config_path(None)\n            assert result.source == ConfigSource.env_var\n            assert str(result.path) == test_path or result.path == Path(test_path)\n\n    def test_goodhart_resolve_explicit_nonexistent_path(self):\n        \"\"\"resolve_config_path should return the explicit path even if it does not exist on the filesystem.\"\"\"\n        nonexistent = Path(\"/nonexistent/deeply/nested/config.yaml\")\n        result = resolve_config_path(nonexistent)\n        assert result.source == ConfigSource.explicit\n        assert result.path == nonexistent\n\n    def test_goodhart_resolve_conventional_returns_absolute_path(self):\n        \"\"\"When resolving via conventional source, the returned path should be an absolute path.\"\"\"\n        with tempfile.TemporaryDirectory() as tmpdir:\n            exemplar_dir = Path(tmpdir) / \".exemplar\"\n            exemplar_dir.mkdir()\n            config_file = exemplar_dir / \"config.yaml\"\n            config_file.write_text(\"\")\n\n            with patch.dict(os.environ, {}, clear=False):\n                # Remove EXEMPLAR_CONFIG if set\n                env = os.environ.copy()\n                env.pop(\"EXEMPLAR_CONFIG\", None)\n                with patch.dict(os.environ, env, clear=True):\n                    with patch(\"os.getcwd\", return_value=tmpdir):\n                        # Also try with chdir if available\n                        original_cwd = os.getcwd()\n                        try:\n                            os.chdir(tmpdir)\n                            result = resolve_config_path(None)\n                            if result.source == ConfigSource.conventional:\n                                assert result.path.is_absolute()\n                                assert str(result.path).endswith(os.path.join(\".exemplar\", \"config.yaml\"))\n                        finally:\n                            os.chdir(original_cwd)\n\n    def test_goodhart_resolve_env_var_takes_priority_over_conventional(self):\n        \"\"\"When env var is set and conventional file exists, env_var must take priority.\"\"\"\n        with tempfile.TemporaryDirectory() as tmpdir:\n            exemplar_dir = Path(tmpdir) / \".exemplar\"\n            exemplar_dir.mkdir()\n            config_file = exemplar_dir / \"config.yaml\"\n            config_file.write_text(\"\")\n\n            env_path = \"/tmp/env_exemplar_config.yaml\"\n            original_cwd = os.getcwd()\n            try:\n                os.chdir(tmpdir)\n                with patch.dict(os.environ, {\"EXEMPLAR_CONFIG\": env_path}):\n                    result = resolve_config_path(None)\n                    assert result.source == ConfigSource.env_var\n            finally:\n                os.chdir(original_cwd)\n\n\n# ──────────────────────────────────────────────\n# load_config() adversarial tests\n# ──────────────────────────────────────────────\n\nclass TestGoodhartLoadConfig:\n\n    def test_goodhart_load_config_deep_merge_preserves_unmentioned_defaults(self):\n        \"\"\"When partial YAML overrides only one reviewer, all other sections must retain defaults.\"\"\"\n        yaml_content = textwrap.dedent(\"\"\"\\\n            reviewers:\n              style:\n                enabled: false\n        \"\"\")\n        defaults = default_config()\n\n        with tempfile.NamedTemporaryFile(mode=\"w\", suffix=\".yaml\", delete=False) as f:\n            f.write(yaml_content)\n            f.flush()\n            try:\n                cfg = load_config(Path(f.name))\n                # The overridden field\n                assert cfg.reviewers[\"style\"].enabled is False\n                # Other reviewers untouched\n                assert cfg.reviewers[\"security\"].enabled is True\n                assert cfg.reviewers[\"security\"].default_trust_weight == 1.0\n                assert cfg.reviewers[\"correctness\"].enabled is True\n                assert cfg.reviewers[\"architecture\"].enabled is True\n                # Other sections untouched\n                assert cfg.circuit == defaults.circuit\n                assert cfg.apprentice == defaults.apprentice\n                assert cfg.ledger == defaults.ledger\n            finally:\n                os.unlink(f.name)\n\n    def test_goodhart_load_config_deep_merge_single_field_override(self):\n        \"\"\"Deep merge must allow overriding a single nested field while preserving siblings.\"\"\"\n        yaml_content = textwrap.dedent(\"\"\"\\\n            apprentice:\n              phase: canary\n        \"\"\")\n        defaults = default_config()\n\n        with tempfile.NamedTemporaryFile(mode=\"w\", suffix=\".yaml\", delete=False) as f:\n            f.write(yaml_content)\n            f.flush()\n            try:\n                cfg = load_config(Path(f.name))\n                assert cfg.apprentice.phase == LearnerPhase.canary or str(cfg.apprentice.phase) == \"canary\"\n                # Sibling fields preserved\n                assert cfg.apprentice.shadow_to_canary_threshold == defaults.apprentice.shadow_to_canary_threshold\n                assert cfg.apprentice.canary_to_primary_threshold == defaults.apprentice.canary_to_primary_threshold\n                assert cfg.apprentice.storage_path == defaults.apprentice.storage_path\n            finally:\n                os.unlink(f.name)\n\n    def test_goodhart_load_config_env_var_file_not_found(self):\n        \"\"\"When EXEMPLAR_CONFIG points to a nonexistent file, load_config should raise ConfigFileNotFoundError.\"\"\"\n        nonexistent = \"/tmp/definitely_nonexistent_exemplar_config_xyz.yaml\"\n        # Make sure it doesn't exist\n        if os.path.exists(nonexistent):\n            os.unlink(nonexistent)\n\n        with patch.dict(os.environ, {\"EXEMPLAR_CONFIG\": nonexistent}):\n            with pytest.raises(ConfigFileNotFoundError) as exc_info:\n                load_config(None)\n            assert exc_info.value.path is not None\n            assert str(exc_info.value.path) == nonexistent or str(exc_info.value.path) == str(Path(nonexistent))\n\n    def test_goodhart_load_config_error_includes_path(self):\n        \"\"\"ConfigFileNotFoundError raised by load_config must include the resolved path in its path field.\"\"\"\n        explicit = Path(\"/tmp/nonexistent_adversarial_test_config.yaml\")\n        if explicit.exists():\n            explicit.unlink()\n        with pytest.raises(ConfigFileNotFoundError) as exc_info:\n            load_config(explicit)\n        assert exc_info.value.path == explicit\n\n    def test_goodhart_load_config_yaml_only_comment(self):\n        \"\"\"A YAML file containing only comments should return default_config().\"\"\"\n        yaml_content = \"# This is just a comment\\n# Nothing else here\\n\"\n        defaults = default_config()\n\n        with tempfile.NamedTemporaryFile(mode=\"w\", suffix=\".yaml\", delete=False) as f:\n            f.write(yaml_content)\n            f.flush()\n            try:\n                cfg = load_config(Path(f.name))\n                assert cfg == defaults\n            finally:\n                os.unlink(f.name)\n\n    def test_goodhart_load_config_yaml_with_only_whitespace(self):\n        \"\"\"A YAML file containing only whitespace should return default_config().\"\"\"\n        yaml_content = \"   \\n\\n  \\n\"\n        defaults = default_config()\n\n        with tempfile.NamedTemporaryFile(mode=\"w\", suffix=\".yaml\", delete=False) as f:\n            f.write(yaml_content)\n            f.flush()\n            try:\n                cfg = load_config(Path(f.name))\n                assert cfg == defaults\n            finally:\n                os.unlink(f.name)\n\n    def test_goodhart_load_config_invalid_trust_weight(self):\n        \"\"\"YAML specifying a reviewer trust_weight above valid range must raise ConfigValidationError.\"\"\"\n        yaml_content = textwrap.dedent(\"\"\"\\\n            reviewers:\n              security:\n                default_trust_weight: 1.5\n        \"\"\")\n\n        with tempfile.NamedTemporaryFile(mode=\"w\", suffix=\".yaml\", delete=False) as f:\n            f.write(yaml_content)\n            f.flush()\n            try:\n                with pytest.raises((ConfigValidationError, ConfigError)):\n                    load_config(Path(f.name))\n            finally:\n                os.unlink(f.name)\n\n    def test_goodhart_load_config_negative_timeout(self):\n        \"\"\"YAML specifying a negative stage_timeout_ms must raise ConfigValidationError.\"\"\"\n        yaml_content = textwrap.dedent(\"\"\"\\\n            circuit:\n              stage_timeout_ms: -100\n        \"\"\")\n\n        with tempfile.NamedTemporaryFile(mode=\"w\", suffix=\".yaml\", delete=False) as f:\n            f.write(yaml_content)\n            f.flush()\n            try:\n                with pytest.raises((ConfigValidationError, ConfigError)):\n                    load_config(Path(f.name))\n            finally:\n                os.unlink(f.name)\n\n    def test_goodhart_load_config_invalid_regex_in_ledger_rule(self):\n        \"\"\"YAML specifying an invalid regex pattern in a ledger rule must raise a config error.\"\"\"\n        yaml_content = textwrap.dedent(\"\"\"\\\n            ledger:\n              rules:\n                - pattern: \"[invalid(\"\n                  label: secret\n                  description: \"Bad regex\"\n        \"\"\")\n\n        with tempfile.NamedTemporaryFile(mode=\"w\", suffix=\".yaml\", delete=False) as f:\n            f.write(yaml_content)\n            f.flush()\n            try:\n                with pytest.raises((ConfigValidationError, ConfigError)):\n                    load_config(Path(f.name))\n            finally:\n                os.unlink(f.name)\n\n    def test_goodhart_load_config_merge_overrides_chronicle_path(self):\n        \"\"\"Deep merge must support overriding top-level string fields like chronicle_log_path.\"\"\"\n        yaml_content = textwrap.dedent(\"\"\"\\\n            chronicle_log_path: /custom/log.jsonl\n        \"\"\")\n        defaults = default_config()\n\n        with tempfile.NamedTemporaryFile(mode=\"w\", suffix=\".yaml\", delete=False) as f:\n            f.write(yaml_content)\n            f.flush()\n            try:\n                cfg = load_config(Path(f.name))\n                assert cfg.chronicle_log_path == \"/custom/log.jsonl\"\n                # Other paths remain at defaults\n                assert cfg.kindex_store_path == defaults.kindex_store_path\n                assert cfg.stigmergy_store_path == defaults.stigmergy_store_path\n                assert cfg.seal_chain_path == defaults.seal_chain_path\n            finally:\n                os.unlink(f.name)\n\n    def test_goodhart_load_config_uses_resolve_config_path(self):\n        \"\"\"load_config must use the resolution chain: env var path should be used when explicit is None.\"\"\"\n        yaml_content = textwrap.dedent(\"\"\"\\\n            chronicle_log_path: /env/var/override.jsonl\n        \"\"\")\n        defaults = default_config()\n\n        with tempfile.NamedTemporaryFile(mode=\"w\", suffix=\".yaml\", delete=False) as f:\n            f.write(yaml_content)\n            f.flush()\n            try:\n                with patch.dict(os.environ, {\"EXEMPLAR_CONFIG\": f.name}):\n                    cfg = load_config(None)\n                    assert cfg.chronicle_log_path == \"/env/var/override.jsonl\"\n                    assert cfg.chronicle_log_path != defaults.chronicle_log_path\n            finally:\n                os.unlink(f.name)\n\n    def test_goodhart_config_validation_error_has_validation_errors_list(self):\n        \"\"\"ConfigValidationError must carry a non-empty validation_errors list on actual validation failures.\"\"\"\n        yaml_content = textwrap.dedent(\"\"\"\\\n            reviewers:\n              security:\n                default_trust_weight: 999.0\n        \"\"\")\n\n        with tempfile.NamedTemporaryFile(mode=\"w\", suffix=\".yaml\", delete=False) as f:\n            f.write(yaml_content)\n            f.flush()\n            try:\n                with pytest.raises((ConfigValidationError, ConfigError)) as exc_info:\n                    load_config(Path(f.name))\n                if isinstance(exc_info.value, ConfigValidationError):\n                    assert isinstance(exc_info.value.validation_errors, list)\n                    assert len(exc_info.value.validation_errors) > 0\n            finally:\n                os.unlink(f.name)\n\n\n# ──────────────────────────────────────────────\n# config_to_yaml() adversarial tests\n# ──────────────────────────────────────────────\n\nclass TestGoodhartConfigToYaml:\n\n    def test_goodhart_config_to_yaml_roundtrip_with_modified_config(self):\n        \"\"\"config_to_yaml roundtrip should work with a config that has non-default values.\"\"\"\n        yaml_content = textwrap.dedent(\"\"\"\\\n            apprentice:\n              phase: canary\n            reviewers:\n              style:\n                enabled: false\n            chronicle_log_path: /modified/path.jsonl\n        \"\"\")\n\n        with tempfile.NamedTemporaryFile(mode=\"w\", suffix=\".yaml\", delete=False) as f:\n            f.write(yaml_content)\n            f.flush()\n            try:\n                cfg = load_config(Path(f.name))\n                yaml_str = config_to_yaml(cfg)\n                parsed = yaml.safe_load(yaml_str)\n                assert parsed is not None\n                roundtrip_cfg = ExemplarConfig.model_validate(parsed)\n                assert roundtrip_cfg == cfg\n            finally:\n                os.unlink(f.name)\n\n    def test_goodhart_config_to_yaml_preserves_ledger_rules(self):\n        \"\"\"config_to_yaml serialization must preserve all ledger rules through a roundtrip.\"\"\"\n        cfg = default_config()\n        yaml_str = config_to_yaml(cfg)\n        parsed = yaml.safe_load(yaml_str)\n        roundtrip_cfg = ExemplarConfig.model_validate(parsed)\n\n        assert len(roundtrip_cfg.ledger.rules) == len(cfg.ledger.rules)\n        for orig, rt in zip(cfg.ledger.rules, roundtrip_cfg.ledger.rules):\n            assert orig.pattern == rt.pattern\n            assert orig.label == rt.label\n            assert orig.description == rt.description\n\n    def test_goodhart_config_to_yaml_output_is_string(self):\n        \"\"\"config_to_yaml must return a str type.\"\"\"\n        cfg = default_config()\n        result = config_to_yaml(cfg)\n        assert isinstance(result, str)\n\n\n# ──────────────────────────────────────────────\n# Error hierarchy adversarial tests\n# ──────────────────────────────────────────────\n\nclass TestGoodhartErrorHierarchy:\n\n    def test_goodhart_config_error_is_exception(self):\n        \"\"\"ConfigError and its subclasses must be actual Exception subclasses.\"\"\"\n        assert issubclass(ConfigError, Exception)\n        assert issubclass(ConfigFileNotFoundError, Exception)\n        assert issubclass(ConfigValidationError, Exception)\n        assert issubclass(ConfigParseError, Exception)\n\n    def test_goodhart_config_file_not_found_is_subclass(self):\n        \"\"\"ConfigFileNotFoundError must be catchable as ConfigError.\"\"\"\n        assert issubclass(ConfigFileNotFoundError, ConfigError)\n        err = ConfigFileNotFoundError(message=\"test\", path=Path(\"/test\"))\n        assert isinstance(err, ConfigError)\n\n    def test_goodhart_config_validation_error_is_subclass(self):\n        \"\"\"ConfigValidationError must be catchable as ConfigError.\"\"\"\n        assert issubclass(ConfigValidationError, ConfigError)\n        err = ConfigValidationError(message=\"test\", path=None, validation_errors=[])\n        assert isinstance(err, ConfigError)\n\n    def test_goodhart_config_parse_error_is_subclass(self):\n        \"\"\"ConfigParseError must be catchable as ConfigError.\"\"\"\n        assert issubclass(ConfigParseError, ConfigError)\n        err = ConfigParseError(message=\"test\", path=Path(\"/test\"))\n        assert isinstance(err, ConfigError)\n\n    def test_goodhart_config_error_can_be_raised_and_caught(self):\n        \"\"\"ConfigError hierarchy instances must be raisable and catchable.\"\"\"\n        with pytest.raises(ConfigError):\n            raise ConfigFileNotFoundError(message=\"not found\", path=Path(\"/x\"))\n\n        with pytest.raises(ConfigError):\n            raise ConfigValidationError(message=\"invalid\", path=None, validation_errors=[\"err1\"])\n\n        with pytest.raises(ConfigError):\n            raise ConfigParseError(message=\"bad yaml\", path=Path(\"/y\"))\n\n\n# ──────────────────────────────────────────────\n# Enum and type adversarial tests\n# ──────────────────────────────────────────────\n\nclass TestGoodhartEnumsAndTypes:\n\n    def test_goodhart_config_source_is_str_enum(self):\n        \"\"\"ConfigSource values should be usable as strings (StrEnum behavior).\"\"\"\n        # Must be comparable to strings\n        assert ConfigSource.explicit == \"explicit\" or str(ConfigSource.explicit) == \"explicit\"\n        assert ConfigSource.env_var == \"env_var\" or str(ConfigSource.env_var) == \"env_var\"\n        assert ConfigSource.conventional == \"conventional\" or str(ConfigSource.conventional) == \"conventional\"\n        assert ConfigSource.builtin == \"builtin\" or str(ConfigSource.builtin) == \"builtin\"\n\n    def test_goodhart_reviewer_config_trust_weight_mid_range(self):\n        \"\"\"ReviewerConfig should accept trust_weight values in the interior of the valid range.\"\"\"\n        rc = ReviewerConfig(\n            enabled=True,\n            stage=ReviewStage.security,\n            default_trust_weight=0.5,\n            allowed_file_patterns=[\"*\"],\n            denied_file_patterns=[],\n            allowed_classifications=[ClassificationLabel.public],\n            max_severity=Severity.high,\n        )\n        assert rc.default_trust_weight == 0.5\n\n    def test_goodhart_reviewer_config_trust_weight_just_above_one(self):\n        \"\"\"ReviewerConfig must reject trust_weight=1.0001.\"\"\"\n        with pytest.raises(Exception):  # ValidationError\n            ReviewerConfig(\n                enabled=True,\n                stage=ReviewStage.security,\n                default_trust_weight=1.0001,\n                allowed_file_patterns=[\"*\"],\n                denied_file_patterns=[],\n                allowed_classifications=[ClassificationLabel.public],\n                max_severity=Severity.high,\n            )\n\n    def test_goodhart_reviewer_config_trust_weight_just_below_zero(self):\n        \"\"\"ReviewerConfig must reject trust_weight=-0.0001.\"\"\"\n        with pytest.raises(Exception):  # ValidationError\n            ReviewerConfig(\n                enabled=True,\n                stage=ReviewStage.security,\n                default_trust_weight=-0.0001,\n                allowed_file_patterns=[\"*\"],\n                denied_file_patterns=[],\n                allowed_classifications=[ClassificationLabel.public],\n                max_severity=Severity.high,\n            )\n\n    def test_goodhart_circuit_config_timeout_zero(self):\n        \"\"\"CircuitConfig must reject stage_timeout_ms=0 (must be strictly positive).\"\"\"\n        with pytest.raises(Exception):  # ValidationError\n            CircuitConfig(\n                stages=[ReviewStage.security],\n                parallel_stages=[],\n                stage_timeout_ms=0,\n                block_threshold=3,\n                warn_threshold=1,\n            )\n\n    def test_goodhart_circuit_config_timeout_one(self):\n        \"\"\"CircuitConfig must accept stage_timeout_ms=1 (minimum valid positive integer).\"\"\"\n        cc = CircuitConfig(\n            stages=[ReviewStage.security],\n            parallel_stages=[],\n            stage_timeout_ms=1,\n            block_threshold=3,\n            warn_threshold=1,\n        )\n        assert cc.stage_timeout_ms == 1\n\n    def test_goodhart_apprentice_threshold_boundary_just_above(self):\n        \"\"\"ApprenticeConfig must reject shadow_to_canary_threshold=1.001.\"\"\"\n        with pytest.raises(Exception):  # ValidationError\n            ApprenticeConfig(\n                phase=LearnerPhase.shadow,\n                storage_path=\"/tmp/store\",\n                shadow_to_canary_threshold=1.001,\n                canary_to_primary_threshold=0.5,\n            )\n"
+}

@@ -1,0 +1,94 @@
+core_pipeline:
+  intake:
+    module: "exemplar.intake"
+    purpose: "Parse unified diffs into DiffHunk records, classify via Ledger"
+    dependencies: ["schemas", "config"]
+    governance: ["ledger"]
+
+  circuit:
+    module: "exemplar.circuit"
+    purpose: "Route hunks through review stages (Baton pattern)"
+    dependencies: ["schemas", "config", "reviewers"]
+    governance: ["baton"]
+
+  assessor:
+    module: "exemplar.assessor"
+    purpose: "Merge reviewer assessments with trust-weighted scoring"
+    dependencies: ["schemas"]
+    governance: ["arbiter"]
+
+  reporter:
+    module: "exemplar.reporter"
+    purpose: "Format reports as JSON/Markdown/GitHub, seal with Tessera"
+    dependencies: ["schemas"]
+    governance: ["tessera"]
+
+data_layer:
+  schemas:
+    module: "exemplar.schemas"
+    purpose: "Frozen Pydantic v2 models and StrEnums"
+    dependencies: []
+    governance: []
+
+  config:
+    module: "exemplar.config"
+    purpose: "YAML + Pydantic config with fail-fast validation"
+    dependencies: ["schemas"]
+    governance: ["constrain"]
+
+reviewers:
+  base:
+    module: "exemplar.reviewers.base"
+    purpose: "ReviewerProtocol (runtime_checkable)"
+    dependencies: ["schemas"]
+    governance: ["agent_safe"]
+
+  security:
+    module: "exemplar.reviewers.security"
+    purpose: "OWASP patterns, secret detection"
+    dependencies: ["schemas"]
+    governance: ["agent_safe", "signet"]
+
+  correctness:
+    module: "exemplar.reviewers.correctness"
+    purpose: "Logic errors, null checks, off-by-ones"
+    dependencies: ["schemas"]
+    governance: ["agent_safe"]
+
+  style:
+    module: "exemplar.reviewers.style"
+    purpose: "Convention violations"
+    dependencies: ["schemas"]
+    governance: ["agent_safe"]
+
+  architecture:
+    module: "exemplar.reviewers.architecture"
+    purpose: "Coupling, layer violations"
+    dependencies: ["schemas"]
+    governance: ["agent_safe"]
+
+integration_layer:
+  chronicle:
+    module: "exemplar.chronicle"
+    purpose: "Emit events at stage boundaries"
+    dependencies: ["schemas"]
+    governance: ["chronicler"]
+
+  learner:
+    module: "exemplar.learner"
+    purpose: "Apprentice shadow/canary/primary phase progression"
+    dependencies: ["schemas"]
+    governance: ["apprentice"]
+
+entry_points:
+  cli:
+    module: "exemplar.cli"
+    purpose: "argparse subcommands: review, trust, history, adopt"
+    dependencies: ["intake", "circuit", "assessor", "reporter", "config"]
+    governance: ["pact", "kindex", "cartographer"]
+
+  mcp_server:
+    module: "exemplar.mcp_server"
+    purpose: "MCP tools: exemplar_review, exemplar_trust, exemplar_history"
+    dependencies: ["intake", "circuit", "assessor", "reporter", "config"]
+    governance: ["kindex"]

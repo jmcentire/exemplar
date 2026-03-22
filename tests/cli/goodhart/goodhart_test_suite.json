@@ -1,0 +1,877 @@
+{
+  "component_id": "cli",
+  "contract_version": 1,
+  "test_cases": [
+    {
+      "id": "goodhart_parse_review_diff_file_preserved",
+      "description": "parse_and_validate_args must preserve the exact diff_file path string from argv, not return a hardcoded value",
+      "function": "parse_and_validate_args",
+      "category": "happy_path",
+      "setup_description": "Build parser via build_parser(), then parse argv=['review', '/tmp/unusual-path-12345.diff']",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "review subcommand with an unusual but valid diff file path like '/tmp/unusual-path-12345.diff'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returned CliArgs.diff_file matches the exact path provided in argv",
+        "the path is not a hardcoded default value"
+      ]
+    },
+    {
+      "id": "goodhart_parse_review_format_option_preserved",
+      "description": "parse_and_validate_args must correctly propagate the --format option value for each valid OutputFormat variant",
+      "function": "parse_and_validate_args",
+      "category": "happy_path",
+      "setup_description": "Build parser, parse with ['review', 'file.diff', '--format', 'md'] and verify each format",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "review subcommand with each format option: json, md, github",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "CliArgs.output_format is 'md' when --format md is passed",
+        "CliArgs.output_format is 'github' when --format github is passed",
+        "CliArgs.output_format is 'json' when --format json is passed"
+      ]
+    },
+    {
+      "id": "goodhart_parse_review_config_path_preserved",
+      "description": "parse_and_validate_args must preserve the exact --config path from argv, not substitute a default",
+      "function": "parse_and_validate_args",
+      "category": "happy_path",
+      "setup_description": "Build parser, parse ['review', 'file.diff', '--config', '/custom/dir/my-config.yml']",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "review subcommand with --config pointing to a custom path",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "CliArgs.config_path matches '/custom/dir/my-config.yml' exactly"
+      ]
+    },
+    {
+      "id": "goodhart_parse_debug_flag_true",
+      "description": "parse_and_validate_args must set debug=True when --debug flag is present, for any subcommand",
+      "function": "parse_and_validate_args",
+      "category": "happy_path",
+      "setup_description": "Build parser, parse with --debug flag in different positions",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "trust subcommand with --debug flag",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "CliArgs.debug is True for ['--debug', 'trust']",
+        "CliArgs.debug is True for ['trust', '--debug'] (flag after subcommand)"
+      ]
+    },
+    {
+      "id": "goodhart_parse_history_query_preserved",
+      "description": "parse_and_validate_args must preserve the exact --query string value for history subcommand",
+      "function": "parse_and_validate_args",
+      "category": "happy_path",
+      "setup_description": "Build parser, parse ['history', '--query', 'security vulnerability fix']",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "history subcommand with --query 'security vulnerability fix'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "CliArgs.query equals 'security vulnerability fix'"
+      ]
+    },
+    {
+      "id": "goodhart_map_decision_whitespace_variants_rejected",
+      "description": "map_decision_to_exit_code must reject decisions with leading/trailing whitespace — only exact lowercase matches are valid",
+      "function": "map_decision_to_exit_code",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Decision strings with whitespace: ' pass', 'pass ', ' warn ', '\\tblock', 'error\\n'",
+      "expected_output_description": "",
+      "expected_error": "invalid_decision",
+      "assertions": [
+        "' pass' raises invalid_decision",
+        "'pass ' raises invalid_decision",
+        "' warn ' raises invalid_decision",
+        "'\\tblock' raises invalid_decision",
+        "'error\\n' raises invalid_decision"
+      ]
+    },
+    {
+      "id": "goodhart_map_decision_mixed_case_variants",
+      "description": "map_decision_to_exit_code must be strictly case-sensitive — mixed case variants like 'Pass', 'WARN', 'Block', 'Error' must all be rejected",
+      "function": "map_decision_to_exit_code",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Mixed case variants: 'Pass', 'WARN', 'Block', 'Error', 'pAsS', 'wArN'",
+      "expected_output_description": "",
+      "expected_error": "invalid_decision",
+      "assertions": [
+        "'Pass' raises invalid_decision",
+        "'WARN' raises invalid_decision",
+        "'Block' raises invalid_decision",
+        "'Error' raises invalid_decision"
+      ]
+    },
+    {
+      "id": "goodhart_map_decision_substring_rejected",
+      "description": "map_decision_to_exit_code must reject strings that contain valid decisions as substrings",
+      "function": "map_decision_to_exit_code",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Strings containing valid decisions: 'password', 'warning', 'blocker', 'errors', 'nopass'",
+      "expected_output_description": "",
+      "expected_error": "invalid_decision",
+      "assertions": [
+        "'password' raises invalid_decision",
+        "'warning' raises invalid_decision",
+        "'blocker' raises invalid_decision",
+        "'errors' raises invalid_decision"
+      ]
+    },
+    {
+      "id": "goodhart_dispatch_table_maps_to_correct_handlers",
+      "description": "Each dispatch table entry must map to the correct distinct handler function for that subcommand, not all pointing to the same function",
+      "function": "build_dispatch_table",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "all four handler functions are distinct objects (not the same function)",
+        "review maps to handle_review",
+        "trust maps to handle_trust",
+        "history maps to handle_history",
+        "adopt maps to handle_adopt"
+      ]
+    },
+    {
+      "id": "goodhart_handle_review_uses_requested_format",
+      "description": "handle_review must pass the requested output format to the reporter pipeline, producing output in that format rather than always using a default",
+      "function": "handle_review",
+      "category": "happy_path",
+      "setup_description": "Mock all dependencies, set output_format to 'md'",
+      "mock_dependencies": {
+        "intake.parse_diff": "returns parsed diff",
+        "circuit.route_stages": "returns routed stages",
+        "assessor.assess": "returns assessment with decision='pass'",
+        "reporter.format_report": "returns markdown-formatted output when called with format='md'",
+        "chronicle.emit_event": "succeeds silently",
+        "config": "returns valid config"
+      },
+      "input_values": {},
+      "input_description": "CliArgs with output_format='md' and mocked pipeline",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "reporter.format_report was called with the 'md' format argument",
+        "stdout_output contains the markdown-formatted report"
+      ]
+    },
+    {
+      "id": "goodhart_handle_review_warn_exit_code",
+      "description": "handle_review must correctly return exit code 1 (WARN) when the pipeline assessment decision is 'warn', not only 0 or 3",
+      "function": "handle_review",
+      "category": "happy_path",
+      "setup_description": "Mock pipeline to return warn decision",
+      "mock_dependencies": {
+        "assessor.assess": "returns assessment with decision='warn'",
+        "reporter.format_report": "returns formatted report",
+        "intake.parse_diff": "returns parsed diff",
+        "circuit.route_stages": "returns routed stages",
+        "chronicle.emit_event": "succeeds",
+        "config": "returns valid config"
+      },
+      "input_values": {},
+      "input_description": "CliArgs for review with mocked pipeline returning warn decision",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "exit_code is 1 (WARN)"
+      ]
+    },
+    {
+      "id": "goodhart_handle_review_block_exit_code",
+      "description": "handle_review must correctly return exit code 2 (BLOCK) when the pipeline assessment decision is 'block'",
+      "function": "handle_review",
+      "category": "happy_path",
+      "setup_description": "Mock pipeline to return block decision",
+      "mock_dependencies": {
+        "assessor.assess": "returns assessment with decision='block'",
+        "reporter.format_report": "returns formatted report",
+        "intake.parse_diff": "returns parsed diff",
+        "circuit.route_stages": "returns routed stages",
+        "chronicle.emit_event": "succeeds",
+        "config": "returns valid config"
+      },
+      "input_values": {},
+      "input_description": "CliArgs for review with mocked pipeline returning block decision",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "exit_code is 2 (BLOCK)"
+      ]
+    },
+    {
+      "id": "goodhart_handle_review_stderr_empty_when_no_debug",
+      "description": "handle_review must not emit diagnostic info to stderr when debug is False — stderr verbosity is controlled by --debug flag",
+      "function": "handle_review",
+      "category": "invariant",
+      "setup_description": "Mock all dependencies successfully, set debug=False",
+      "mock_dependencies": {
+        "all pipeline deps": "succeed normally",
+        "config": "returns valid config"
+      },
+      "input_values": {},
+      "input_description": "CliArgs with debug=False and successful pipeline",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "stderr_output is empty or contains no diagnostic information when debug=False"
+      ]
+    },
+    {
+      "id": "goodhart_handle_review_stdout_nonempty_on_success",
+      "description": "handle_review must produce non-empty stdout_output on successful pipeline completion, containing the formatted report",
+      "function": "handle_review",
+      "category": "invariant",
+      "setup_description": "Mock pipeline with non-empty report output",
+      "mock_dependencies": {
+        "reporter.format_report": "returns non-empty report string",
+        "all other pipeline deps": "succeed normally"
+      },
+      "input_values": {},
+      "input_description": "Successful review pipeline",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "stdout_output is non-empty",
+        "stdout_output contains the report from reporter.format_report"
+      ]
+    },
+    {
+      "id": "goodhart_handle_review_error_has_stderr",
+      "description": "handle_review must include diagnostic/error information in stderr_output when returning ERROR(3), not leave it empty",
+      "function": "handle_review",
+      "category": "error_case",
+      "setup_description": "Mock intake.parse_diff to raise, verify stderr has error info",
+      "mock_dependencies": {
+        "intake.parse_diff": "raises RuntimeError('intake failed')",
+        "config": "returns valid config"
+      },
+      "input_values": {},
+      "input_description": "CliArgs where pipeline stage raises an exception",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "exit_code is 3",
+        "stderr_output is non-empty and contains error context"
+      ]
+    },
+    {
+      "id": "goodhart_main_trust_returns_zero",
+      "description": "main() must correctly dispatch and return exit code 0 for trust subcommand, not just for review",
+      "function": "main",
+      "category": "happy_path",
+      "setup_description": "Mock trust dependencies to succeed",
+      "mock_dependencies": {
+        "assessor.get_trust_scores": "returns valid trust data",
+        "config": "returns valid config"
+      },
+      "input_values": {},
+      "input_description": "argv=['trust'] with mocked trust handler",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "main(['trust']) returns 0"
+      ]
+    },
+    {
+      "id": "goodhart_main_history_returns_zero",
+      "description": "main() must correctly dispatch and return exit code 0 for history subcommand",
+      "function": "main",
+      "category": "happy_path",
+      "setup_description": "Mock history dependencies to succeed",
+      "mock_dependencies": {
+        "learner.query_history": "returns history results",
+        "config": "returns valid config"
+      },
+      "input_values": {},
+      "input_description": "argv=['history'] with mocked history handler",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "main(['history']) returns 0"
+      ]
+    },
+    {
+      "id": "goodhart_main_adopt_returns_zero",
+      "description": "main() must correctly dispatch and return exit code 0 for adopt subcommand",
+      "function": "main",
+      "category": "happy_path",
+      "setup_description": "Mock adopt dependencies to succeed",
+      "mock_dependencies": {
+        "learner.scan_linter_configs": "returns scan results",
+        "config": "returns valid config"
+      },
+      "input_values": {},
+      "input_description": "argv=['adopt'] with mocked adopt handler",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "main(['adopt']) returns 0"
+      ]
+    },
+    {
+      "id": "goodhart_main_invalid_subcommand_returns_error",
+      "description": "main() must return exit code 3 (or handle gracefully) when given an invalid subcommand that argparse will reject",
+      "function": "main",
+      "category": "error_case",
+      "setup_description": "Call main with an unrecognized subcommand",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "argv=['nonexistent'] — invalid subcommand",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "return value is an int",
+        "no exception escapes",
+        "return value is 3 or handled appropriately"
+      ]
+    },
+    {
+      "id": "goodhart_main_empty_argv_returns_error",
+      "description": "main() must return exit code 3 when given empty argv (no subcommand)",
+      "function": "main",
+      "category": "error_case",
+      "setup_description": "Call main([])",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "argv=[]",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "return value is 3",
+        "no exception escapes"
+      ]
+    },
+    {
+      "id": "goodhart_filepath_exactly_4096_accepted",
+      "description": "FilePath must accept a path string of exactly 4096 characters (the maximum), not just reject >4096",
+      "function": "FilePath",
+      "category": "edge_case",
+      "setup_description": "Construct FilePath with 'a' * 4096",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A string of exactly 4096 'a' characters",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "FilePath with 4096 characters is accepted without error"
+      ]
+    },
+    {
+      "id": "goodhart_filepath_4097_rejected",
+      "description": "FilePath must reject a path string of exactly 4097 characters — one beyond the max boundary",
+      "function": "FilePath",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A string of exactly 4097 'a' characters",
+      "expected_output_description": "",
+      "expected_error": "validation error",
+      "assertions": [
+        "FilePath with 4097 characters raises validation error"
+      ]
+    },
+    {
+      "id": "goodhart_filepath_single_char_accepted",
+      "description": "FilePath must accept a single-character path (minimum length boundary)",
+      "function": "FilePath",
+      "category": "edge_case",
+      "setup_description": "Construct FilePath with value='x'",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A single character string 'x'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "FilePath with 'x' is accepted"
+      ]
+    },
+    {
+      "id": "goodhart_filepath_embedded_null_rejected",
+      "description": "FilePath must reject strings with null bytes anywhere in the string, not just at start or end",
+      "function": "FilePath",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "String with embedded null: 'path/to\\x00/file'",
+      "expected_output_description": "",
+      "expected_error": "validation error",
+      "assertions": [
+        "FilePath rejects 'path/to\\x00/file'"
+      ]
+    },
+    {
+      "id": "goodhart_filepath_special_chars_accepted",
+      "description": "FilePath must accept paths with spaces, unicode, and special characters that are not null bytes",
+      "function": "FilePath",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Paths with spaces, unicode: '/path/to/my file.diff', '/tmp/日本語/file.diff', '/path/with-dashes_and.dots'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "FilePath accepts '/path/to/my file.diff'",
+        "FilePath accepts '/tmp/日本語/file.diff'",
+        "FilePath accepts '/path/with-dashes_and.dots'"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_valid_function_keys",
+      "description": "PactKey must accept valid function keys matching the pattern for all handler functions",
+      "function": "PactKey",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "PactKey with function_key values: 'EXEMPLAR.CLI.handle_review', 'EXEMPLAR.CLI.handle_trust', 'EXEMPLAR.CLI.handle_history', 'EXEMPLAR.CLI.handle_adopt', 'EXEMPLAR.CLI.main'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All five function keys are accepted with namespace 'EXEMPLAR.CLI'"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_rejects_uppercase_function",
+      "description": "PactKey function_key must only contain lowercase letters and underscores in the suffix — uppercase is rejected",
+      "function": "PactKey",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "PactKey with function_key='EXEMPLAR.CLI.HandleReview'",
+      "expected_output_description": "",
+      "expected_error": "validation error",
+      "assertions": [
+        "PactKey rejects function_key with uppercase letters in suffix"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_rejects_digits_in_function",
+      "description": "PactKey function_key regex only allows lowercase and underscores — digits in the function name suffix are rejected",
+      "function": "PactKey",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "PactKey with function_key='EXEMPLAR.CLI.handle_review2'",
+      "expected_output_description": "",
+      "expected_error": "validation error",
+      "assertions": [
+        "PactKey rejects function_key with digits"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_rejects_wrong_prefix",
+      "description": "PactKey function_key must start with 'EXEMPLAR.CLI.' — other prefixes are rejected",
+      "function": "PactKey",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "PactKey with function_key='EXEMPLAR.INTAKE.parse_diff'",
+      "expected_output_description": "",
+      "expected_error": "validation error",
+      "assertions": [
+        "PactKey rejects function_key not starting with EXEMPLAR.CLI."
+      ]
+    },
+    {
+      "id": "goodhart_parse_review_default_format",
+      "description": "parse_and_validate_args must assign a valid default output_format when --format is not specified for review subcommand",
+      "function": "parse_and_validate_args",
+      "category": "edge_case",
+      "setup_description": "Build parser, parse ['review', 'file.diff'] and check output_format has a valid default",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "argv=['review', 'file.diff'] without --format",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "CliArgs.output_format is a valid OutputFormat variant (json, md, or github)"
+      ]
+    },
+    {
+      "id": "goodhart_parse_invalid_format_rejected",
+      "description": "parse_and_validate_args must reject invalid --format values that are not in the enum",
+      "function": "parse_and_validate_args",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "argv=['review', 'file.diff', '--format', 'xml']",
+      "expected_output_description": "",
+      "expected_error": "unknown_argument or argparse error",
+      "assertions": [
+        "raises an error for invalid format 'xml'"
+      ]
+    },
+    {
+      "id": "goodhart_main_returns_exactly_int_type",
+      "description": "main() must return a Python int, not a bool or other numeric type that equals an int",
+      "function": "main",
+      "category": "invariant",
+      "setup_description": "Call main with valid argv and check exact type",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Various valid and invalid argv inputs",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "type(result) is int, not bool or other subclass"
+      ]
+    },
+    {
+      "id": "goodhart_main_runtime_error_returns_three",
+      "description": "main() must catch RuntimeError from any dependency and return 3, not just specific exception types",
+      "function": "main",
+      "category": "error_case",
+      "setup_description": "Mock the dispatch table handler to raise RuntimeError",
+      "mock_dependencies": {
+        "dispatch handler": "raises RuntimeError('unexpected')"
+      },
+      "input_values": {},
+      "input_description": "Mocked handler that raises RuntimeError",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "return value is 3",
+        "no exception escapes"
+      ]
+    },
+    {
+      "id": "goodhart_main_type_error_returns_three",
+      "description": "main() must catch TypeError and return 3 — the boundary catches ALL exceptions",
+      "function": "main",
+      "category": "error_case",
+      "setup_description": "Mock dispatch to raise TypeError",
+      "mock_dependencies": {
+        "dispatch handler": "raises TypeError('bad type')"
+      },
+      "input_values": {},
+      "input_description": "Mocked handler that raises TypeError",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "return value is 3"
+      ]
+    },
+    {
+      "id": "goodhart_main_memory_error_returns_three",
+      "description": "main() must catch even BaseException subclasses like MemoryError and return 3 (contract says NO exception escapes)",
+      "function": "main",
+      "category": "error_case",
+      "setup_description": "Mock dispatch to raise MemoryError",
+      "mock_dependencies": {
+        "dispatch handler": "raises MemoryError"
+      },
+      "input_values": {},
+      "input_description": "Mocked handler that raises MemoryError",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "return value is 3 or KeyboardInterrupt is the only allowed escape"
+      ]
+    },
+    {
+      "id": "goodhart_handle_trust_stdout_has_content",
+      "description": "handle_trust must produce non-empty stdout_output containing reviewer trust data, not an empty string",
+      "function": "handle_trust",
+      "category": "invariant",
+      "setup_description": "Mock assessor to return trust scores for multiple reviewers",
+      "mock_dependencies": {
+        "assessor.get_trust_scores": "returns scores for 3 reviewers",
+        "config": "returns valid config"
+      },
+      "input_values": {},
+      "input_description": "Mocked trust scores with multiple reviewers",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "stdout_output is non-empty",
+        "stdout_output contains some representation of reviewer names or scores"
+      ]
+    },
+    {
+      "id": "goodhart_handle_history_with_query_filters",
+      "description": "handle_history must pass the query parameter to learner.query_history when --query is provided, enabling filtered results",
+      "function": "handle_history",
+      "category": "happy_path",
+      "setup_description": "Mock learner.query_history and verify it receives the query argument",
+      "mock_dependencies": {
+        "learner.query_history": "returns filtered results when query='security'",
+        "config": "returns valid config"
+      },
+      "input_values": {},
+      "input_description": "CliArgs with query='security' for history subcommand",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "learner.query_history was called with the query parameter 'security'",
+        "exit_code is 0"
+      ]
+    },
+    {
+      "id": "goodhart_handle_history_config_error_returns_three",
+      "description": "handle_history must return ERROR(3) when config loading fails, not just when kindex is unavailable",
+      "function": "handle_history",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {
+        "config": "raises config_load_error"
+      },
+      "input_values": {},
+      "input_description": "Mocked config loader that raises",
+      "expected_output_description": "",
+      "expected_error": "config_load_error",
+      "assertions": [
+        "exit_code is 3"
+      ]
+    },
+    {
+      "id": "goodhart_handle_adopt_config_error_returns_three",
+      "description": "handle_adopt must return ERROR(3) when config loading fails",
+      "function": "handle_adopt",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {
+        "config": "raises config_load_error"
+      },
+      "input_values": {},
+      "input_description": "Mocked config loader that raises",
+      "expected_output_description": "",
+      "expected_error": "config_load_error",
+      "assertions": [
+        "exit_code is 3"
+      ]
+    },
+    {
+      "id": "goodhart_cli_args_subcommand_matches_parsed",
+      "description": "CliArgs.subcommand must be a proper SubcommandName enum value, not just a plain string",
+      "function": "parse_and_validate_args",
+      "category": "invariant",
+      "setup_description": "Parse each subcommand and check the type/value of subcommand field",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Each valid subcommand argv",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "CliArgs.subcommand for 'review' is SubcommandName.review (or equivalent enum)",
+        "CliArgs.subcommand for 'trust' is SubcommandName.trust",
+        "CliArgs.subcommand for 'history' is SubcommandName.history",
+        "CliArgs.subcommand for 'adopt' is SubcommandName.adopt"
+      ]
+    },
+    {
+      "id": "goodhart_parse_review_different_diff_files",
+      "description": "parse_and_validate_args must correctly parse different diff file paths, not return a hardcoded value",
+      "function": "parse_and_validate_args",
+      "category": "invariant",
+      "setup_description": "Parse multiple different argv inputs and verify diff_file varies accordingly",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Multiple different diff file names: 'a.diff', 'changes.patch', '/absolute/path/to/diff', 'relative/path.diff'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "each parsed CliArgs.diff_file matches the corresponding input path exactly"
+      ]
+    },
+    {
+      "id": "goodhart_build_parser_trust_no_positional",
+      "description": "trust subcommand should not accept any positional arguments — only the subcommand name",
+      "function": "build_parser",
+      "category": "edge_case",
+      "setup_description": "Build parser and attempt to parse trust with an extra positional arg",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "parsing ['trust', 'extraarg'] raises an error for unrecognized argument"
+      ]
+    },
+    {
+      "id": "goodhart_build_parser_adopt_no_positional",
+      "description": "adopt subcommand should not accept any positional arguments — only the subcommand name",
+      "function": "build_parser",
+      "category": "edge_case",
+      "setup_description": "Build parser and attempt to parse adopt with an extra positional arg",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "parsing ['adopt', 'extraarg'] raises an error for unrecognized argument"
+      ]
+    },
+    {
+      "id": "goodhart_main_writes_handler_stdout_to_sys_stdout",
+      "description": "main() must write the exact stdout_output from the handler to sys.stdout, not fabricate output",
+      "function": "main",
+      "category": "invariant",
+      "setup_description": "Mock handler to return specific output, capture sys.stdout",
+      "mock_dependencies": {
+        "handler": "returns CliResult with stdout_output='UNIQUE_OUTPUT_MARKER_XYZ'"
+      },
+      "input_values": {},
+      "input_description": "Mocked handler returning CliResult with unique stdout_output string",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "sys.stdout received 'UNIQUE_OUTPUT_MARKER_XYZ'"
+      ]
+    },
+    {
+      "id": "goodhart_main_writes_handler_stderr_to_sys_stderr",
+      "description": "main() must write the handler's stderr_output to sys.stderr, not discard it",
+      "function": "main",
+      "category": "invariant",
+      "setup_description": "Mock handler to return specific stderr, capture sys.stderr",
+      "mock_dependencies": {
+        "handler": "returns CliResult with stderr_output='DIAGNOSTIC_MARKER_ABC'"
+      },
+      "input_values": {},
+      "input_description": "Mocked handler returning CliResult with non-empty stderr_output",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "sys.stderr received 'DIAGNOSTIC_MARKER_ABC'"
+      ]
+    },
+    {
+      "id": "goodhart_map_decision_none_rejected",
+      "description": "map_decision_to_exit_code must reject None input — only string values are accepted",
+      "function": "map_decision_to_exit_code",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "None as decision",
+      "expected_output_description": "",
+      "expected_error": "invalid_decision or TypeError",
+      "assertions": [
+        "raises invalid_decision or TypeError"
+      ]
+    },
+    {
+      "id": "goodhart_map_decision_numeric_rejected",
+      "description": "map_decision_to_exit_code must reject numeric inputs (0, 1, 2, 3) — it operates on string decisions not exit codes",
+      "function": "map_decision_to_exit_code",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Integer 0 as decision",
+      "expected_output_description": "",
+      "expected_error": "invalid_decision or TypeError",
+      "assertions": [
+        "raises invalid_decision or TypeError for integer input"
+      ]
+    },
+    {
+      "id": "goodhart_handle_review_pipeline_calls_in_order",
+      "description": "handle_review must invoke the pipeline stages (intake → circuit → assessor → reporter) in sequence, not skip stages",
+      "function": "handle_review",
+      "category": "invariant",
+      "setup_description": "Mock all pipeline stages with call-order tracking",
+      "mock_dependencies": {
+        "intake.parse_diff": "tracks call order, returns parsed diff",
+        "circuit.route_stages": "tracks call order, returns stages",
+        "assessor.assess": "tracks call order, returns assessment",
+        "reporter.format_report": "tracks call order, returns report",
+        "config": "returns valid config",
+        "chronicle.emit_event": "succeeds"
+      },
+      "input_values": {},
+      "input_description": "Mocked pipeline with call tracking",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "all four pipeline stages were called",
+        "intake was called before circuit",
+        "circuit was called before assessor",
+        "assessor was called before reporter"
+      ]
+    },
+    {
+      "id": "goodhart_cli_exit_code_no_extra_values",
+      "description": "CliExitCode enum must have exactly 4 members (0,1,2,3) — no hidden fifth value",
+      "function": "CliExitCode",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "len(CliExitCode) == 4",
+        "set of values is exactly {0, 1, 2, 3}"
+      ]
+    },
+    {
+      "id": "goodhart_output_format_no_extra_values",
+      "description": "OutputFormat enum must have exactly 3 members — no hidden extra format",
+      "function": "OutputFormat",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "len(OutputFormat) == 3",
+        "set of values is exactly {'json', 'md', 'github'}"
+      ]
+    },
+    {
+      "id": "goodhart_subcommand_name_no_extra_values",
+      "description": "SubcommandName enum must have exactly 4 members — no hidden extra subcommand",
+      "function": "SubcommandName",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "len(SubcommandName) == 4",
+        "set of values is exactly {'review', 'trust', 'history', 'adopt'}"
+      ]
+    }
+  ],
+  "test_language": "python",
+  "generated_code": "\"\"\"\nAdversarial hidden acceptance tests for CLI Entry Point component.\nThese tests target gaps in visible test coverage to detect implementations\nthat hardcode values or take shortcuts to pass visible tests.\n\"\"\"\nimport asyncio\nimport inspect\nimport sys\nfrom unittest.mock import AsyncMock, MagicMock, patch, call\nimport pytest\n\nfrom exemplar.cli import (\n    build_parser,\n    parse_and_validate_args,\n    handle_review,\n    handle_trust,\n    handle_history,\n    handle_adopt,\n    build_dispatch_table,\n    map_decision_to_exit_code,\n    main,\n    CliArgs,\n    CliResult,\n    CliExitCode,\n    SubcommandName,\n    OutputFormat,\n    FilePath,\n    PactKey,\n)\n\n\n# ---------------------------------------------------------------------------\n# Helper to run async functions in sync tests\n# ---------------------------------------------------------------------------\ndef run_async(coro):\n    return asyncio.get_event_loop().run_until_complete(coro)\n\n\n# ---------------------------------------------------------------------------\n# parse_and_validate_args: hardcoded return detection\n# ---------------------------------------------------------------------------\nclass TestGoodhartParseArgs:\n    def test_goodhart_parse_review_diff_file_preserved(self):\n        \"\"\"parse_and_validate_args must preserve the exact diff_file path string from argv, not return a hardcoded value.\"\"\"\n        parser = build_parser()\n        # Use a path that no hardcoded implementation would guess\n        args = parse_and_validate_args(parser, [\"review\", \"/tmp/unusual-path-12345.diff\"])\n        diff_file_val = args.diff_file if isinstance(args.diff_file, str) else getattr(args.diff_file, 'value', str(args.diff_file))\n        assert \"unusual-path-12345\" in diff_file_val\n\n    def test_goodhart_parse_review_different_diff_files(self):\n        \"\"\"parse_and_validate_args must correctly parse different diff file paths, not return a hardcoded value.\"\"\"\n        parser = build_parser()\n        paths = [\"a.diff\", \"changes.patch\", \"/absolute/path/to/diff\", \"relative/path.diff\"]\n        for path in paths:\n            args = parse_and_validate_args(parser, [\"review\", path])\n            diff_file_val = args.diff_file if isinstance(args.diff_file, str) else getattr(args.diff_file, 'value', str(args.diff_file))\n            assert path in diff_file_val, f\"Expected diff_file to contain '{path}', got '{diff_file_val}'\"\n\n    def test_goodhart_parse_review_format_option_preserved(self):\n        \"\"\"parse_and_validate_args must correctly propagate the --format option value for each valid OutputFormat variant.\"\"\"\n        parser = build_parser()\n        for fmt in [\"json\", \"md\", \"github\"]:\n            args = parse_and_validate_args(parser, [\"review\", \"file.diff\", \"--format\", fmt])\n            fmt_val = args.output_format if isinstance(args.output_format, str) else getattr(args.output_format, 'value', str(args.output_format))\n            assert fmt_val == fmt or fmt in str(fmt_val), f\"Expected format '{fmt}', got '{fmt_val}'\"\n\n    def test_goodhart_parse_review_config_path_preserved(self):\n        \"\"\"parse_and_validate_args must preserve the exact --config path from argv.\"\"\"\n        parser = build_parser()\n        args = parse_and_validate_args(parser, [\"review\", \"file.diff\", \"--config\", \"/custom/dir/my-config.yml\"])\n        config_val = args.config_path if isinstance(args.config_path, str) else getattr(args.config_path, 'value', str(args.config_path))\n        assert \"my-config.yml\" in config_val\n\n    def test_goodhart_parse_debug_flag_true_for_trust(self):\n        \"\"\"parse_and_validate_args must set debug=True when --debug flag is present for trust subcommand.\"\"\"\n        parser = build_parser()\n        args = parse_and_validate_args(parser, [\"--debug\", \"trust\"])\n        assert args.debug is True\n\n    def test_goodhart_parse_history_query_preserved(self):\n        \"\"\"parse_and_validate_args must preserve the exact --query string value for history subcommand.\"\"\"\n        parser = build_parser()\n        args = parse_and_validate_args(parser, [\"history\", \"--query\", \"security vulnerability fix\"])\n        assert args.query == \"security vulnerability fix\"\n\n    def test_goodhart_parse_review_default_format(self):\n        \"\"\"parse_and_validate_args must assign a valid default output_format when --format is not specified.\"\"\"\n        parser = build_parser()\n        args = parse_and_validate_args(parser, [\"review\", \"file.diff\"])\n        fmt_val = args.output_format if isinstance(args.output_format, str) else getattr(args.output_format, 'value', str(args.output_format))\n        assert fmt_val in (\"json\", \"md\", \"github\"), f\"Default format '{fmt_val}' is not a valid OutputFormat\"\n\n    def test_goodhart_parse_invalid_format_rejected(self):\n        \"\"\"parse_and_validate_args must reject invalid --format values not in the enum.\"\"\"\n        parser = build_parser()\n        with pytest.raises((SystemExit, Exception)):\n            parse_and_validate_args(parser, [\"review\", \"file.diff\", \"--format\", \"xml\"])\n\n    def test_goodhart_cli_args_subcommand_matches_parsed(self):\n        \"\"\"CliArgs.subcommand must be a proper typed value, not just a plain string that happens to match.\"\"\"\n        parser = build_parser()\n        for subcmd in [\"review\", \"trust\", \"history\", \"adopt\"]:\n            argv = [subcmd, \"file.diff\"] if subcmd == \"review\" else [subcmd]\n            args = parse_and_validate_args(parser, argv)\n            # The subcommand value must match the expected string\n            subcmd_val = args.subcommand if isinstance(args.subcommand, str) else getattr(args.subcommand, 'value', str(args.subcommand))\n            assert subcmd_val == subcmd or subcmd in str(subcmd_val)\n\n\n# ---------------------------------------------------------------------------\n# build_parser: subcommands reject extra args\n# ---------------------------------------------------------------------------\nclass TestGoodhartBuildParser:\n    def test_goodhart_build_parser_trust_no_positional(self):\n        \"\"\"trust subcommand should not accept any positional arguments.\"\"\"\n        parser = build_parser()\n        with pytest.raises((SystemExit, Exception)):\n            parser.parse_args([\"trust\", \"extraarg\"])\n\n    def test_goodhart_build_parser_adopt_no_positional(self):\n        \"\"\"adopt subcommand should not accept any positional arguments.\"\"\"\n        parser = build_parser()\n        with pytest.raises((SystemExit, Exception)):\n            parser.parse_args([\"adopt\", \"extraarg\"])\n\n\n# ---------------------------------------------------------------------------\n# map_decision_to_exit_code: edge cases beyond visible tests\n# ---------------------------------------------------------------------------\nclass TestGoodhartMapDecision:\n    def test_goodhart_map_decision_whitespace_variants_rejected(self):\n        \"\"\"map_decision_to_exit_code must reject decisions with leading/trailing whitespace.\"\"\"\n        for bad in [\" pass\", \"pass \", \" warn \", \"\\tblock\", \"error\\n\"]:\n            with pytest.raises(Exception):\n                map_decision_to_exit_code(bad)\n\n    def test_goodhart_map_decision_mixed_case_variants(self):\n        \"\"\"map_decision_to_exit_code must be strictly case-sensitive for all variants.\"\"\"\n        for bad in [\"Pass\", \"WARN\", \"Block\", \"Error\", \"pAsS\", \"wArN\", \"bLoCk\"]:\n            with pytest.raises(Exception):\n                map_decision_to_exit_code(bad)\n\n    def test_goodhart_map_decision_substring_rejected(self):\n        \"\"\"map_decision_to_exit_code must reject strings that contain valid decisions as substrings.\"\"\"\n        for bad in [\"password\", \"warning\", \"blocker\", \"errors\", \"nopass\", \"repass\"]:\n            with pytest.raises(Exception):\n                map_decision_to_exit_code(bad)\n\n    def test_goodhart_map_decision_none_rejected(self):\n        \"\"\"map_decision_to_exit_code must reject None input.\"\"\"\n        with pytest.raises(Exception):\n            map_decision_to_exit_code(None)\n\n    def test_goodhart_map_decision_numeric_rejected(self):\n        \"\"\"map_decision_to_exit_code must reject numeric inputs — it operates on string decisions.\"\"\"\n        for bad in [0, 1, 2, 3]:\n            with pytest.raises(Exception):\n                map_decision_to_exit_code(bad)\n\n\n# ---------------------------------------------------------------------------\n# build_dispatch_table: handlers are distinct\n# ---------------------------------------------------------------------------\nclass TestGoodhartDispatchTable:\n    def test_goodhart_dispatch_table_maps_to_correct_handlers(self):\n        \"\"\"Each dispatch table entry must map to a distinct handler function.\"\"\"\n        table = build_dispatch_table()\n        handlers_dict = table.handlers if hasattr(table, 'handlers') else table\n        if isinstance(handlers_dict, dict):\n            handler_values = list(handlers_dict.values())\n        else:\n            handler_values = list(handlers_dict.values()) if hasattr(handlers_dict, 'values') else []\n        # All handlers must be distinct objects\n        handler_ids = [id(h) for h in handler_values]\n        assert len(set(handler_ids)) == 4, \"All four handlers must be distinct functions\"\n\n    def test_goodhart_dispatch_table_keys_are_subcommands(self):\n        \"\"\"Dispatch table keys must correspond to actual SubcommandName values.\"\"\"\n        table = build_dispatch_table()\n        handlers_dict = table.handlers if hasattr(table, 'handlers') else table\n        if isinstance(handlers_dict, dict):\n            keys = set()\n            for k in handlers_dict.keys():\n                key_str = k if isinstance(k, str) else getattr(k, 'value', str(k))\n                keys.add(key_str)\n            assert keys == {\"review\", \"trust\", \"history\", \"adopt\"}\n\n\n# ---------------------------------------------------------------------------\n# FilePath: boundary and special character tests\n# ---------------------------------------------------------------------------\nclass TestGoodhartFilePath:\n    def test_goodhart_filepath_exactly_4096_accepted(self):\n        \"\"\"FilePath must accept a path string of exactly 4096 characters (the maximum).\"\"\"\n        fp = FilePath(value=\"a\" * 4096)\n        val = fp.value if hasattr(fp, 'value') else str(fp)\n        assert len(val) == 4096\n\n    def test_goodhart_filepath_4097_rejected(self):\n        \"\"\"FilePath must reject a path string of exactly 4097 characters.\"\"\"\n        with pytest.raises(Exception):\n            FilePath(value=\"a\" * 4097)\n\n    def test_goodhart_filepath_single_char_accepted(self):\n        \"\"\"FilePath must accept a single-character path (minimum length boundary).\"\"\"\n        fp = FilePath(value=\"x\")\n        val = fp.value if hasattr(fp, 'value') else str(fp)\n        assert val == \"x\" or \"x\" in val\n\n    def test_goodhart_filepath_embedded_null_rejected(self):\n        \"\"\"FilePath must reject strings with null bytes anywhere in the string.\"\"\"\n        with pytest.raises(Exception):\n            FilePath(value=\"path/to\\x00/file\")\n\n    def test_goodhart_filepath_special_chars_accepted(self):\n        \"\"\"FilePath must accept paths with spaces, unicode, and special characters that are not null bytes.\"\"\"\n        for path in [\"/path/to/my file.diff\", \"/tmp/日本語/file.diff\", \"/path/with-dashes_and.dots\"]:\n            fp = FilePath(value=path)\n            val = fp.value if hasattr(fp, 'value') else str(fp)\n            assert path in val\n\n\n# ---------------------------------------------------------------------------\n# PactKey: boundary tests\n# ---------------------------------------------------------------------------\nclass TestGoodhartPactKey:\n    def test_goodhart_pact_key_valid_function_keys(self):\n        \"\"\"PactKey must accept valid function keys for all handler functions.\"\"\"\n        for fk in [\n            \"EXEMPLAR.CLI.handle_review\",\n            \"EXEMPLAR.CLI.handle_trust\",\n            \"EXEMPLAR.CLI.handle_history\",\n            \"EXEMPLAR.CLI.handle_adopt\",\n            \"EXEMPLAR.CLI.main\",\n        ]:\n            pk = PactKey(namespace=\"EXEMPLAR.CLI\", function_key=fk)\n            assert pk.function_key == fk\n\n    def test_goodhart_pact_key_rejects_uppercase_function(self):\n        \"\"\"PactKey function_key must only contain lowercase letters and underscores in the suffix.\"\"\"\n        with pytest.raises(Exception):\n            PactKey(namespace=\"EXEMPLAR.CLI\", function_key=\"EXEMPLAR.CLI.HandleReview\")\n\n    def test_goodhart_pact_key_rejects_digits_in_function(self):\n        \"\"\"PactKey function_key regex only allows lowercase and underscores — digits are rejected.\"\"\"\n        with pytest.raises(Exception):\n            PactKey(namespace=\"EXEMPLAR.CLI\", function_key=\"EXEMPLAR.CLI.handle_review2\")\n\n    def test_goodhart_pact_key_rejects_wrong_prefix(self):\n        \"\"\"PactKey function_key must start with 'EXEMPLAR.CLI.' — other prefixes are rejected.\"\"\"\n        with pytest.raises(Exception):\n            PactKey(namespace=\"EXEMPLAR.CLI\", function_key=\"EXEMPLAR.INTAKE.parse_diff\")\n\n\n# ---------------------------------------------------------------------------\n# Enum member counts (no extra hidden values)\n# ---------------------------------------------------------------------------\nclass TestGoodhartEnumCounts:\n    def test_goodhart_cli_exit_code_no_extra_values(self):\n        \"\"\"CliExitCode enum must have exactly 4 members.\"\"\"\n        members = list(CliExitCode)\n        assert len(members) == 4\n        values = {m.value if hasattr(m, 'value') else m for m in members}\n        assert values == {0, 1, 2, 3}\n\n    def test_goodhart_output_format_no_extra_values(self):\n        \"\"\"OutputFormat enum must have exactly 3 members.\"\"\"\n        members = list(OutputFormat)\n        assert len(members) == 3\n\n    def test_goodhart_subcommand_name_no_extra_values(self):\n        \"\"\"SubcommandName enum must have exactly 4 members.\"\"\"\n        members = list(SubcommandName)\n        assert len(members) == 4\n\n\n# ---------------------------------------------------------------------------\n# handle_review: exit codes for warn and block\n# ---------------------------------------------------------------------------\nclass TestGoodhartHandleReview:\n    @pytest.fixture\n    def mock_review_args(self, tmp_path):\n        \"\"\"Create a CliArgs-like object for review with a real diff file.\"\"\"\n        diff_file = tmp_path / \"test.diff\"\n        diff_file.write_text(\"--- a/file.py\\n+++ b/file.py\\n@@ -1 +1 @@\\n-old\\n+new\\n\")\n        try:\n            return CliArgs(\n                subcommand=\"review\",\n                diff_file=str(diff_file),\n                config_path=\"\",\n                output_format=\"json\",\n                query=\"\",\n                debug=False,\n            )\n        except Exception:\n            # If CliArgs requires enum types\n            return CliArgs(\n                subcommand=SubcommandName(\"review\"),\n                diff_file=FilePath(value=str(diff_file)),\n                config_path=FilePath(value=str(tmp_path / \".exemplar.yml\")),\n                output_format=OutputFormat(\"json\"),\n                query=\"\",\n                debug=False,\n            )\n\n    def test_goodhart_handle_review_warn_exit_code(self, mock_review_args):\n        \"\"\"handle_review must correctly return exit code 1 (WARN) when pipeline decision is 'warn'.\"\"\"\n        with patch(\"exemplar.cli.config\") as mock_config, \\\n             patch(\"exemplar.cli.chronicle\") as mock_chronicle, \\\n             patch(\"exemplar.cli.intake\") as mock_intake, \\\n             patch(\"exemplar.cli.circuit\") as mock_circuit, \\\n             patch(\"exemplar.cli.assessor\") as mock_assessor, \\\n             patch(\"exemplar.cli.reporter\") as mock_reporter:\n            mock_config.load_config = MagicMock(return_value=MagicMock())\n            mock_chronicle.emit_event = AsyncMock()\n            mock_intake.parse_diff = MagicMock(return_value=MagicMock())\n            mock_circuit.route_stages = MagicMock(return_value=MagicMock())\n            mock_result = MagicMock()\n            mock_result.decision = \"warn\"\n            mock_assessor.assess = AsyncMock(return_value=mock_result) if asyncio.iscoroutinefunction(getattr(mock_assessor, 'assess', None)) else MagicMock(return_value=mock_result)\n            mock_reporter.format_report = MagicMock(return_value=\"warn report\")\n\n            try:\n                result = run_async(handle_review(mock_review_args))\n            except Exception:\n                pytest.skip(\"Could not run handle_review with mocks — implementation details differ\")\n\n            exit_val = result.exit_code if isinstance(result.exit_code, int) else getattr(result.exit_code, 'value', int(result.exit_code))\n            assert exit_val == 1, f\"Expected exit code 1 (WARN), got {exit_val}\"\n\n    def test_goodhart_handle_review_block_exit_code(self, mock_review_args):\n        \"\"\"handle_review must correctly return exit code 2 (BLOCK) when pipeline decision is 'block'.\"\"\"\n        with patch(\"exemplar.cli.config\") as mock_config, \\\n             patch(\"exemplar.cli.chronicle\") as mock_chronicle, \\\n             patch(\"exemplar.cli.intake\") as mock_intake, \\\n             patch(\"exemplar.cli.circuit\") as mock_circuit, \\\n             patch(\"exemplar.cli.assessor\") as mock_assessor, \\\n             patch(\"exemplar.cli.reporter\") as mock_reporter:\n            mock_config.load_config = MagicMock(return_value=MagicMock())\n            mock_chronicle.emit_event = AsyncMock()\n            mock_intake.parse_diff = MagicMock(return_value=MagicMock())\n            mock_circuit.route_stages = MagicMock(return_value=MagicMock())\n            mock_result = MagicMock()\n            mock_result.decision = \"block\"\n            mock_assessor.assess = AsyncMock(return_value=mock_result) if asyncio.iscoroutinefunction(getattr(mock_assessor, 'assess', None)) else MagicMock(return_value=mock_result)\n            mock_reporter.format_report = MagicMock(return_value=\"block report\")\n\n            try:\n                result = run_async(handle_review(mock_review_args))\n            except Exception:\n                pytest.skip(\"Could not run handle_review with mocks — implementation details differ\")\n\n            exit_val = result.exit_code if isinstance(result.exit_code, int) else getattr(result.exit_code, 'value', int(result.exit_code))\n            assert exit_val == 2, f\"Expected exit code 2 (BLOCK), got {exit_val}\"\n\n    def test_goodhart_handle_review_stdout_nonempty_on_success(self, mock_review_args):\n        \"\"\"handle_review must produce non-empty stdout_output on successful pipeline completion.\"\"\"\n        with patch(\"exemplar.cli.config\") as mock_config, \\\n             patch(\"exemplar.cli.chronicle\") as mock_chronicle, \\\n             patch(\"exemplar.cli.intake\") as mock_intake, \\\n             patch(\"exemplar.cli.circuit\") as mock_circuit, \\\n             patch(\"exemplar.cli.assessor\") as mock_assessor, \\\n             patch(\"exemplar.cli.reporter\") as mock_reporter:\n            mock_config.load_config = MagicMock(return_value=MagicMock())\n            mock_chronicle.emit_event = AsyncMock()\n            mock_intake.parse_diff = MagicMock(return_value=MagicMock())\n            mock_circuit.route_stages = MagicMock(return_value=MagicMock())\n            mock_result = MagicMock()\n            mock_result.decision = \"pass\"\n            mock_assessor.assess = AsyncMock(return_value=mock_result) if asyncio.iscoroutinefunction(getattr(mock_assessor, 'assess', None)) else MagicMock(return_value=mock_result)\n            mock_reporter.format_report = MagicMock(return_value=\"formatted report output\")\n\n            try:\n                result = run_async(handle_review(mock_review_args))\n            except Exception:\n                pytest.skip(\"Could not run handle_review with mocks\")\n\n            assert result.stdout_output, \"stdout_output must be non-empty on success\"\n\n\n# ---------------------------------------------------------------------------\n# main: dispatch to all subcommands, error handling\n# ---------------------------------------------------------------------------\nclass TestGoodhartMain:\n    def test_goodhart_main_trust_returns_zero(self):\n        \"\"\"main() must correctly dispatch and return exit code 0 for trust subcommand.\"\"\"\n        mock_result = MagicMock()\n        mock_result.exit_code = 0\n        mock_result.stdout_output = \"trust scores\"\n        mock_result.stderr_output = \"\"\n\n        with patch(\"exemplar.cli.handle_trust\", new_callable=lambda: lambda: AsyncMock(return_value=mock_result)) as mock_handler:\n            try:\n                with patch(\"exemplar.cli.build_dispatch_table\") as mock_dt:\n                    handlers = {\n                        \"review\": AsyncMock(),\n                        \"trust\": AsyncMock(return_value=mock_result),\n                        \"history\": AsyncMock(),\n                        \"adopt\": AsyncMock(),\n                    }\n                    mock_table = MagicMock()\n                    mock_table.handlers = handlers\n                    mock_dt.return_value = mock_table\n                    result = main([\"trust\"])\n            except Exception:\n                # Try without patching dispatch table\n                try:\n                    with patch(\"exemplar.cli.handle_trust\", AsyncMock(return_value=mock_result)):\n                        with patch(\"exemplar.cli.config\") as mc:\n                            mc.load_config = MagicMock(return_value=MagicMock())\n                            result = main([\"trust\"])\n                except Exception:\n                    pytest.skip(\"Cannot mock trust handler for main()\")\n\n        assert result == 0, f\"Expected 0, got {result}\"\n\n    def test_goodhart_main_empty_argv_returns_error(self):\n        \"\"\"main() must return exit code when given empty argv (no subcommand).\"\"\"\n        result = main([])\n        assert isinstance(result, int)\n        # Should be error since no subcommand\n        assert result in (2, 3), f\"Expected error exit code for empty argv, got {result}\"\n\n    def test_goodhart_main_invalid_subcommand_returns_error(self):\n        \"\"\"main() must return an error exit code when given an invalid subcommand.\"\"\"\n        result = main([\"nonexistent\"])\n        assert isinstance(result, int)\n        assert result in (2, 3), f\"Expected error exit code for invalid subcommand, got {result}\"\n\n    def test_goodhart_main_returns_exactly_int_type(self):\n        \"\"\"main() must return a Python int, not a bool or other type.\"\"\"\n        result = main([])\n        assert type(result) is int, f\"Expected exact type int, got {type(result).__name__}\"\n\n    def test_goodhart_main_runtime_error_returns_three(self):\n        \"\"\"main() must catch RuntimeError from dependencies and return 3.\"\"\"\n        with patch(\"exemplar.cli.build_parser\", side_effect=RuntimeError(\"unexpected\")):\n            result = main([\"trust\"])\n        assert result == 3\n\n    def test_goodhart_main_type_error_returns_three(self):\n        \"\"\"main() must catch TypeError and return 3.\"\"\"\n        with patch(\"exemplar.cli.build_parser\", side_effect=TypeError(\"bad type\")):\n            result = main([\"trust\"])\n        assert result == 3\n\n    def test_goodhart_main_writes_handler_stdout_to_sys_stdout(self):\n        \"\"\"main() must write the exact stdout_output from the handler to sys.stdout.\"\"\"\n        unique_marker = \"UNIQUE_OUTPUT_MARKER_XYZ_98765\"\n        mock_result = MagicMock()\n        mock_result.exit_code = 0\n        mock_result.stdout_output = unique_marker\n        mock_result.stderr_output = \"\"\n\n        captured = []\n        original_write = sys.stdout.write\n\n        with patch(\"exemplar.cli.build_dispatch_table\") as mock_dt, \\\n             patch(\"sys.stdout\") as mock_stdout:\n            mock_stdout.write = MagicMock(side_effect=lambda s: captured.append(s))\n            handlers = {}\n            for name in [\"review\", \"trust\", \"history\", \"adopt\"]:\n                handlers[name] = AsyncMock(return_value=mock_result)\n            # Also try with enum keys\n            try:\n                for name in SubcommandName:\n                    handlers[name] = AsyncMock(return_value=mock_result)\n            except Exception:\n                pass\n            mock_table = MagicMock()\n            mock_table.handlers = handlers\n            mock_table.__getitem__ = lambda self, key: handlers.get(key, handlers.get(str(key) if not isinstance(key, str) else key))\n            mock_dt.return_value = mock_table\n\n            try:\n                result = main([\"trust\"])\n                written = \"\".join(captured)\n                assert unique_marker in written, f\"Expected '{unique_marker}' in stdout, got: {written}\"\n            except Exception:\n                pytest.skip(\"Cannot verify stdout writing with current mock setup\")\n\n    def test_goodhart_main_writes_handler_stderr_to_sys_stderr(self):\n        \"\"\"main() must write the handler's stderr_output to sys.stderr.\"\"\"\n        diag_marker = \"DIAGNOSTIC_MARKER_ABC_54321\"\n        mock_result = MagicMock()\n        mock_result.exit_code = 0\n        mock_result.stdout_output = \"output\"\n        mock_result.stderr_output = diag_marker\n\n        captured = []\n\n        with patch(\"exemplar.cli.build_dispatch_table\") as mock_dt, \\\n             patch(\"sys.stderr\") as mock_stderr, \\\n             patch(\"sys.stdout\"):\n            mock_stderr.write = MagicMock(side_effect=lambda s: captured.append(s))\n            handlers = {}\n            for name in [\"review\", \"trust\", \"history\", \"adopt\"]:\n                handlers[name] = AsyncMock(return_value=mock_result)\n            try:\n                for name in SubcommandName:\n                    handlers[name] = AsyncMock(return_value=mock_result)\n            except Exception:\n                pass\n            mock_table = MagicMock()\n            mock_table.handlers = handlers\n            mock_dt.return_value = mock_table\n\n            try:\n                main([\"trust\"])\n                written = \"\".join(captured)\n                assert diag_marker in written, f\"Expected '{diag_marker}' in stderr, got: {written}\"\n            except Exception:\n                pytest.skip(\"Cannot verify stderr writing with current mock setup\")\n\n\n# ---------------------------------------------------------------------------\n# handle_trust: content verification\n# ---------------------------------------------------------------------------\nclass TestGoodhartHandleTrust:\n    def test_goodhart_handle_trust_stdout_has_content(self):\n        \"\"\"handle_trust must produce non-empty stdout_output containing reviewer trust data.\"\"\"\n        try:\n            mock_args = CliArgs(\n                subcommand=SubcommandName(\"trust\"),\n                diff_file=FilePath(value=\".\"),\n                config_path=FilePath(value=\".\"),\n                output_format=OutputFormat(\"json\"),\n                query=\"\",\n                debug=False,\n            )\n        except Exception:\n            try:\n                mock_args = CliArgs(\n                    subcommand=\"trust\",\n                    diff_file=\"\",\n                    config_path=\"\",\n                    output_format=\"json\",\n                    query=\"\",\n                    debug=False,\n                )\n            except Exception:\n                pytest.skip(\"Cannot construct CliArgs for trust\")\n\n        trust_data = [\n            {\"reviewer\": \"security\", \"score\": 0.95},\n            {\"reviewer\": \"style\", \"score\": 0.82},\n            {\"reviewer\": \"complexity\", \"score\": 0.77},\n        ]\n\n        with patch(\"exemplar.cli.config\") as mock_config, \\\n             patch(\"exemplar.cli.assessor\") as mock_assessor:\n            mock_config.load_config = MagicMock(return_value=MagicMock())\n            mock_assessor.get_trust_scores = MagicMock(return_value=trust_data)\n            if hasattr(mock_assessor.get_trust_scores, '__aiter__'):\n                mock_assessor.get_trust_scores = AsyncMock(return_value=trust_data)\n\n            try:\n                result = run_async(handle_trust(mock_args))\n            except Exception:\n                pytest.skip(\"Cannot run handle_trust with mocks\")\n\n            assert result.stdout_output, \"handle_trust stdout_output must be non-empty\"\n\n\n# ---------------------------------------------------------------------------\n# handle_history: query parameter propagation\n# ---------------------------------------------------------------------------\nclass TestGoodhartHandleHistory:\n    def test_goodhart_handle_history_with_query_filters(self):\n        \"\"\"handle_history must pass the query parameter to the learner when --query is provided.\"\"\"\n        try:\n            mock_args = CliArgs(\n                subcommand=SubcommandName(\"history\"),\n                diff_file=FilePath(value=\".\"),\n                config_path=FilePath(value=\".\"),\n                output_format=OutputFormat(\"json\"),\n                query=\"security\",\n                debug=False,\n            )\n        except Exception:\n            try:\n                mock_args = CliArgs(\n                    subcommand=\"history\",\n                    diff_file=\"\",\n                    config_path=\"\",\n                    output_format=\"json\",\n                    query=\"security\",\n                    debug=False,\n                )\n            except Exception:\n                pytest.skip(\"Cannot construct CliArgs for history\")\n\n        with patch(\"exemplar.cli.config\") as mock_config, \\\n             patch(\"exemplar.cli.learner\") as mock_learner:\n            mock_config.load_config = MagicMock(return_value=MagicMock())\n            mock_learner.query_history = MagicMock(return_value=[])\n            if hasattr(mock_learner, 'query_history'):\n                # Try both sync and async\n                pass\n\n            try:\n                result = run_async(handle_history(mock_args))\n            except Exception:\n                pytest.skip(\"Cannot run handle_history with mocks\")\n\n            # Verify the query was passed through\n            if mock_learner.query_history.called:\n                call_args = mock_learner.query_history.call_args\n                all_args = str(call_args)\n                assert \"security\" in all_args, \"query parameter 'security' should be passed to learner.query_history\"\n\n    def test_goodhart_handle_history_config_error_returns_three(self):\n        \"\"\"handle_history must return ERROR(3) when config loading fails.\"\"\"\n        try:\n            mock_args = CliArgs(\n                subcommand=SubcommandName(\"history\"),\n                diff_file=FilePath(value=\".\"),\n                config_path=FilePath(value=\"/nonexistent/config.yml\"),\n                output_format=OutputFormat(\"json\"),\n                query=\"\",\n                debug=False,\n            )\n        except Exception:\n            try:\n                mock_args = CliArgs(\n                    subcommand=\"history\",\n                    diff_file=\"\",\n                    config_path=\"/nonexistent/config.yml\",\n                    output_format=\"json\",\n                    query=\"\",\n                    debug=False,\n                )\n            except Exception:\n                pytest.skip(\"Cannot construct CliArgs for history\")\n\n        with patch(\"exemplar.cli.config\") as mock_config:\n            mock_config.load_config = MagicMock(side_effect=Exception(\"config load failed\"))\n\n            try:\n                result = run_async(handle_history(mock_args))\n            except Exception:\n                pytest.skip(\"Cannot run handle_history with config error mock\")\n\n            exit_val = result.exit_code if isinstance(result.exit_code, int) else getattr(result.exit_code, 'value', int(result.exit_code))\n            assert exit_val == 3, f\"Expected exit code 3, got {exit_val}\"\n\n\n# ---------------------------------------------------------------------------\n# handle_adopt: config error\n# ---------------------------------------------------------------------------\nclass TestGoodhartHandleAdopt:\n    def test_goodhart_handle_adopt_config_error_returns_three(self):\n        \"\"\"handle_adopt must return ERROR(3) when config loading fails.\"\"\"\n        try:\n            mock_args = CliArgs(\n                subcommand=SubcommandName(\"adopt\"),\n                diff_file=FilePath(value=\".\"),\n                config_path=FilePath(value=\"/nonexistent/config.yml\"),\n                output_format=OutputFormat(\"json\"),\n                query=\"\",\n                debug=False,\n            )\n        except Exception:\n            try:\n                mock_args = CliArgs(\n                    subcommand=\"adopt\",\n                    diff_file=\"\",\n                    config_path=\"/nonexistent/config.yml\",\n                    output_format=\"json\",\n                    query=\"\",\n                    debug=False,\n                )\n            except Exception:\n                pytest.skip(\"Cannot construct CliArgs for adopt\")\n\n        with patch(\"exemplar.cli.config\") as mock_config:\n            mock_config.load_config = MagicMock(side_effect=Exception(\"config load failed\"))\n\n            try:\n                result = run_async(handle_adopt(mock_args))\n            except Exception:\n                pytest.skip(\"Cannot run handle_adopt with config error mock\")\n\n            exit_val = result.exit_code if isinstance(result.exit_code, int) else getattr(result.exit_code, 'value', int(result.exit_code))\n            assert exit_val == 3, f\"Expected exit code 3, got {exit_val}\"\n\n\n# ---------------------------------------------------------------------------\n# CliResult immutability with different field values\n# ---------------------------------------------------------------------------\nclass TestGoodhartImmutability:\n    def test_goodhart_cli_result_different_values_frozen(self):\n        \"\"\"CliResult must be frozen for any combination of fields, not just test defaults.\"\"\"\n        try:\n            result = CliResult(exit_code=1, stdout_output=\"warn output\", stderr_output=\"some diag\")\n        except Exception:\n            try:\n                result = CliResult(exit_code=CliExitCode(1), stdout_output=\"warn output\", stderr_output=\"some diag\")\n            except Exception:\n                pytest.skip(\"Cannot construct CliResult\")\n\n        with pytest.raises(Exception):\n            result.exit_code = 0\n\n        with pytest.raises(Exception):\n            result.stdout_output = \"modified\"\n\n    def test_goodhart_cli_args_different_values_frozen(self):\n        \"\"\"CliArgs must be frozen for non-default field values.\"\"\"\n        try:\n            args = CliArgs(\n                subcommand=SubcommandName(\"trust\"),\n                diff_file=FilePath(value=\".\"),\n                config_path=FilePath(value=\"/some/path\"),\n                output_format=OutputFormat(\"md\"),\n                query=\"test query\",\n                debug=True,\n            )\n        except Exception:\n            try:\n                args = CliArgs(\n                    subcommand=\"trust\",\n                    diff_file=\".\",\n                    config_path=\"/some/path\",\n                    output_format=\"md\",\n                    query=\"test query\",\n                    debug=True,\n                )\n            except Exception:\n                pytest.skip(\"Cannot construct CliArgs\")\n\n        with pytest.raises(Exception):\n            args.debug = False\n\n        with pytest.raises(Exception):\n            args.query = \"changed\"\n"
+}

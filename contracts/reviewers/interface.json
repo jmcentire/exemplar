@@ -1,0 +1,1526 @@
+{
+  "component_id": "reviewers",
+  "name": "Reviewer Implementations",
+  "description": "ReviewerProtocol (runtime_checkable Protocol) and four independent implementations for multi-stage code review analysis. SecurityReviewer detects hardcoded secrets, SQL injection, path traversal, command injection, and insecure deserialization via compiled regex patterns. CorrectnessReviewer performs AST-based analysis for None dereference patterns, off-by-one errors in range/slice, unchecked return values, bare excepts, and mutable default arguments. StyleReviewer checks convention violations including naming, line length, import ordering, and docstring presence via text/regex analysis. ArchitectureReviewer detects coupling via import analysis, layer violation checks, and circular dependency hints. Each reviewer is scoped by Agent-Safe PolicyToken — receives only permitted hunks. Each produces typed findings with Severity and Confidence. Heuristic-quality, not production static analysis. Reviewers are pure analysis units — Chronicler event emission is handled by the caller (circuit.py).",
+  "version": 1,
+  "types": [
+    {
+      "name": "ReviewStage",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "security",
+        "correctness",
+        "style",
+        "architecture"
+      ],
+      "inner_types": [],
+      "description": "Named stage in the review circuit pipeline.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "Severity",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ],
+      "inner_types": [],
+      "description": "Severity level of a review finding, ordered from most to least critical.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "Confidence",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "inner_types": [],
+      "description": "Confidence level of a reviewer finding or merged assessment.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ReviewDecision",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "block",
+        "warn",
+        "pass"
+      ],
+      "inner_types": [],
+      "description": "Final decision on a pull request review: block merging, warn, or pass.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "RuleId",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The rule identifier string",
+          "validators": [
+            {
+              "kind": "regex",
+              "expression": "^(SEC|COR|STY|ARC)-\\d{3}$",
+              "error_message": "Rule ID must match PREFIX-NNN format where PREFIX is SEC, COR, STY, or ARC"
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Namespaced rule identifier string. Format: PREFIX-NNN where PREFIX is SEC|COR|STY|ARC and NNN is a zero-padded 3-digit number.",
+      "owner_component": ""
+    },
+    {
+      "name": "FilePath",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The relative file path",
+          "validators": [
+            {
+              "kind": "regex",
+              "expression": "^(?!/)(?!.*\\.\\.)[\\.\\w\\-/]+$",
+              "error_message": "File path must be relative, use forward slashes, and contain no '..' segments"
+            },
+            {
+              "kind": "length",
+              "expression": "1..500",
+              "error_message": "File path must be between 1 and 500 characters"
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Relative file path within a repository. Unix-style forward slashes, no leading slash, no '..' traversal.",
+      "owner_component": ""
+    },
+    {
+      "name": "LineNumber",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "The line number (1-based)",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "1..1000000",
+              "error_message": "Line number must be a positive integer no greater than 1,000,000"
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "1-based line number within a source file.",
+      "owner_component": ""
+    },
+    {
+      "name": "ReviewRequestId",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "UUID string for the review request",
+          "validators": [
+            {
+              "kind": "regex",
+              "expression": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "error_message": "Review request ID must be a valid lowercase UUID"
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "UUID string identifying a unique review request. Used for deterministic assessment ID generation via uuid5.",
+      "owner_component": ""
+    },
+    {
+      "name": "DiffHunk",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique identifier for this hunk (deterministic from content).",
+          "validators": []
+        },
+        {
+          "name": "file_path",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Relative file path the hunk belongs to.",
+          "validators": []
+        },
+        {
+          "name": "start_line_old",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Starting line number in the old file.",
+          "validators": []
+        },
+        {
+          "name": "count_old",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of lines in the old file span.",
+          "validators": []
+        },
+        {
+          "name": "start_line_new",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Starting line number in the new file.",
+          "validators": []
+        },
+        {
+          "name": "count_new",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of lines in the new file span.",
+          "validators": []
+        },
+        {
+          "name": "context_before",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Context lines before the change.",
+          "validators": []
+        },
+        {
+          "name": "added_lines",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Lines added in this hunk.",
+          "validators": []
+        },
+        {
+          "name": "removed_lines",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Lines removed in this hunk.",
+          "validators": []
+        },
+        {
+          "name": "context_after",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Context lines after the change.",
+          "validators": []
+        },
+        {
+          "name": "raw_header",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Original @@ header line from the diff.",
+          "validators": []
+        },
+        {
+          "name": "classifications",
+          "type_ref": "list[ClassificationLabel]",
+          "required": true,
+          "default": "[]",
+          "description": "Ledger classification labels applied to this hunk.",
+          "validators": []
+        },
+        {
+          "name": "language",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Detected programming language of the file, if known.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single parsed hunk from a unified diff, with metadata and classification labels.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "PolicyToken",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "token_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique token identifier.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Reviewer agent this token is issued to.",
+          "validators": []
+        },
+        {
+          "name": "allowed_file_patterns",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "['**/*']",
+          "description": "Glob patterns for files the reviewer may inspect.",
+          "validators": []
+        },
+        {
+          "name": "denied_file_patterns",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Glob patterns for files the reviewer must NOT inspect.",
+          "validators": []
+        },
+        {
+          "name": "allowed_classifications",
+          "type_ref": "list[ClassificationLabel]",
+          "required": true,
+          "default": "['public']",
+          "description": "Classification labels the reviewer is permitted to see.",
+          "validators": []
+        },
+        {
+          "name": "max_severity",
+          "type_ref": "Severity",
+          "required": true,
+          "default": "critical",
+          "description": "Maximum severity level the reviewer is allowed to emit.",
+          "validators": []
+        },
+        {
+          "name": "issued_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of token issuance.",
+          "validators": []
+        },
+        {
+          "name": "expires_at",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "ISO-8601 expiry timestamp, null if non-expiring.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Agent-Safe policy token defining what a reviewer agent is permitted to access and do.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "Finding",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique finding identifier.",
+          "validators": []
+        },
+        {
+          "name": "hunk_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the DiffHunk this finding applies to.",
+          "validators": []
+        },
+        {
+          "name": "file_path",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "File path where the finding was detected.",
+          "validators": []
+        },
+        {
+          "name": "line_number",
+          "type_ref": "Optional[int]",
+          "required": false,
+          "default": "null",
+          "description": "Specific line number if applicable.",
+          "validators": []
+        },
+        {
+          "name": "severity",
+          "type_ref": "Severity",
+          "required": true,
+          "default": "",
+          "description": "Severity of the finding.",
+          "validators": []
+        },
+        {
+          "name": "confidence",
+          "type_ref": "Confidence",
+          "required": true,
+          "default": "",
+          "description": "Reviewer confidence in this finding.",
+          "validators": []
+        },
+        {
+          "name": "title",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Short human-readable title of the finding.",
+          "validators": []
+        },
+        {
+          "name": "description",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Detailed explanation of the issue.",
+          "validators": []
+        },
+        {
+          "name": "suggestion",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Suggested fix or remediation.",
+          "validators": []
+        },
+        {
+          "name": "rule_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the rule or pattern that triggered this finding.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "Which review stage produced this finding.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single issue found by a reviewer in a specific hunk.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "Assessment",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique assessment identifier.",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the ReviewRequest this assessment responds to.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "The review stage this assessment covers.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the reviewer agent that produced this assessment.",
+          "validators": []
+        },
+        {
+          "name": "decision",
+          "type_ref": "ReviewDecision",
+          "required": true,
+          "default": "",
+          "description": "This reviewer's overall decision.",
+          "validators": []
+        },
+        {
+          "name": "findings",
+          "type_ref": "list[Finding]",
+          "required": true,
+          "default": "[]",
+          "description": "List of findings from this reviewer.",
+          "validators": []
+        },
+        {
+          "name": "confidence",
+          "type_ref": "Confidence",
+          "required": true,
+          "default": "",
+          "description": "Overall confidence of this assessment.",
+          "validators": []
+        },
+        {
+          "name": "is_partial",
+          "type_ref": "bool",
+          "required": true,
+          "default": "false",
+          "description": "True if the reviewer failed/timed out and this is a degraded result.",
+          "validators": []
+        },
+        {
+          "name": "error_message",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Error message if the reviewer encountered an issue.",
+          "validators": []
+        },
+        {
+          "name": "duration_ms",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Time in milliseconds the reviewer took to produce this assessment.",
+          "validators": []
+        },
+        {
+          "name": "created_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of assessment creation.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single reviewer's complete assessment of the diff hunks it was given.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "RulePattern",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "rule_id",
+          "type_ref": "RuleId",
+          "required": true,
+          "default": "",
+          "description": "Namespaced rule identifier",
+          "validators": []
+        },
+        {
+          "name": "pattern",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Regex pattern string (compiled at module load time)",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "1..2000",
+              "error_message": "Pattern must be between 1 and 2000 characters"
+            }
+          ]
+        },
+        {
+          "name": "severity",
+          "type_ref": "Severity",
+          "required": true,
+          "default": "",
+          "description": "Default severity when this rule matches",
+          "validators": []
+        },
+        {
+          "name": "confidence",
+          "type_ref": "Confidence",
+          "required": true,
+          "default": "",
+          "description": "Default confidence when this rule matches",
+          "validators": []
+        },
+        {
+          "name": "message_template",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable message template. May contain {match} placeholder for the matched text.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "1..500",
+              "error_message": "Message template must be between 1 and 500 characters"
+            }
+          ]
+        },
+        {
+          "name": "suggestion",
+          "type_ref": "str",
+          "required": false,
+          "default": "",
+          "description": "Remediation suggestion for this rule",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Frozen dataclass representing a single compiled detection rule used by pattern-based reviewers (Security, Style).",
+      "owner_component": ""
+    },
+    {
+      "name": "AstRule",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "rule_id",
+          "type_ref": "RuleId",
+          "required": true,
+          "default": "",
+          "description": "Namespaced rule identifier (COR-xxx)",
+          "validators": []
+        },
+        {
+          "name": "node_types",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "AST node type names this rule inspects (e.g., 'If', 'Compare', 'FunctionDef')",
+          "validators": []
+        },
+        {
+          "name": "severity",
+          "type_ref": "Severity",
+          "required": true,
+          "default": "",
+          "description": "Default severity when this rule matches",
+          "validators": []
+        },
+        {
+          "name": "confidence",
+          "type_ref": "Confidence",
+          "required": true,
+          "default": "",
+          "description": "Default confidence when this rule matches",
+          "validators": []
+        },
+        {
+          "name": "message_template",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable message template",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "1..500",
+              "error_message": "Message template must be between 1 and 500 characters"
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Frozen dataclass representing a single AST-based detection rule used by CorrectnessReviewer.",
+      "owner_component": ""
+    },
+    {
+      "name": "ImportInfo",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "module",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The module being imported",
+          "validators": []
+        },
+        {
+          "name": "names",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "Specific names imported (empty for bare 'import X')",
+          "validators": []
+        },
+        {
+          "name": "file_path",
+          "type_ref": "FilePath",
+          "required": true,
+          "default": "",
+          "description": "File containing this import statement",
+          "validators": []
+        },
+        {
+          "name": "line_number",
+          "type_ref": "LineNumber",
+          "required": true,
+          "default": "",
+          "description": "Line number of the import statement",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Parsed import information extracted from a single import statement for architecture analysis.",
+      "owner_component": ""
+    },
+    {
+      "name": "HunkAnalysisError",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "file_path",
+          "type_ref": "FilePath",
+          "required": true,
+          "default": "",
+          "description": "File path of the hunk that caused the error",
+          "validators": []
+        },
+        {
+          "name": "start_line",
+          "type_ref": "LineNumber",
+          "required": true,
+          "default": "",
+          "description": "Start line of the hunk",
+          "validators": []
+        },
+        {
+          "name": "error_type",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Exception class name",
+          "validators": []
+        },
+        {
+          "name": "error_message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable error description",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "1..500",
+              "error_message": "Error message must be between 1 and 500 characters"
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Structured record of an error encountered while analyzing a single hunk.",
+      "owner_component": ""
+    },
+    {
+      "name": "FilteredHunksResult",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "permitted",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "Hunks that passed policy filtering",
+          "validators": []
+        },
+        {
+          "name": "denied_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of hunks denied by policy",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "0..100000",
+              "error_message": "Denied count must be non-negative"
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Result of filtering hunks by policy. Contains the permitted hunks and count of denied hunks.",
+      "owner_component": ""
+    },
+    {
+      "name": "DecisionDerivation",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "decision",
+          "type_ref": "ReviewDecision",
+          "required": true,
+          "default": "",
+          "description": "The derived decision",
+          "validators": []
+        },
+        {
+          "name": "min_confidence",
+          "type_ref": "Confidence",
+          "required": true,
+          "default": "",
+          "description": "Conservative minimum confidence across all findings. HIGH if no findings.",
+          "validators": []
+        },
+        {
+          "name": "has_critical",
+          "type_ref": "bool",
+          "required": true,
+          "default": "",
+          "description": "Whether any CRITICAL severity finding exists",
+          "validators": []
+        },
+        {
+          "name": "has_high",
+          "type_ref": "bool",
+          "required": true,
+          "default": "",
+          "description": "Whether any HIGH severity finding exists",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Intermediate result of deriving a ReviewDecision from aggregate finding severities.",
+      "owner_component": ""
+    },
+    {
+      "name": "ClassificationLabel",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "secret",
+        "pii",
+        "internal_api",
+        "public"
+      ],
+      "inner_types": [],
+      "description": "Ledger data classification label for diff content.",
+      "owner_component": "schemas"
+    }
+  ],
+  "functions": [
+    {
+      "name": "filter_hunks_by_policy",
+      "description": "Filters a list of DiffHunks according to PolicyToken scoping rules. Uses fnmatch glob matching with deny-wins semantics: if a hunk's file_path matches any denied_paths pattern, it is excluded regardless of allowed_paths. If allowed_paths is non-empty, only hunks matching at least one allowed pattern (and no denied pattern) pass through. Also checks that the reviewer's stage is in allowed_stages (or allowed_stages is empty). PACT-KEY: FILTER-HUNKS-POLICY-V1",
+      "inputs": [
+        {
+          "name": "hunks",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "List of DiffHunks to filter",
+          "validators": []
+        },
+        {
+          "name": "policy",
+          "type_ref": "PolicyToken",
+          "required": true,
+          "default": "",
+          "description": "Agent-Safe policy token defining permitted scope",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "The review stage requesting access, checked against policy.allowed_stages",
+          "validators": []
+        }
+      ],
+      "output_type": "FilteredHunksResult",
+      "error_cases": [
+        {
+          "name": "invalid_glob_pattern",
+          "condition": "A glob pattern in policy.allowed_paths or policy.denied_paths causes fnmatch to raise",
+          "error_type": "ValueError",
+          "error_data": {
+            "detail": "Description of the malformed pattern"
+          }
+        }
+      ],
+      "preconditions": [
+        "hunks is a list (may be empty)",
+        "policy is a valid PolicyToken with well-formed glob patterns",
+        "stage is a valid ReviewStage enum member"
+      ],
+      "postconditions": [
+        "result.permitted contains only hunks whose file_path matches allowed_paths (if non-empty) and does not match any denied_paths",
+        "result.denied_count == len(hunks) - len(result.permitted)",
+        "result.permitted preserves original ordering of hunks",
+        "If policy.allowed_stages is non-empty and stage not in policy.allowed_stages, result.permitted is empty and result.denied_count == len(hunks)"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure function — no side effects. Filters hunks in memory only."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 5,
+        "max_memory_mb": null,
+        "complexity": "O(h * p) where h = number of hunks and p = number of policy patterns"
+      }
+    },
+    {
+      "name": "derive_decision",
+      "description": "Derives a ReviewDecision and conservative minimum Confidence from a list of Findings using deterministic severity aggregation rules. BLOCK if any CRITICAL or HIGH finding, ADVISORY if any MEDIUM finding, PASS otherwise. Confidence is the minimum across all findings, or HIGH if no findings. PACT-KEY: DERIVE-DECISION-V1",
+      "inputs": [
+        {
+          "name": "findings",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "List of Finding objects to aggregate",
+          "validators": []
+        }
+      ],
+      "output_type": "DecisionDerivation",
+      "error_cases": [],
+      "preconditions": [
+        "findings is a list of valid Finding objects (may be empty)"
+      ],
+      "postconditions": [
+        "If findings is empty, decision is PASS and min_confidence is HIGH",
+        "If any finding has severity CRITICAL or HIGH, decision is BLOCK",
+        "If no CRITICAL/HIGH but any MEDIUM, decision is ADVISORY",
+        "If all findings are LOW or INFO, decision is PASS",
+        "min_confidence is the minimum confidence across all findings using ordering LOW < MEDIUM < HIGH"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure function — deterministic decision derivation from findings."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 1,
+        "max_memory_mb": null,
+        "complexity": "O(n) where n = number of findings"
+      }
+    },
+    {
+      "name": "build_assessment",
+      "description": "Constructs a frozen Assessment from the reviewer's analysis results. Generates a deterministic assessment_id via uuid5(NAMESPACE_DNS, f'{review_request_id}:{reviewer_id}'). Computes duration_ms from start_ns (monotonic_ns captured at review entry). Derives decision and confidence via derive_decision(). PACT-KEY: BUILD-ASSESSMENT-V1",
+      "inputs": [
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the reviewer (e.g. 'security', 'correctness')",
+          "validators": [
+            {
+              "kind": "regex",
+              "expression": "^(security|correctness|style|architecture)$",
+              "error_message": "Reviewer ID must be one of the four canonical reviewer names"
+            }
+          ]
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "The review stage this assessment belongs to",
+          "validators": []
+        },
+        {
+          "name": "findings",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "All findings collected during review",
+          "validators": []
+        },
+        {
+          "name": "hunks_analyzed",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of hunks successfully analyzed",
+          "validators": []
+        },
+        {
+          "name": "hunks_skipped",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of hunks filtered out by policy",
+          "validators": []
+        },
+        {
+          "name": "errors",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "Per-hunk error messages for failed analyses",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "ReviewRequestId",
+          "required": true,
+          "default": "",
+          "description": "UUID of the review request for deterministic ID generation",
+          "validators": []
+        },
+        {
+          "name": "start_ns",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Monotonic nanosecond timestamp captured at review() entry",
+          "validators": []
+        }
+      ],
+      "output_type": "Assessment",
+      "error_cases": [
+        {
+          "name": "invalid_reviewer_id",
+          "condition": "reviewer_id is not one of the four canonical reviewer names",
+          "error_type": "ValueError",
+          "error_data": {
+            "detail": "Unrecognized reviewer_id"
+          }
+        }
+      ],
+      "preconditions": [
+        "start_ns was captured via time.monotonic_ns() at the beginning of the review call",
+        "review_request_id is a valid UUID string",
+        "hunks_analyzed >= 0",
+        "hunks_skipped >= 0"
+      ],
+      "postconditions": [
+        "assessment_id is deterministic: uuid5(NAMESPACE_DNS, '{review_request_id}:{reviewer_id}')",
+        "duration_ms >= 0.0",
+        "decision and confidence are derived from findings via derive_decision()",
+        "Returned Assessment is a frozen Pydantic model"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure function — constructs a frozen Assessment in memory."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 1,
+        "max_memory_mb": null,
+        "complexity": "O(n) where n = number of findings (for derive_decision)"
+      }
+    },
+    {
+      "name": "SecurityReviewer.review",
+      "description": "Analyzes diff hunks for security vulnerabilities using compiled regex pattern matching against OWASP top patterns. Detects hardcoded secrets (API keys, passwords, tokens), SQL injection vectors, path traversal attempts, command injection, and insecure deserialization. Filters hunks by policy first, then iterates each permitted hunk with per-hunk try/except isolation. Rule IDs: SEC-001 (hardcoded secrets), SEC-002 (SQL injection), SEC-003 (path traversal), SEC-004 (command injection), SEC-005 (insecure deserialization), SEC-006 (weak cryptography), SEC-007 (debug/logging exposure). PACT-KEY: SEC-REVIEW-V1",
+      "inputs": [
+        {
+          "name": "hunks",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "List of DiffHunks from the pull request diff",
+          "validators": []
+        },
+        {
+          "name": "policy",
+          "type_ref": "PolicyToken",
+          "required": true,
+          "default": "",
+          "description": "Agent-Safe policy token scoping which hunks may be analyzed",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "ReviewRequestId",
+          "required": true,
+          "default": "",
+          "description": "UUID identifying this review request for deterministic assessment ID",
+          "validators": []
+        }
+      ],
+      "output_type": "Assessment",
+      "error_cases": [
+        {
+          "name": "all_hunks_denied",
+          "condition": "PolicyToken denies all hunks or stage not permitted — not an error, returns Assessment with empty findings and PASS decision",
+          "error_type": "None",
+          "error_data": {
+            "detail": "Returns valid Assessment with zero findings"
+          }
+        }
+      ],
+      "preconditions": [
+        "hunks is a list of valid DiffHunk objects",
+        "policy is a valid PolicyToken",
+        "review_request_id is a valid UUID string"
+      ],
+      "postconditions": [
+        "Assessment.reviewer_id == 'security'",
+        "Assessment.stage == ReviewStage.SECURITY",
+        "All findings have rule_ids matching SEC-xxx pattern",
+        "Assessment.hunks_analyzed + Assessment.hunks_skipped == len(hunks) - len(hunks that errored) + Assessment.hunks_skipped ... specifically: hunks_analyzed counts successfully processed hunks, hunks_skipped counts policy-filtered hunks",
+        "No exceptions propagate — per-hunk errors are captured in Assessment.errors"
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure analysis — reads hunk content in memory, applies compiled regex patterns, returns frozen Assessment."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 200,
+        "max_memory_mb": 50,
+        "complexity": "O(h * r * l) where h = hunks, r = rule patterns, l = lines per hunk"
+      }
+    },
+    {
+      "name": "CorrectnessReviewer.review",
+      "description": "Analyzes diff hunks for correctness issues using AST-based analysis with ast.parse and ast.NodeVisitor. Detects None dereference patterns (attribute access on potentially-None values), off-by-one errors in range/slice expressions, unchecked return values, bare except clauses, mutable default arguments, and logic errors. Falls back gracefully when ast.parse raises SyntaxError (non-Python files or invalid syntax). Rule IDs: COR-001 (None dereference), COR-002 (off-by-one), COR-003 (unchecked return), COR-004 (bare except), COR-005 (mutable default), COR-006 (unreachable code). PACT-KEY: COR-REVIEW-V1",
+      "inputs": [
+        {
+          "name": "hunks",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "List of DiffHunks from the pull request diff",
+          "validators": []
+        },
+        {
+          "name": "policy",
+          "type_ref": "PolicyToken",
+          "required": true,
+          "default": "",
+          "description": "Agent-Safe policy token scoping which hunks may be analyzed",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "ReviewRequestId",
+          "required": true,
+          "default": "",
+          "description": "UUID identifying this review request for deterministic assessment ID",
+          "validators": []
+        }
+      ],
+      "output_type": "Assessment",
+      "error_cases": [
+        {
+          "name": "syntax_error_fallback",
+          "condition": "ast.parse raises SyntaxError for a hunk's content — this is expected for non-Python or partial code",
+          "error_type": "None",
+          "error_data": {
+            "detail": "Gracefully handled: hunk is skipped for AST analysis, may still be checked by text-based fallback patterns"
+          }
+        },
+        {
+          "name": "all_hunks_denied",
+          "condition": "PolicyToken denies all hunks or stage not permitted",
+          "error_type": "None",
+          "error_data": {
+            "detail": "Returns valid Assessment with zero findings"
+          }
+        }
+      ],
+      "preconditions": [
+        "hunks is a list of valid DiffHunk objects",
+        "policy is a valid PolicyToken",
+        "review_request_id is a valid UUID string"
+      ],
+      "postconditions": [
+        "Assessment.reviewer_id == 'correctness'",
+        "Assessment.stage == ReviewStage.CORRECTNESS",
+        "All findings have rule_ids matching COR-xxx pattern",
+        "Hunks with non-Python file paths or unparseable content are gracefully skipped (SyntaxError fallback) and counted in hunks_analyzed with no findings",
+        "No exceptions propagate — per-hunk errors are captured in Assessment.errors"
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure analysis — parses hunk content via ast.parse in memory, walks AST nodes, returns frozen Assessment."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 500,
+        "max_memory_mb": 100,
+        "complexity": "O(h * n) where h = hunks and n = AST nodes per hunk"
+      }
+    },
+    {
+      "name": "StyleReviewer.review",
+      "description": "Analyzes diff hunks for coding convention violations using text and regex analysis. Checks line length limits, naming convention adherence (PascalCase for classes, snake_case for functions/variables, UPPER_SNAKE_CASE for constants), import ordering (stdlib before third-party before local, alphabetical within groups), and docstring presence on public functions/classes. Rule IDs: STY-001 (line length), STY-002 (naming convention), STY-003 (import ordering), STY-004 (missing docstring), STY-005 (trailing whitespace), STY-006 (mixed indentation). PACT-KEY: STY-REVIEW-V1",
+      "inputs": [
+        {
+          "name": "hunks",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "List of DiffHunks from the pull request diff",
+          "validators": []
+        },
+        {
+          "name": "policy",
+          "type_ref": "PolicyToken",
+          "required": true,
+          "default": "",
+          "description": "Agent-Safe policy token scoping which hunks may be analyzed",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "ReviewRequestId",
+          "required": true,
+          "default": "",
+          "description": "UUID identifying this review request for deterministic assessment ID",
+          "validators": []
+        }
+      ],
+      "output_type": "Assessment",
+      "error_cases": [
+        {
+          "name": "all_hunks_denied",
+          "condition": "PolicyToken denies all hunks or stage not permitted",
+          "error_type": "None",
+          "error_data": {
+            "detail": "Returns valid Assessment with zero findings"
+          }
+        }
+      ],
+      "preconditions": [
+        "hunks is a list of valid DiffHunk objects",
+        "policy is a valid PolicyToken",
+        "review_request_id is a valid UUID string"
+      ],
+      "postconditions": [
+        "Assessment.reviewer_id == 'style'",
+        "Assessment.stage == ReviewStage.STYLE",
+        "All findings have rule_ids matching STY-xxx pattern",
+        "Style findings never have severity above MEDIUM — style issues are advisory only",
+        "No exceptions propagate — per-hunk errors are captured in Assessment.errors"
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure analysis — text/regex analysis of hunk content in memory, returns frozen Assessment."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 100,
+        "max_memory_mb": 30,
+        "complexity": "O(h * r * l) where h = hunks, r = rule patterns, l = lines per hunk"
+      }
+    },
+    {
+      "name": "ArchitectureReviewer.review",
+      "description": "Analyzes diff hunks for architectural issues using import-line regex extraction and cross-hunk coupling analysis. Detects excessive coupling (too many imports from a single module), layer violations (e.g., a low-level module importing from a high-level one per configured layer hierarchy), circular dependency hints (A imports B and B imports A detected within the diff), and god-module indicators (files with excessive import counts). Rule IDs: ARC-001 (excessive coupling), ARC-002 (layer violation), ARC-003 (circular dependency hint), ARC-004 (god module), ARC-005 (forbidden import). PACT-KEY: ARC-REVIEW-V1",
+      "inputs": [
+        {
+          "name": "hunks",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "List of DiffHunks from the pull request diff",
+          "validators": []
+        },
+        {
+          "name": "policy",
+          "type_ref": "PolicyToken",
+          "required": true,
+          "default": "",
+          "description": "Agent-Safe policy token scoping which hunks may be analyzed",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "ReviewRequestId",
+          "required": true,
+          "default": "",
+          "description": "UUID identifying this review request for deterministic assessment ID",
+          "validators": []
+        }
+      ],
+      "output_type": "Assessment",
+      "error_cases": [
+        {
+          "name": "all_hunks_denied",
+          "condition": "PolicyToken denies all hunks or stage not permitted",
+          "error_type": "None",
+          "error_data": {
+            "detail": "Returns valid Assessment with zero findings"
+          }
+        }
+      ],
+      "preconditions": [
+        "hunks is a list of valid DiffHunk objects",
+        "policy is a valid PolicyToken",
+        "review_request_id is a valid UUID string"
+      ],
+      "postconditions": [
+        "Assessment.reviewer_id == 'architecture'",
+        "Assessment.stage == ReviewStage.ARCHITECTURE",
+        "All findings have rule_ids matching ARC-xxx pattern",
+        "Cross-hunk analysis considers all permitted hunks collectively (not hunk-by-hunk isolation) for import graph construction",
+        "No exceptions propagate — per-hunk errors are captured in Assessment.errors"
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure analysis — regex-based import extraction and cross-hunk graph analysis in memory, returns frozen Assessment."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 300,
+        "max_memory_mb": 50,
+        "complexity": "O(h * l + i^2) where h = hunks, l = lines per hunk, i = total imports extracted (for cross-reference analysis)"
+      }
+    },
+    {
+      "name": "get_all_reviewers",
+      "description": "Factory function that instantiates and returns all four canonical reviewer implementations. Each reviewer is constructed with its module-level frozen rule catalog. Returns a list ordered by recommended execution sequence: Security, Correctness, Style, Architecture. PACT-KEY: GET-ALL-REVIEWERS-V1",
+      "inputs": [],
+      "output_type": "list",
+      "error_cases": [],
+      "preconditions": [],
+      "postconditions": [
+        "Returned list contains exactly 4 elements",
+        "Each element satisfies the ReviewerProtocol (runtime_checkable)",
+        "Order is: SecurityReviewer, CorrectnessReviewer, StyleReviewer, ArchitectureReviewer",
+        "Each reviewer's reviewer_id is unique"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure factory — constructs reviewer instances in memory with no external effects."
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "get_reviewer_by_stage",
+      "description": "Returns the canonical reviewer implementation for a given ReviewStage. PACT-KEY: GET-REVIEWER-BY-STAGE-V1",
+      "inputs": [
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "The review stage to get the reviewer for",
+          "validators": []
+        }
+      ],
+      "output_type": "any",
+      "error_cases": [
+        {
+          "name": "unknown_stage",
+          "condition": "stage value is not a recognized ReviewStage member (should not occur with proper enum typing but guarded defensively)",
+          "error_type": "ValueError",
+          "error_data": {
+            "detail": "Unrecognized ReviewStage value"
+          }
+        }
+      ],
+      "preconditions": [
+        "stage is a valid ReviewStage enum member"
+      ],
+      "postconditions": [
+        "Returned object satisfies ReviewerProtocol",
+        "Returned reviewer's stage property matches the input stage"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure factory — returns a reviewer instance for the given stage."
+        }
+      ],
+      "performance_budget": null
+    }
+  ],
+  "dependencies": [
+    "schemas",
+    "config"
+  ],
+  "dependency_contracts": {
+    "schemas": [
+      "DiffHunk",
+      "PolicyToken",
+      "Assessment",
+      "Finding",
+      "Severity",
+      "Confidence",
+      "ReviewDecision",
+      "ReviewStage"
+    ],
+    "config": [
+      "ExemplarConfig"
+    ]
+  },
+  "invariants": [
+    "All reviewers implement the same ReviewerProtocol — no class inheritance, only structural conformance via @runtime_checkable Protocol",
+    "Every reviewer filters hunks through filter_hunks_by_policy() before analysis — no hunk reaches analysis logic without policy check",
+    "Each hunk is processed inside its own try/except — a failure analyzing one hunk never prevents analysis of remaining hunks",
+    "All rule IDs follow namespaced format: SEC-xxx for security, COR-xxx for correctness, STY-xxx for style, ARC-xxx for architecture",
+    "Rule catalogs are module-level frozen constants — they are never mutated at runtime",
+    "Assessment.decision is derived deterministically from aggregate severity of findings — not manually set",
+    "Assessment.confidence is the conservative minimum across all findings — not averaged",
+    "Assessment objects returned are frozen (immutable Pydantic models with frozen=True)",
+    "Reviewers never emit Chronicler events directly — they are pure analysis units",
+    "PACT keys are embedded in all public method docstrings for Sentinel attribution",
+    "review() is idempotent: given the same hunks, policy, and review_request_id, it produces the same Assessment"
+  ],
+  "requires": [
+    "schemas",
+    "config"
+  ],
+  "processing_register": "rigorous-analytical",
+  "data_access": {
+    "reads": [
+      "INTERNAL",
+      "PUBLIC"
+    ],
+    "writes": [],
+    "rationale": "Reads INTERNAL-tier diff hunk content (source code fragments from pull requests) and PUBLIC-tier PolicyToken scope declarations to determine which hunks a reviewer is permitted to analyze. Reads INTERNAL-tier ExemplarConfig for reviewer-specific thresholds. Does not write to any persistent store — all output is returned as in-memory frozen Assessment objects.",
+    "side_effects": [
+      {
+        "type": "read",
+        "classification": "INTERNAL",
+        "fields": [
+          "DiffHunk.content",
+          "DiffHunk.file_path",
+          "DiffHunk.added_lines",
+          "DiffHunk.removed_lines"
+        ],
+        "rationale": "Reads source code diff content to perform pattern matching, AST parsing, and import analysis for finding generation"
+      },
+      {
+        "type": "read",
+        "classification": "PUBLIC",
+        "fields": [
+          "PolicyToken.allowed_paths",
+          "PolicyToken.denied_paths",
+          "PolicyToken.allowed_stages"
+        ],
+        "rationale": "Reads policy scoping rules to filter hunks before analysis, enforcing agent-safe access control"
+      },
+      {
+        "type": "read",
+        "classification": "INTERNAL",
+        "fields": [
+          "ExemplarConfig.reviewer_thresholds"
+        ],
+        "rationale": "Reads configuration thresholds for severity aggregation and confidence floors"
+      }
+    ]
+  },
+  "authority": {
+    "domains": [
+      "review-rules",
+      "finding-generation"
+    ],
+    "rationale": "This component is the authoritative owner of all review rule catalogs (SEC-xxx, COR-xxx, STY-xxx, ARC-xxx rule definitions and their compiled patterns) and the logic that produces Finding instances from diff analysis. No other component defines review rules or generates findings from hunk analysis."
+  }
+}

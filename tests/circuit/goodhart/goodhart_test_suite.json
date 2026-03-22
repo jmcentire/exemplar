@@ -1,0 +1,500 @@
+{
+  "component_id": "circuit",
+  "contract_version": 1,
+  "test_cases": [
+    {
+      "id": "goodhart_resolve_plan_parallel_group_ordered_by_earliest_stage",
+      "description": "The execution plan must order parallel group steps by the position of the earliest member stage in config.stages, not by the order groups appear in parallel_stages",
+      "function": "resolve_execution_plan",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Config with stages [security, correctness, style, architecture] and parallel_stages [[style, architecture], [security, correctness]] — second group has earlier members",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "The parallel group containing security comes before the group containing style in the execution plan steps",
+        "stage_order matches config.stages exactly"
+      ]
+    },
+    {
+      "id": "goodhart_resolve_plan_interleaved_sequential_and_parallel",
+      "description": "Sequential stages interleaved between parallel groups must appear in their correct position relative to parallel group steps",
+      "function": "resolve_execution_plan",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Config with stages [security, correctness, style, architecture], parallel_stages [[correctness, style]], so security is sequential before parallel, architecture is sequential after",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "First step is sequential with security",
+        "Second step is parallel with correctness and style",
+        "Third step is sequential with architecture",
+        "Total of 3 steps"
+      ]
+    },
+    {
+      "id": "goodhart_run_assessment_review_request_id_matches",
+      "description": "Every assessment returned by run() must reference the correct review_request_id from the input request",
+      "function": "run",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A ReviewRequest with a unique id like 'req-unique-xyz-999'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Every assessment in the returned list has review_request_id matching the input request.id",
+        "No assessment has an empty or None review_request_id"
+      ]
+    },
+    {
+      "id": "goodhart_run_assessment_stages_match_one_to_one",
+      "description": "Each assessment's stage field must match a unique configured stage, with no duplicates and no missing stages",
+      "function": "run",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Config with all four stages",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "The set of assessment.stage values equals the set of config.stages",
+        "No two assessments share the same stage"
+      ]
+    },
+    {
+      "id": "goodhart_run_three_stages_subset",
+      "description": "run() must work correctly with a non-standard subset of stages (not all four), returning exactly the configured number of assessments",
+      "function": "run",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Config with only [correctness, style] stages, two reviewers, no parallel groups",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Exactly 2 assessments returned",
+        "First assessment stage is correctness",
+        "Second assessment stage is style"
+      ]
+    },
+    {
+      "id": "goodhart_invoke_reviewer_assessment_stage_matches_input",
+      "description": "invoke_reviewer must set Assessment.stage to the exact stage passed as argument, not a hardcoded value",
+      "function": "invoke_reviewer",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Invoke with stage=architecture (a less commonly tested stage)",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Returned assessment.stage == architecture",
+        "assessment.is_partial == False when reviewer succeeds"
+      ]
+    },
+    {
+      "id": "goodhart_invoke_reviewer_duration_ms_nonzero",
+      "description": "Assessment.duration_ms must reflect actual elapsed time and be a non-negative integer, not hardcoded to zero",
+      "function": "invoke_reviewer",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Reviewer that takes a small but measurable amount of time (e.g. asyncio.sleep(0.01))",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "assessment.duration_ms >= 0",
+        "assessment.duration_ms is an integer"
+      ]
+    },
+    {
+      "id": "goodhart_invoke_reviewer_error_message_contains_detail",
+      "description": "When a reviewer raises an exception, the degraded assessment's error_message must contain information about the actual failure, not be empty or generic",
+      "function": "invoke_reviewer",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Reviewer that raises ValueError('specific-error-token-12345')",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "assessment.is_partial == True",
+        "assessment.error_message is not None",
+        "assessment.error_message is not empty"
+      ]
+    },
+    {
+      "id": "goodhart_init_missing_single_middle_reviewer",
+      "description": "CircuitConfigError must correctly identify which specific stages are missing reviewers, even when only one middle stage is missing",
+      "function": "__init__",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Config with [security, correctness, style, architecture] but reviewers dict missing only 'style'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "CircuitConfigError is raised",
+        "The error's missing_reviewers list contains style"
+      ]
+    },
+    {
+      "id": "goodhart_init_reviewers_superset_of_stages",
+      "description": "Constructor should succeed when reviewers dict has extra entries beyond config.stages — only missing entries should fail",
+      "function": "__init__",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Config with stages [security, correctness], reviewers dict with all four stages including style and architecture as extras",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Construction succeeds without error",
+        "Execution plan covers exactly the configured stages"
+      ]
+    },
+    {
+      "id": "goodhart_run_single_stage_config",
+      "description": "run() must work with a single-stage configuration, returning exactly one assessment",
+      "function": "run",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Config with only [architecture] stage, one reviewer, no parallel groups",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Exactly 1 assessment returned",
+        "The single assessment's stage is architecture"
+      ]
+    },
+    {
+      "id": "goodhart_run_parallel_actually_concurrent",
+      "description": "Parallel stages must execute concurrently, not sequentially — total wall-clock time should be near the max single stage time, not the sum",
+      "function": "run",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {
+        "security_reviewer": "asyncio.sleep(0.1) then return assessment",
+        "correctness_reviewer": "asyncio.sleep(0.1) then return assessment"
+      },
+      "input_values": {},
+      "input_description": "Config with [security, correctness] in parallel, each reviewer sleeps for ~0.1s. Measure total time.",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Total elapsed time is less than 0.19 seconds (proving concurrency, not sequential 0.2s)"
+      ]
+    },
+    {
+      "id": "goodhart_chronicler_events_include_correct_stage",
+      "description": "Chronicler events emitted during run() must have their stage field set to the correct ReviewStage for each invocation, not a hardcoded value",
+      "function": "run",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Config with [security, architecture] stages (skipping correctness and style)",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "stage.started events emitted for security and architecture",
+        "stage.complete events emitted for security and architecture",
+        "No events emitted for correctness or style stages"
+      ]
+    },
+    {
+      "id": "goodhart_stage_timeout_ms_boundary_99",
+      "description": "StageTimeoutMs must reject 99 (one below minimum boundary), verifying strict range enforcement",
+      "function": "StageTimeoutMs",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "value=99",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_stage_timeout_ms_boundary_300001",
+      "description": "StageTimeoutMs must reject 300001 (one above maximum boundary), verifying strict range enforcement",
+      "function": "StageTimeoutMs",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "value=300001",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_constants_exist",
+      "description": "Module-level PACT key constants must be defined and match the documented naming pattern",
+      "function": "PACTKey",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Import module and check for PACT_CIRCUIT_RUN, PACT_CIRCUIT_RESOLVE_PLAN, PACT_CIRCUIT_INVOKE_REVIEWER, PACT_CIRCUIT_GET_TIMEOUT, PACT_CIRCUIT_GET_PLAN",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "PACT_CIRCUIT_RUN exists at module level",
+        "PACT_CIRCUIT_RESOLVE_PLAN exists at module level",
+        "PACT_CIRCUIT_INVOKE_REVIEWER exists at module level",
+        "PACT_CIRCUIT_GET_TIMEOUT exists at module level",
+        "PACT_CIRCUIT_GET_PLAN exists at module level"
+      ]
+    },
+    {
+      "id": "goodhart_run_timeout_produces_partial_assessment",
+      "description": "When a reviewer times out during run(), the corresponding assessment must have is_partial=True and a non-empty error_message, while other assessments complete normally",
+      "function": "run",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Config with [security, correctness], security reviewer times out, correctness succeeds. Use short timeout.",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Exactly 2 assessments returned",
+        "Security assessment has is_partial=True",
+        "Security assessment has non-empty error_message",
+        "Correctness assessment has is_partial=False"
+      ]
+    },
+    {
+      "id": "goodhart_execution_plan_frozen",
+      "description": "The ExecutionPlan returned by get_execution_plan() must be immutable — attempting to mutate it should raise an error",
+      "function": "get_execution_plan",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Construct router, get plan, attempt to modify steps list or stage_order",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Attempting to assign to plan.steps raises an error",
+        "Attempting to assign to plan.stage_order raises an error"
+      ]
+    },
+    {
+      "id": "goodhart_resolve_plan_three_stages_one_parallel_group",
+      "description": "Execution plan with 3 stages where 2 are parallel and 1 is sequential must produce exactly 2 steps in correct order",
+      "function": "resolve_execution_plan",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Config with stages [architecture, security, correctness], parallel_stages=[[security, correctness]]",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Plan has 2 steps",
+        "First step is sequential with architecture (earliest in config.stages)",
+        "Second step is parallel with security and correctness",
+        "stage_order is [architecture, security, correctness]"
+      ]
+    },
+    {
+      "id": "goodhart_init_parallel_stage_not_in_config_different_stage",
+      "description": "Constructor must reject parallel groups containing stages not in config.stages, even when the invalid stage is a valid ReviewStage enum member",
+      "function": "__init__",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Config with stages=[security, correctness], parallel_stages=[[security, architecture]] where architecture is not in stages",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "CircuitConfigError is raised",
+        "invalid_parallel_stages contains architecture"
+      ]
+    },
+    {
+      "id": "goodhart_invoke_reviewer_different_exception_types",
+      "description": "invoke_reviewer must absorb any exception type (RuntimeError, KeyError, etc.) into a degraded assessment, not just specific exception classes",
+      "function": "invoke_reviewer",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Reviewer that raises KeyError('missing-key')",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "assessment.is_partial == True",
+        "assessment.error_message is not None",
+        "No exception propagated"
+      ]
+    },
+    {
+      "id": "goodhart_run_config_order_reversed",
+      "description": "Assessments must follow config.stages ordering even when config.stages is in a non-alphabetical, non-default order",
+      "function": "run",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Config with stages=[architecture, style, correctness, security] (reverse of typical order)",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "assessments[0].stage == architecture",
+        "assessments[1].stage == style",
+        "assessments[2].stage == correctness",
+        "assessments[3].stage == security"
+      ]
+    },
+    {
+      "id": "goodhart_chronicler_emits_both_started_and_complete_per_stage",
+      "description": "For each configured stage, exactly one stage.started and one stage.complete event must be emitted during run(), totaling 2*N events for N stages",
+      "function": "run",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Config with 3 stages [security, correctness, style]",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "At least 6 chronicler events emitted (2 per stage)",
+        "3 events have event_type stage.started",
+        "3 events have event_type stage.complete"
+      ]
+    },
+    {
+      "id": "goodhart_parallel_group_rejects_single_stage",
+      "description": "ParallelGroup must enforce the minimum of 2 stages — a single-element list must be rejected",
+      "function": "ParallelGroup",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "ParallelGroup(stages=[security])",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_stage_timeout_ms_rejects_zero",
+      "description": "StageTimeoutMs must reject zero as it falls below the minimum of 100",
+      "function": "StageTimeoutMs",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "value=0",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_stage_timeout_ms_rejects_negative",
+      "description": "StageTimeoutMs must reject negative values",
+      "function": "StageTimeoutMs",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "value=-1",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_rejects_missing_exemplar_prefix",
+      "description": "PACTKey must reject strings that don't start with 'exemplar.' prefix",
+      "function": "PACTKey",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "value='other.circuit.BatonCircuitRouter.run'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Validation error is raised"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_accepts_valid_method_pattern",
+      "description": "PACTKey must accept valid patterns like 'exemplar.circuit.BatonCircuitRouter.run'",
+      "function": "PACTKey",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "value='exemplar.circuit.BatonCircuitRouter.run'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "No validation error"
+      ]
+    },
+    {
+      "id": "goodhart_run_reviewer_receives_request",
+      "description": "Each reviewer must be called with the actual ReviewRequest object passed to run(), not a substitute or empty request",
+      "function": "run",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Mock reviewers that capture the request argument they receive",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Each reviewer was called with the same request object passed to run()",
+        "The request's id matches in captured calls"
+      ]
+    },
+    {
+      "id": "goodhart_init_all_four_stages_no_parallel",
+      "description": "Constructor must succeed with all four stages configured sequentially (no parallel groups), and execution plan should have 4 sequential steps",
+      "function": "__init__",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Config with all four stages, empty parallel_stages, all four reviewers provided",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Construction succeeds",
+        "Execution plan has 4 steps",
+        "All steps have is_parallel=False"
+      ]
+    }
+  ],
+  "test_language": "python",
+  "generated_code": "\"\"\"\nAdversarial hidden acceptance tests for the Baton Circuit Router.\n\nThese tests verify behavioral properties that could be bypassed by implementations\nthat hardcode returns matching visible test inputs.\n\"\"\"\nimport asyncio\nimport pytest\nimport time\nfrom unittest.mock import AsyncMock, MagicMock, patch\nfrom typing import Optional\n\nfrom exemplar.circuit import (\n    BatonCircuitRouter,\n    CircuitConfig,\n    CircuitConfigError,\n    ReviewStage,\n    StageTimeoutMs,\n    ParallelGroup,\n    ExecutionStep,\n    ExecutionPlan,\n    ChroniclerEvent,\n    ChroniclerEventType,\n    PACTKey,\n)\n\n# Try to import PACT constants\ntry:\n    from exemplar.circuit import (\n        PACT_CIRCUIT_RUN,\n        PACT_CIRCUIT_RESOLVE_PLAN,\n        PACT_CIRCUIT_INVOKE_REVIEWER,\n        PACT_CIRCUIT_GET_TIMEOUT,\n        PACT_CIRCUIT_GET_PLAN,\n    )\nexcept ImportError:\n    PACT_CIRCUIT_RUN = None\n    PACT_CIRCUIT_RESOLVE_PLAN = None\n    PACT_CIRCUIT_INVOKE_REVIEWER = None\n    PACT_CIRCUIT_GET_TIMEOUT = None\n    PACT_CIRCUIT_GET_PLAN = None\n\nfrom exemplar.schemas import (\n    ReviewRequest,\n    DiffHunk,\n    Assessment,\n    ReviewDecision,\n    Confidence,\n    Severity,\n    Finding,\n    ClassificationLabel,\n)\n\n\n# ── Helpers ──────────────────────────────────────────────────────────\n\n\ndef make_clock(now_utc=\"2024-01-01T00:00:00Z\", monotonic_start=0):\n    \"\"\"Create a deterministic ClockProvider mock.\"\"\"\n    counter = {\"ms\": monotonic_start}\n    clock = MagicMock()\n    clock.now_utc = MagicMock(return_value=now_utc)\n\n    def _monotonic():\n        val = counter[\"ms\"]\n        counter[\"ms\"] += 10\n        return val\n\n    clock.monotonic_ms = MagicMock(side_effect=_monotonic)\n    return clock\n\n\ndef make_chronicler(fail=False):\n    \"\"\"Create a mock ChroniclerEmitter.\"\"\"\n    chronicler = MagicMock()\n    if fail:\n        chronicler.emit = AsyncMock(side_effect=RuntimeError(\"emit failed\"))\n    else:\n        chronicler.emit = AsyncMock()\n    return chronicler\n\n\ndef make_hunk(hunk_id=\"hunk-1\", file_path=\"test.py\"):\n    return DiffHunk(\n        id=hunk_id,\n        file_path=file_path,\n        start_line_old=1,\n        count_old=5,\n        start_line_new=1,\n        count_new=7,\n        context_before=[\"# context\"],\n        added_lines=[\"+ new line\"],\n        removed_lines=[\"- old line\"],\n        context_after=[\"# after\"],\n        raw_header=\"@@ -1,5 +1,7 @@\",\n        classifications=[ClassificationLabel.public],\n        language=\"python\",\n    )\n\n\ndef make_request(request_id=\"req-test-001\"):\n    return ReviewRequest(\n        id=request_id,\n        source=\"test\",\n        hunks=[make_hunk()],\n        file_paths=[\"test.py\"],\n        created_at=\"2024-01-01T00:00:00Z\",\n        metadata={},\n    )\n\n\ndef make_assessment(stage, request_id=\"req-test-001\", is_partial=False, error_message=None):\n    return Assessment(\n        id=f\"assess-{stage.value}\",\n        review_request_id=request_id,\n        stage=stage,\n        reviewer_id=f\"reviewer-{stage.value}\",\n        decision=ReviewDecision.pass_,\n        findings=[],\n        confidence=Confidence.high,\n        is_partial=is_partial,\n        error_message=error_message,\n        duration_ms=10,\n        created_at=\"2024-01-01T00:00:00Z\",\n    )\n\n\ndef make_reviewer(stage, request_id=\"req-test-001\", delay=0, fail=False, fail_exc=None):\n    \"\"\"Create a mock reviewer that returns an assessment or fails.\"\"\"\n    reviewer = MagicMock()\n\n    async def _review(req):\n        if delay > 0:\n            await asyncio.sleep(delay)\n        if fail:\n            raise fail_exc or RuntimeError(f\"reviewer-{stage.value} failed\")\n        return make_assessment(stage, request_id=req.id)\n\n    reviewer.review = AsyncMock(side_effect=_review)\n    return reviewer\n\n\ndef try_make_assessment(stage, request_id=\"req-test-001\"):\n    \"\"\"Try different field names for ReviewDecision.pass since 'pass' is a Python keyword.\"\"\"\n    for field_name in [\"pass_\", \"pass\"]:\n        try:\n            return Assessment(\n                id=f\"assess-{stage.value}\",\n                review_request_id=request_id,\n                stage=stage,\n                reviewer_id=f\"reviewer-{stage.value}\",\n                decision=getattr(ReviewDecision, field_name),\n                findings=[],\n                confidence=Confidence.high,\n                is_partial=False,\n                error_message=None,\n                duration_ms=10,\n                created_at=\"2024-01-01T00:00:00Z\",\n            )\n        except (AttributeError, Exception):\n            continue\n    # Last resort: try string value\n    return Assessment(\n        id=f\"assess-{stage.value}\",\n        review_request_id=request_id,\n        stage=stage,\n        reviewer_id=f\"reviewer-{stage.value}\",\n        decision=\"pass\",\n        findings=[],\n        confidence=Confidence.high,\n        is_partial=False,\n        error_message=None,\n        duration_ms=10,\n        created_at=\"2024-01-01T00:00:00Z\",\n    )\n\n\ndef make_config(stages=None, parallel_stages=None, stage_timeout_ms=5000,\n                block_threshold=1, warn_threshold=2):\n    stages = stages or [\n        ReviewStage.security,\n        ReviewStage.correctness,\n        ReviewStage.style,\n        ReviewStage.architecture,\n    ]\n    parallel_stages = parallel_stages or []\n    return CircuitConfig(\n        stages=stages,\n        parallel_stages=parallel_stages,\n        stage_timeout_ms=stage_timeout_ms,\n        block_threshold=block_threshold,\n        warn_threshold=warn_threshold,\n    )\n\n\ndef make_reviewers(stages, request_id=\"req-test-001\", delays=None, failures=None):\n    \"\"\"Create reviewers dict for given stages with optional per-stage delays and failures.\"\"\"\n    delays = delays or {}\n    failures = failures or {}\n    reviewers = {}\n    for s in stages:\n        reviewers[s] = make_reviewer(\n            s,\n            request_id=request_id,\n            delay=delays.get(s, 0),\n            fail=s in failures,\n            fail_exc=failures.get(s),\n        )\n    return reviewers\n\n\ndef build_router(stages=None, parallel_stages=None, stage_timeout_ms=5000,\n                 request_id=\"req-test-001\", chronicler=None, clock=None,\n                 extra_reviewers=None, reviewer_delays=None, reviewer_failures=None):\n    \"\"\"Build a BatonCircuitRouter with reasonable defaults.\"\"\"\n    stages = stages or [\n        ReviewStage.security,\n        ReviewStage.correctness,\n        ReviewStage.style,\n        ReviewStage.architecture,\n    ]\n    config = make_config(stages=stages, parallel_stages=parallel_stages,\n                         stage_timeout_ms=stage_timeout_ms)\n    reviewers = make_reviewers(stages, request_id=request_id,\n                               delays=reviewer_delays or {},\n                               failures=reviewer_failures or {})\n    if extra_reviewers:\n        for s, r in extra_reviewers.items():\n            reviewers[s] = r\n    chronicler = chronicler or make_chronicler()\n    clock = clock or make_clock()\n    return BatonCircuitRouter(config, reviewers, chronicler, clock), config, chronicler\n\n\n# ── Tests ────────────────────────────────────────────────────────────\n\n\nclass TestGoodhartResolvePlan:\n\n    def test_goodhart_resolve_plan_parallel_group_ordered_by_earliest_stage(self):\n        \"\"\"The execution plan must order parallel group steps by the position of\n        the earliest member stage in config.stages, not by the order groups appear\n        in parallel_stages.\"\"\"\n        stages = [\n            ReviewStage.security,\n            ReviewStage.correctness,\n            ReviewStage.style,\n            ReviewStage.architecture,\n        ]\n        # parallel_stages lists [style, architecture] first, then [security, correctness]\n        # but security comes first in config.stages, so that group should execute first\n        parallel_stages = [\n            [ReviewStage.style, ReviewStage.architecture],\n            [ReviewStage.security, ReviewStage.correctness],\n        ]\n        router, config, _ = build_router(stages=stages, parallel_stages=parallel_stages)\n        plan = router.get_execution_plan()\n\n        assert plan.stage_order == stages\n\n        # Find the step containing security — it should come before the step containing style\n        security_step_idx = None\n        style_step_idx = None\n        for i, step in enumerate(plan.steps):\n            if ReviewStage.security in step.stages:\n                security_step_idx = i\n            if ReviewStage.style in step.stages:\n                style_step_idx = i\n\n        assert security_step_idx is not None\n        assert style_step_idx is not None\n        assert security_step_idx < style_step_idx, (\n            \"Parallel group with earlier stages must come first in execution order\"\n        )\n\n    def test_goodhart_resolve_plan_interleaved_sequential_and_parallel(self):\n        \"\"\"Sequential stages interleaved between parallel groups must appear in\n        their correct position relative to parallel group steps.\"\"\"\n        stages = [\n            ReviewStage.security,\n            ReviewStage.correctness,\n            ReviewStage.style,\n            ReviewStage.architecture,\n        ]\n        parallel_stages = [[ReviewStage.correctness, ReviewStage.style]]\n        router, _, _ = build_router(stages=stages, parallel_stages=parallel_stages)\n        plan = router.get_execution_plan()\n\n        assert len(plan.steps) == 3\n        # Step 1: sequential security\n        assert plan.steps[0].stages == [ReviewStage.security]\n        assert plan.steps[0].is_parallel is False\n        # Step 2: parallel correctness + style\n        assert set(plan.steps[1].stages) == {ReviewStage.correctness, ReviewStage.style}\n        assert plan.steps[1].is_parallel is True\n        # Step 3: sequential architecture\n        assert plan.steps[2].stages == [ReviewStage.architecture]\n        assert plan.steps[2].is_parallel is False\n\n    def test_goodhart_resolve_plan_three_stages_one_parallel_group(self):\n        \"\"\"Execution plan with 3 stages where 2 are parallel and 1 is sequential\n        must produce exactly 2 steps in correct order.\"\"\"\n        stages = [\n            ReviewStage.architecture,\n            ReviewStage.security,\n            ReviewStage.correctness,\n        ]\n        parallel_stages = [[ReviewStage.security, ReviewStage.correctness]]\n        router, _, _ = build_router(stages=stages, parallel_stages=parallel_stages)\n        plan = router.get_execution_plan()\n\n        assert len(plan.steps) == 2\n        # architecture is earliest so sequential first\n        assert plan.steps[0].stages == [ReviewStage.architecture]\n        assert plan.steps[0].is_parallel is False\n        # parallel group second\n        assert set(plan.steps[1].stages) == {ReviewStage.security, ReviewStage.correctness}\n        assert plan.steps[1].is_parallel is True\n        assert plan.stage_order == stages\n\n\nclass TestGoodhartInit:\n\n    def test_goodhart_init_missing_single_middle_reviewer(self):\n        \"\"\"CircuitConfigError must correctly identify which specific stages are\n        missing reviewers, even when only one middle stage is missing.\"\"\"\n        stages = [\n            ReviewStage.security,\n            ReviewStage.correctness,\n            ReviewStage.style,\n            ReviewStage.architecture,\n        ]\n        config = make_config(stages=stages)\n        # Provide all reviewers except style\n        reviewers = {\n            ReviewStage.security: make_reviewer(ReviewStage.security),\n            ReviewStage.correctness: make_reviewer(ReviewStage.correctness),\n            ReviewStage.architecture: make_reviewer(ReviewStage.architecture),\n        }\n        with pytest.raises(CircuitConfigError) as exc_info:\n            BatonCircuitRouter(config, reviewers, make_chronicler(), make_clock())\n\n        err = exc_info.value\n        assert ReviewStage.style in err.missing_reviewers\n\n    def test_goodhart_init_reviewers_superset_of_stages(self):\n        \"\"\"Constructor should succeed when reviewers dict has extra entries beyond\n        config.stages — only missing entries should fail.\"\"\"\n        stages = [ReviewStage.security, ReviewStage.correctness]\n        config = make_config(stages=stages)\n        # Provide reviewers for all four stages (superset)\n        reviewers = {\n            ReviewStage.security: make_reviewer(ReviewStage.security),\n            ReviewStage.correctness: make_reviewer(ReviewStage.correctness),\n            ReviewStage.style: make_reviewer(ReviewStage.style),\n            ReviewStage.architecture: make_reviewer(ReviewStage.architecture),\n        }\n        router = BatonCircuitRouter(config, reviewers, make_chronicler(), make_clock())\n        plan = router.get_execution_plan()\n        plan_stages = set()\n        for step in plan.steps:\n            plan_stages.update(step.stages)\n        assert plan_stages == set(stages)\n\n    def test_goodhart_init_all_four_stages_no_parallel(self):\n        \"\"\"Constructor must succeed with all four stages configured sequentially\n        and execution plan should have 4 sequential steps.\"\"\"\n        stages = [\n            ReviewStage.security,\n            ReviewStage.correctness,\n            ReviewStage.style,\n            ReviewStage.architecture,\n        ]\n        router, _, _ = build_router(stages=stages, parallel_stages=[])\n        plan = router.get_execution_plan()\n        assert len(plan.steps) == 4\n        for step in plan.steps:\n            assert step.is_parallel is False\n            assert len(step.stages) == 1\n\n    def test_goodhart_init_parallel_stage_not_in_config_different_stage(self):\n        \"\"\"Constructor must reject parallel groups containing stages not in\n        config.stages, even when the invalid stage is a valid ReviewStage enum.\"\"\"\n        stages = [ReviewStage.security, ReviewStage.correctness]\n        config = make_config(\n            stages=stages,\n            parallel_stages=[[ReviewStage.security, ReviewStage.architecture]],\n        )\n        reviewers = {\n            ReviewStage.security: make_reviewer(ReviewStage.security),\n            ReviewStage.correctness: make_reviewer(ReviewStage.correctness),\n        }\n        with pytest.raises(CircuitConfigError) as exc_info:\n            BatonCircuitRouter(config, reviewers, make_chronicler(), make_clock())\n\n        err = exc_info.value\n        assert ReviewStage.architecture in err.invalid_parallel_stages\n\n\nclass TestGoodhartRun:\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_assessment_review_request_id_matches(self):\n        \"\"\"Every assessment returned by run() must reference the correct\n        review_request_id from the input request.\"\"\"\n        unique_id = \"req-unique-xyz-999\"\n        router, _, _ = build_router(request_id=unique_id)\n        request = make_request(request_id=unique_id)\n        assessments = await router.run(request)\n\n        for a in assessments:\n            assert a.review_request_id == unique_id\n            assert a.review_request_id != \"\"\n            assert a.review_request_id is not None\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_assessment_stages_match_one_to_one(self):\n        \"\"\"Each assessment's stage field must match a unique configured stage,\n        with no duplicates and no missing stages.\"\"\"\n        stages = [\n            ReviewStage.security,\n            ReviewStage.correctness,\n            ReviewStage.style,\n            ReviewStage.architecture,\n        ]\n        router, config, _ = build_router(stages=stages)\n        request = make_request()\n        assessments = await router.run(request)\n\n        assessment_stages = [a.stage for a in assessments]\n        assert len(assessment_stages) == len(set(assessment_stages)), \"Duplicate stages in assessments\"\n        assert set(assessment_stages) == set(stages), \"Assessment stages don't match config stages\"\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_three_stages_subset(self):\n        \"\"\"run() must work correctly with a non-standard subset of stages (not\n        all four), returning exactly the configured number.\"\"\"\n        stages = [ReviewStage.correctness, ReviewStage.style]\n        router, _, _ = build_router(stages=stages)\n        request = make_request()\n        assessments = await router.run(request)\n\n        assert len(assessments) == 2\n        assert assessments[0].stage == ReviewStage.correctness\n        assert assessments[1].stage == ReviewStage.style\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_single_stage_config(self):\n        \"\"\"run() must work with a single-stage configuration, returning exactly\n        one assessment.\"\"\"\n        stages = [ReviewStage.architecture]\n        router, _, _ = build_router(stages=stages)\n        request = make_request()\n        assessments = await router.run(request)\n\n        assert len(assessments) == 1\n        assert assessments[0].stage == ReviewStage.architecture\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_config_order_reversed(self):\n        \"\"\"Assessments must follow config.stages ordering even when config.stages\n        is in a non-alphabetical, non-default order.\"\"\"\n        stages = [\n            ReviewStage.architecture,\n            ReviewStage.style,\n            ReviewStage.correctness,\n            ReviewStage.security,\n        ]\n        router, _, _ = build_router(stages=stages)\n        request = make_request()\n        assessments = await router.run(request)\n\n        assert len(assessments) == 4\n        assert assessments[0].stage == ReviewStage.architecture\n        assert assessments[1].stage == ReviewStage.style\n        assert assessments[2].stage == ReviewStage.correctness\n        assert assessments[3].stage == ReviewStage.security\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_parallel_actually_concurrent(self):\n        \"\"\"Parallel stages must execute concurrently — total time should be near\n        max single stage time, not the sum.\"\"\"\n        stages = [ReviewStage.security, ReviewStage.correctness]\n        parallel_stages = [[ReviewStage.security, ReviewStage.correctness]]\n        delays = {ReviewStage.security: 0.1, ReviewStage.correctness: 0.1}\n        router, _, _ = build_router(\n            stages=stages,\n            parallel_stages=parallel_stages,\n            reviewer_delays=delays,\n        )\n        request = make_request()\n\n        start = time.monotonic()\n        assessments = await router.run(request)\n        elapsed = time.monotonic() - start\n\n        assert len(assessments) == 2\n        # If sequential, would take ~0.2s. Parallel should be ~0.1s.\n        assert elapsed < 0.19, f\"Parallel stages took {elapsed:.3f}s, likely sequential\"\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_timeout_produces_partial_assessment(self):\n        \"\"\"When a reviewer times out, the corresponding assessment must have\n        is_partial=True and a non-empty error_message, while others complete.\"\"\"\n        stages = [ReviewStage.security, ReviewStage.correctness]\n        # Security reviewer will sleep longer than timeout\n        router, _, _ = build_router(\n            stages=stages,\n            stage_timeout_ms=200,\n            reviewer_delays={ReviewStage.security: 5.0},  # way over 200ms\n        )\n        request = make_request()\n        assessments = await router.run(request)\n\n        assert len(assessments) == 2\n        security_assessment = [a for a in assessments if a.stage == ReviewStage.security][0]\n        correctness_assessment = [a for a in assessments if a.stage == ReviewStage.correctness][0]\n\n        assert security_assessment.is_partial is True\n        assert security_assessment.error_message is not None\n        assert security_assessment.error_message != \"\"\n        assert correctness_assessment.is_partial is False\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_reviewer_receives_request(self):\n        \"\"\"Each reviewer must be called with the actual ReviewRequest object\n        passed to run(), not a substitute.\"\"\"\n        unique_id = \"req-capture-test-777\"\n        stages = [ReviewStage.security, ReviewStage.correctness]\n        config = make_config(stages=stages)\n        captured_requests = {}\n\n        for s in stages:\n            reviewer = MagicMock()\n\n            async def _review(req, _stage=s):\n                captured_requests[_stage] = req\n                return make_assessment(_stage, request_id=req.id)\n\n            reviewer.review = AsyncMock(side_effect=_review)\n            if s == stages[0]:\n                sec_reviewer = reviewer\n            else:\n                corr_reviewer = reviewer\n\n        reviewers = {stages[0]: sec_reviewer, stages[1]: corr_reviewer}\n        router = BatonCircuitRouter(config, reviewers, make_chronicler(), make_clock())\n        request = make_request(request_id=unique_id)\n        await router.run(request)\n\n        for s in stages:\n            assert s in captured_requests, f\"Reviewer for {s} was not called\"\n            assert captured_requests[s].id == unique_id\n\n\nclass TestGoodhartInvokeReviewer:\n\n    @pytest.mark.asyncio\n    async def test_goodhart_invoke_reviewer_assessment_stage_matches_input(self):\n        \"\"\"invoke_reviewer must set Assessment.stage to the exact stage passed as\n        argument, not a hardcoded value.\"\"\"\n        stage = ReviewStage.architecture\n        stages = [stage]\n        router, _, _ = build_router(stages=stages)\n        request = make_request()\n\n        assessment = await router.invoke_reviewer(\n            stage, request, StageTimeoutMs(value=5000)\n        )\n        assert assessment.stage == ReviewStage.architecture\n        assert assessment.is_partial is False\n\n    @pytest.mark.asyncio\n    async def test_goodhart_invoke_reviewer_duration_ms_nonzero(self):\n        \"\"\"Assessment.duration_ms must reflect actual elapsed time and be a\n        non-negative integer.\"\"\"\n        stages = [ReviewStage.security]\n        router, _, _ = build_router(\n            stages=stages,\n            reviewer_delays={ReviewStage.security: 0.01},\n        )\n        request = make_request()\n\n        assessment = await router.invoke_reviewer(\n            ReviewStage.security, request, StageTimeoutMs(value=5000)\n        )\n        assert isinstance(assessment.duration_ms, int)\n        assert assessment.duration_ms >= 0\n\n    @pytest.mark.asyncio\n    async def test_goodhart_invoke_reviewer_error_message_contains_detail(self):\n        \"\"\"When a reviewer raises, the degraded assessment's error_message must\n        contain information about the actual failure.\"\"\"\n        stages = [ReviewStage.correctness]\n        router, _, _ = build_router(\n            stages=stages,\n            reviewer_failures={\n                ReviewStage.correctness: ValueError(\"specific-error-token-12345\")\n            },\n        )\n        request = make_request()\n\n        assessment = await router.invoke_reviewer(\n            ReviewStage.correctness, request, StageTimeoutMs(value=5000)\n        )\n        assert assessment.is_partial is True\n        assert assessment.error_message is not None\n        assert len(assessment.error_message) > 0\n\n    @pytest.mark.asyncio\n    async def test_goodhart_invoke_reviewer_different_exception_types(self):\n        \"\"\"invoke_reviewer must absorb any exception type (KeyError, etc.) into a\n        degraded assessment.\"\"\"\n        stages = [ReviewStage.style]\n        router, _, _ = build_router(\n            stages=stages,\n            reviewer_failures={ReviewStage.style: KeyError(\"missing-key\")},\n        )\n        request = make_request()\n\n        assessment = await router.invoke_reviewer(\n            ReviewStage.style, request, StageTimeoutMs(value=5000)\n        )\n        assert assessment.is_partial is True\n        assert assessment.error_message is not None\n\n\nclass TestGoodhartChronicler:\n\n    @pytest.mark.asyncio\n    async def test_goodhart_chronicler_events_include_correct_stage(self):\n        \"\"\"Chronicler events emitted during run() must have their stage field set\n        to the correct ReviewStage for each invocation.\"\"\"\n        stages = [ReviewStage.security, ReviewStage.architecture]\n        chronicler = make_chronicler()\n        router, _, _ = build_router(stages=stages, chronicler=chronicler)\n        request = make_request()\n        await router.run(request)\n\n        emitted_events = [call.args[0] for call in chronicler.emit.call_args_list]\n\n        started_stages = {\n            e.stage for e in emitted_events\n            if e.event_type == ChroniclerEventType(\"stage.started\")\n        }\n        complete_stages = {\n            e.stage for e in emitted_events\n            if e.event_type == ChroniclerEventType(\"stage.complete\")\n        }\n\n        assert ReviewStage.security in started_stages\n        assert ReviewStage.architecture in started_stages\n        assert ReviewStage.security in complete_stages\n        assert ReviewStage.architecture in complete_stages\n\n        # Should NOT contain events for stages not in config\n        all_event_stages = {e.stage for e in emitted_events if e.stage is not None}\n        assert ReviewStage.correctness not in all_event_stages\n        assert ReviewStage.style not in all_event_stages\n\n    @pytest.mark.asyncio\n    async def test_goodhart_chronicler_emits_both_started_and_complete_per_stage(self):\n        \"\"\"For each configured stage, exactly one stage.started and one\n        stage.complete event must be emitted, totaling 2*N for N stages.\"\"\"\n        stages = [ReviewStage.security, ReviewStage.correctness, ReviewStage.style]\n        chronicler = make_chronicler()\n        router, _, _ = build_router(stages=stages, chronicler=chronicler)\n        request = make_request()\n        await router.run(request)\n\n        emitted_events = [call.args[0] for call in chronicler.emit.call_args_list]\n        started_events = [\n            e for e in emitted_events\n            if e.event_type == ChroniclerEventType(\"stage.started\")\n        ]\n        complete_events = [\n            e for e in emitted_events\n            if e.event_type == ChroniclerEventType(\"stage.complete\")\n        ]\n\n        assert len(started_events) >= 3, f\"Expected 3 stage.started events, got {len(started_events)}\"\n        assert len(complete_events) >= 3, f\"Expected 3 stage.complete events, got {len(complete_events)}\"\n\n\nclass TestGoodhartExecutionPlan:\n\n    def test_goodhart_execution_plan_frozen(self):\n        \"\"\"The ExecutionPlan returned by get_execution_plan() must be immutable.\"\"\"\n        router, _, _ = build_router()\n        plan = router.get_execution_plan()\n\n        with pytest.raises(Exception):  # Pydantic frozen model raises on assignment\n            plan.steps = []\n\n        with pytest.raises(Exception):\n            plan.stage_order = []\n\n\nclass TestGoodhartStageTimeoutMs:\n\n    def test_goodhart_stage_timeout_ms_boundary_99(self):\n        \"\"\"StageTimeoutMs must reject 99 (one below minimum boundary).\"\"\"\n        with pytest.raises(Exception):\n            StageTimeoutMs(value=99)\n\n    def test_goodhart_stage_timeout_ms_boundary_300001(self):\n        \"\"\"StageTimeoutMs must reject 300001 (one above maximum boundary).\"\"\"\n        with pytest.raises(Exception):\n            StageTimeoutMs(value=300001)\n\n    def test_goodhart_stage_timeout_ms_rejects_zero(self):\n        \"\"\"StageTimeoutMs must reject zero as it falls below the minimum of 100.\"\"\"\n        with pytest.raises(Exception):\n            StageTimeoutMs(value=0)\n\n    def test_goodhart_stage_timeout_ms_rejects_negative(self):\n        \"\"\"StageTimeoutMs must reject negative values.\"\"\"\n        with pytest.raises(Exception):\n            StageTimeoutMs(value=-1)\n\n\nclass TestGoodhartParallelGroup:\n\n    def test_goodhart_parallel_group_rejects_single_stage(self):\n        \"\"\"ParallelGroup must enforce the minimum of 2 stages.\"\"\"\n        with pytest.raises(Exception):\n            ParallelGroup(stages=[ReviewStage.security])\n\n\nclass TestGoodhartPACTKey:\n\n    def test_goodhart_pact_key_constants_exist(self):\n        \"\"\"Module-level PACT key constants must be defined.\"\"\"\n        import exemplar.circuit as circuit_module\n\n        assert hasattr(circuit_module, \"PACT_CIRCUIT_RUN\"), \"PACT_CIRCUIT_RUN not found\"\n        assert hasattr(circuit_module, \"PACT_CIRCUIT_RESOLVE_PLAN\"), \"PACT_CIRCUIT_RESOLVE_PLAN not found\"\n        assert hasattr(circuit_module, \"PACT_CIRCUIT_INVOKE_REVIEWER\"), \"PACT_CIRCUIT_INVOKE_REVIEWER not found\"\n        assert hasattr(circuit_module, \"PACT_CIRCUIT_GET_TIMEOUT\"), \"PACT_CIRCUIT_GET_TIMEOUT not found\"\n        assert hasattr(circuit_module, \"PACT_CIRCUIT_GET_PLAN\"), \"PACT_CIRCUIT_GET_PLAN not found\"\n\n    def test_goodhart_pact_key_rejects_missing_exemplar_prefix(self):\n        \"\"\"PACTKey must reject strings that don't start with 'exemplar.' prefix.\"\"\"\n        with pytest.raises(Exception):\n            PACTKey(value=\"other.circuit.BatonCircuitRouter.run\")\n\n    def test_goodhart_pact_key_accepts_valid_method_pattern(self):\n        \"\"\"PACTKey must accept valid patterns matching the documented regex.\"\"\"\n        key = PACTKey(value=\"exemplar.circuit.BatonCircuitRouter.run\")\n        assert key.value == \"exemplar.circuit.BatonCircuitRouter.run\"\n"
+}

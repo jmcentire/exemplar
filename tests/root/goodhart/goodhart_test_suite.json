@@ -1,0 +1,836 @@
+{
+  "component_id": "root",
+  "contract_version": 1,
+  "test_cases": [
+    {
+      "id": "goodhart_map_decision_case_sensitivity",
+      "description": "map_decision_to_exit_code should reject case variants like 'Pass', 'WARN', 'BLOCK' — only lowercase variants are valid ReviewDecision strings",
+      "function": "map_decision_to_exit_code",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Decision strings with non-lowercase casing: 'Pass', 'PASS', 'Warn', 'WARN', 'Block', 'BLOCK'",
+      "expected_output_description": "",
+      "expected_error": "invalid_decision",
+      "assertions": [
+        "map_decision_to_exit_code('Pass') raises an error",
+        "map_decision_to_exit_code('PASS') raises an error",
+        "map_decision_to_exit_code('Warn') raises an error",
+        "map_decision_to_exit_code('WARN') raises an error",
+        "map_decision_to_exit_code('Block') raises an error",
+        "map_decision_to_exit_code('BLOCK') raises an error"
+      ]
+    },
+    {
+      "id": "goodhart_map_decision_near_miss_strings",
+      "description": "map_decision_to_exit_code should reject strings that are similar to but not exactly valid decisions, such as 'passed', 'warning', 'blocked', 'fail'",
+      "function": "map_decision_to_exit_code",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Near-miss strings: 'passed', 'passing', 'warning', 'blocked', 'fail', 'error', 'none'",
+      "expected_output_description": "",
+      "expected_error": "invalid_decision",
+      "assertions": [
+        "map_decision_to_exit_code('passed') raises an error",
+        "map_decision_to_exit_code('warning') raises an error",
+        "map_decision_to_exit_code('blocked') raises an error",
+        "map_decision_to_exit_code('fail') raises an error",
+        "map_decision_to_exit_code('error') raises an error"
+      ]
+    },
+    {
+      "id": "goodhart_map_decision_whitespace",
+      "description": "map_decision_to_exit_code should reject decision strings with leading/trailing whitespace — no implicit stripping",
+      "function": "map_decision_to_exit_code",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Decision strings with whitespace: ' pass', 'warn ', ' block '",
+      "expected_output_description": "",
+      "expected_error": "invalid_decision",
+      "assertions": [
+        "map_decision_to_exit_code(' pass') raises an error",
+        "map_decision_to_exit_code('warn ') raises an error",
+        "map_decision_to_exit_code(' block ') raises an error"
+      ]
+    },
+    {
+      "id": "goodhart_map_decision_none_input",
+      "description": "map_decision_to_exit_code should raise an error when given None as input, not return a default value",
+      "function": "map_decision_to_exit_code",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "decision": "None"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "invalid_decision",
+      "assertions": [
+        "map_decision_to_exit_code(None) raises an error (TypeError or ValueError)"
+      ]
+    },
+    {
+      "id": "goodhart_map_decision_numeric_input",
+      "description": "map_decision_to_exit_code should reject numeric inputs — it accepts only string decision variants",
+      "function": "map_decision_to_exit_code",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Numeric inputs: 0, 1, 2",
+      "expected_output_description": "",
+      "expected_error": "invalid_decision",
+      "assertions": [
+        "map_decision_to_exit_code(0) raises an error",
+        "map_decision_to_exit_code(1) raises an error",
+        "map_decision_to_exit_code(2) raises an error"
+      ]
+    },
+    {
+      "id": "goodhart_map_decision_return_type",
+      "description": "map_decision_to_exit_code should return an int type, not a string or other numeric type, for all valid decisions",
+      "function": "map_decision_to_exit_code",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "type(map_decision_to_exit_code('pass')) is int",
+        "type(map_decision_to_exit_code('warn')) is int",
+        "type(map_decision_to_exit_code('block')) is int"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_trailing_dot_rejected",
+      "description": "ExemplarError pact_key validator should reject keys ending with a dot, as the regex requires at least one lowercase letter after the last dot",
+      "function": "ExemplarError",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "pact_key='exemplar.root.' — trailing dot with no suffix",
+      "expected_output_description": "",
+      "expected_error": "Validation error on pact_key",
+      "assertions": [
+        "ExemplarError with pact_key='exemplar.root.' raises validation error"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_hyphen_rejected",
+      "description": "ExemplarError pact_key validator should reject hyphens since regex only allows [a-z_] after exemplar.root.",
+      "function": "ExemplarError",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "pact_key='exemplar.root.run-pipeline' — contains hyphen",
+      "expected_output_description": "",
+      "expected_error": "Validation error on pact_key",
+      "assertions": [
+        "ExemplarError with pact_key='exemplar.root.run-pipeline' raises validation error"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_extra_dots_rejected",
+      "description": "ExemplarError pact_key validator should reject keys with extra dot-separated segments beyond exemplar.root.suffix since regex only allows [a-z_]+ after the third segment",
+      "function": "ExemplarError",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "pact_key='exemplar.root.run.pipeline' — extra dot segment",
+      "expected_output_description": "",
+      "expected_error": "Validation error on pact_key",
+      "assertions": [
+        "ExemplarError with pact_key='exemplar.root.run.pipeline' raises validation error"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_space_rejected",
+      "description": "ExemplarError pact_key validator should reject keys containing spaces",
+      "function": "ExemplarError",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "pact_key='exemplar.root.run pipeline' — contains space",
+      "expected_output_description": "",
+      "expected_error": "Validation error on pact_key",
+      "assertions": [
+        "ExemplarError with pact_key='exemplar.root.run pipeline' raises validation error"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_wrong_prefix_rejected",
+      "description": "ExemplarError pact_key validator should reject keys that don't start with 'exemplar.root.'",
+      "function": "ExemplarError",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "pact_key values with wrong prefixes: 'exemplar.cli.run', 'root.init', 'exemplar.root'",
+      "expected_output_description": "",
+      "expected_error": "Validation error on pact_key",
+      "assertions": [
+        "ExemplarError with pact_key='exemplar.cli.run' raises validation error",
+        "ExemplarError with pact_key='root.init' raises validation error",
+        "ExemplarError with pact_key='exemplar.root' raises validation error (no suffix after root)"
+      ]
+    },
+    {
+      "id": "goodhart_exemplar_error_is_exception",
+      "description": "ExemplarError should be a subclass of Exception so it can be raised and caught in standard Python exception handling",
+      "function": "ExemplarError",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "issubclass(ExemplarError, Exception) is True"
+      ]
+    },
+    {
+      "id": "goodhart_pipeline_stage_error_is_exemplar_error",
+      "description": "PipelineStageError should be a subclass of ExemplarError, enabling catch of all Root errors via ExemplarError",
+      "function": "PipelineStageError",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "issubclass(PipelineStageError, ExemplarError) is True"
+      ]
+    },
+    {
+      "id": "goodhart_pipeline_stage_enum_is_strenum",
+      "description": "PipelineStage variants should be usable as strings directly (StrEnum behavior) — comparing to their string name should work",
+      "function": "PipelineStage",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "PipelineStage.intake == 'intake'",
+        "PipelineStage.circuit == 'circuit'",
+        "PipelineStage.assess == 'assess'",
+        "PipelineStage.format == 'format'",
+        "PipelineStage.seal == 'seal'",
+        "isinstance(PipelineStage.intake, str) is True"
+      ]
+    },
+    {
+      "id": "goodhart_error_severity_enum_is_strenum",
+      "description": "ErrorSeverity variants should behave as strings (StrEnum) with values matching their names",
+      "function": "ErrorSeverity",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ErrorSeverity.fatal == 'fatal'",
+        "ErrorSeverity.recoverable == 'recoverable'",
+        "ErrorSeverity.ignorable == 'ignorable'",
+        "isinstance(ErrorSeverity.fatal, str) is True"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_constants_values",
+      "description": "PactKeyConstants should have values matching the exemplar.root.* pattern specified in the contract for each Root method",
+      "function": "PactKeyConstants",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "PactKeyConstants.ROOT_INIT matches the pact_key regex pattern",
+        "PactKeyConstants.ROOT_RUN_PIPELINE matches the pact_key regex pattern",
+        "PactKeyConstants.ROOT_AENTER matches the pact_key regex pattern",
+        "PactKeyConstants.ROOT_AEXIT matches the pact_key regex pattern",
+        "PactKeyConstants.ROOT_CREATE matches the pact_key regex pattern",
+        "PactKeyConstants.ROOT_BUILD_PIPELINE_RESULT matches the pact_key regex pattern",
+        "All constants start with 'exemplar.root.'"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_constants_distinct",
+      "description": "All PactKeyConstants should have distinct values — no two Root methods share the same PACT key",
+      "function": "PactKeyConstants",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All 6 PactKeyConstants values are unique strings"
+      ]
+    },
+    {
+      "id": "goodhart_exit_code_mapping_fixed_values",
+      "description": "ExitCodeMapping should have the canonical fixed values: pass=0, warn=1, block=2, error=3",
+      "function": "ExitCodeMapping",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ExitCodeMapping instance with pass_code=0, warn_code=1, block_code=2, error_code=3 is valid",
+        "The error_code field exists and is distinct from block_code"
+      ]
+    },
+    {
+      "id": "goodhart_root_config_frozen",
+      "description": "RootConfig should be a frozen Pydantic model — attempting to mutate fields after construction should raise an error",
+      "function": "RootConfig",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Attempting to set chronicle_log_path on a constructed RootConfig raises an error"
+      ]
+    },
+    {
+      "id": "goodhart_root_config_all_paths_validated_independently",
+      "description": "RootConfig should validate each path field independently — an empty string in any single field should be rejected even if others are valid",
+      "function": "RootConfig",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Each path field set to empty string individually while others are valid",
+      "expected_output_description": "",
+      "expected_error": "Validation error on the empty path field",
+      "assertions": [
+        "RootConfig with only chronicle_log_path='' raises validation error",
+        "RootConfig with only seal_chain_path='' raises validation error",
+        "RootConfig with only kindex_store_path='' raises validation error",
+        "RootConfig with only stigmergy_store_path='' raises validation error"
+      ]
+    },
+    {
+      "id": "goodhart_exemplar_error_message_whitespace_only",
+      "description": "ExemplarError message validator requires len >= 1, so a whitespace-only message like ' ' should be accepted (it has length > 0)",
+      "function": "ExemplarError",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "message=' ' (single space character)",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ExemplarError with message=' ' (single space) is accepted since len(' ') >= 1"
+      ]
+    },
+    {
+      "id": "goodhart_aexit_returns_false_with_exception",
+      "description": "__aexit__ must return False even when an exception is passed in, ensuring exceptions are never suppressed by the context manager",
+      "function": "__aexit__",
+      "category": "invariant",
+      "setup_description": "Create a Root instance, enter context, then call __aexit__ with a RuntimeError exception triple",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "__aexit__(RuntimeError, RuntimeError('test'), mock_tb) returns exactly False",
+        "__aexit__(ValueError, ValueError('x'), mock_tb) returns exactly False",
+        "Return value is specifically False (not None, not 0, not falsy)"
+      ]
+    },
+    {
+      "id": "goodhart_aexit_returns_false_without_exception",
+      "description": "__aexit__ must return False even during normal (non-exceptional) exit from the context manager",
+      "function": "__aexit__",
+      "category": "invariant",
+      "setup_description": "Create a Root instance, enter context, then call __aexit__ with None, None, None",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "__aexit__(None, None, None) returns exactly False (not None, not 0)"
+      ]
+    },
+    {
+      "id": "goodhart_run_pipeline_output_format_matches_input",
+      "description": "PipelineResult.output_format should exactly match the output_format string passed to run_pipeline, not be hardcoded to a default",
+      "function": "run_pipeline",
+      "category": "happy_path",
+      "setup_description": "Mock all pipeline sub-components. Run pipeline with each valid output_format ('json', 'md', 'github') and verify the result preserves it",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.output_format == 'json' when called with output_format='json'",
+        "result.output_format == 'md' when called with output_format='md'",
+        "result.output_format == 'github' when called with output_format='github'"
+      ]
+    },
+    {
+      "id": "goodhart_run_pipeline_whitespace_only_diff_rejected",
+      "description": "run_pipeline should reject a whitespace-only diff_source since it contains no unified diff content, similar to empty string handling",
+      "function": "run_pipeline",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "diff_source='   ' (whitespace only)",
+      "expected_output_description": "",
+      "expected_error": "empty_diff or intake_failure",
+      "assertions": [
+        "run_pipeline with diff_source of only whitespace either raises an error or produces an intake failure"
+      ]
+    },
+    {
+      "id": "goodhart_run_pipeline_reusable_across_calls",
+      "description": "Root should support multiple sequential run_pipeline calls with the same circuit router instance — state should not leak between runs",
+      "function": "run_pipeline",
+      "category": "invariant",
+      "setup_description": "Mock all sub-components. Enter context, run pipeline twice with different diffs, verify both produce valid results and the circuit_router is the same object",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "First run_pipeline returns a valid PipelineResult",
+        "Second run_pipeline returns a valid PipelineResult",
+        "The circuit_router used in both calls is the same object (id() matches)"
+      ]
+    },
+    {
+      "id": "goodhart_emit_event_pact_key_in_payload",
+      "description": "_emit_event should embed the provided pact_key in the event payload dict, not just pass it as a separate field",
+      "function": "_emit_event",
+      "category": "invariant",
+      "setup_description": "Call _emit_event with a specific pact_key and capture the event emitted to the chronicler mock",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "The emitted event's payload contains a 'pact_key' key",
+        "The payload['pact_key'] value matches the pact_key argument passed to _emit_event"
+      ]
+    },
+    {
+      "id": "goodhart_emit_event_catches_all_exception_types",
+      "description": "_emit_event must catch ALL exception types from the chronicler (not just specific ones), including RuntimeError, OSError, KeyboardInterrupt-adjacent errors",
+      "function": "_emit_event",
+      "category": "invariant",
+      "setup_description": "Mock chronicler.emit to raise various exception types: RuntimeError, OSError, TypeError, ConnectionError",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "_emit_event does not propagate RuntimeError from chronicler",
+        "_emit_event does not propagate OSError from chronicler",
+        "_emit_event does not propagate TypeError from chronicler",
+        "_emit_event does not propagate ConnectionError from chronicler"
+      ]
+    },
+    {
+      "id": "goodhart_emit_event_appends_with_various_pact_keys",
+      "description": "_emit_event should append events to accumulated_events list with different pact_key values, not just one hardcoded key",
+      "function": "_emit_event",
+      "category": "happy_path",
+      "setup_description": "Call _emit_event multiple times with different pact_keys and event_types, verify all are appended",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "accumulated_events grows by 1 for each _emit_event call",
+        "Each appended event reflects the specific pact_key passed"
+      ]
+    },
+    {
+      "id": "goodhart_build_pipeline_result_preserves_events_list",
+      "description": "_build_pipeline_result should preserve the exact events list passed in, including all accumulated events from all stages",
+      "function": "_build_pipeline_result",
+      "category": "happy_path",
+      "setup_description": "Create a mock events list with multiple diverse events and pass to _build_pipeline_result",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.events is the same list (or equal to) the events passed in",
+        "result.events contains all events that were passed in, not a subset"
+      ]
+    },
+    {
+      "id": "goodhart_build_pipeline_result_preserves_formatted_output",
+      "description": "_build_pipeline_result should preserve the exact formatted_output string, not truncate or transform it",
+      "function": "_build_pipeline_result",
+      "category": "happy_path",
+      "setup_description": "Pass a large or unusual formatted_output string to _build_pipeline_result",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "formatted_output containing special characters, newlines, unicode",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.formatted_output is identical to the input formatted_output string"
+      ]
+    },
+    {
+      "id": "goodhart_pipeline_stage_error_stage_field",
+      "description": "PipelineStageError should correctly store the PipelineStage indicating which stage failed, for each possible stage",
+      "function": "PipelineStageError",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "PipelineStageError constructed with stage=PipelineStage.intake has stage == PipelineStage.intake",
+        "PipelineStageError constructed with stage=PipelineStage.circuit has stage == PipelineStage.circuit",
+        "PipelineStageError constructed with stage=PipelineStage.assess has stage == PipelineStage.assess",
+        "PipelineStageError constructed with stage=PipelineStage.format has stage == PipelineStage.format",
+        "PipelineStageError constructed with stage=PipelineStage.seal has stage == PipelineStage.seal"
+      ]
+    },
+    {
+      "id": "goodhart_exemplar_error_all_stages",
+      "description": "ExemplarError should accept any PipelineStage variant as the stage field, not just a subset",
+      "function": "ExemplarError",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ExemplarError can be constructed with stage=PipelineStage.intake",
+        "ExemplarError can be constructed with stage=PipelineStage.circuit",
+        "ExemplarError can be constructed with stage=PipelineStage.assess",
+        "ExemplarError can be constructed with stage=PipelineStage.format",
+        "ExemplarError can be constructed with stage=PipelineStage.seal"
+      ]
+    },
+    {
+      "id": "goodhart_exemplar_error_context_is_dict",
+      "description": "ExemplarError context field should accept an arbitrary dict, including nested structures and empty dicts",
+      "function": "ExemplarError",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ExemplarError with context={} is valid",
+        "ExemplarError with context={'key': 'value', 'nested': {'a': 1}} is valid"
+      ]
+    },
+    {
+      "id": "goodhart_run_pipeline_exit_code_pass",
+      "description": "run_pipeline should return exit_code=0 specifically for 'pass' decision, verifying it's not hardcoded to a different default",
+      "function": "run_pipeline",
+      "category": "happy_path",
+      "setup_description": "Mock assessor to return a report with decision='pass'",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.exit_code == 0",
+        "result.exit_code is exactly 0, not None or False"
+      ]
+    },
+    {
+      "id": "goodhart_run_pipeline_events_count_minimum",
+      "description": "Pipeline result events should contain at minimum review.started and review.complete plus stage boundary events for each stage (intake, circuit, assess, format, seal)",
+      "function": "run_pipeline",
+      "category": "invariant",
+      "setup_description": "Mock all sub-components for a successful pipeline run",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.events has length >= 2 (at minimum review.started and review.complete)",
+        "At least one event has event_type containing 'started'",
+        "At least one event has event_type containing 'complete'"
+      ]
+    },
+    {
+      "id": "goodhart_pipeline_event_stage_matches_pipeline_stage_names",
+      "description": "PipelineEvent stage field should use the string values from PipelineStage enum, not arbitrary strings",
+      "function": "PipelineEvent",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "PipelineEvent can be constructed with stage='intake'",
+        "PipelineEvent can be constructed with stage='circuit'",
+        "PipelineEvent can be constructed with stage='assess'",
+        "PipelineEvent can be constructed with stage='format'",
+        "PipelineEvent can be constructed with stage='seal'"
+      ]
+    },
+    {
+      "id": "goodhart_exemplar_error_cause_empty_string",
+      "description": "ExemplarError should accept an empty string as cause (it's optional context), since the cause field carries the string representation of the underlying exception",
+      "function": "ExemplarError",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ExemplarError with cause='' is valid",
+        "The cause field stores the exact empty string passed"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_multiple_underscores",
+      "description": "ExemplarError pact_key validator should accept keys with multiple consecutive underscores since regex [a-z_]+ allows this",
+      "function": "ExemplarError",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "pact_key='exemplar.root.__init__'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ExemplarError with pact_key='exemplar.root.__init__' is accepted",
+        "ExemplarError with pact_key='exemplar.root.a_b_c' is accepted"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_only_underscores",
+      "description": "ExemplarError pact_key validator should accept keys where the suffix is only underscores since regex [a-z_]+ allows this",
+      "function": "ExemplarError",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "pact_key='exemplar.root.___'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ExemplarError with pact_key='exemplar.root.___' is accepted since regex allows [a-z_]+"
+      ]
+    },
+    {
+      "id": "goodhart_run_pipeline_seal_failure_still_has_valid_exit_code",
+      "description": "When seal fails (fire-and-forget), the pipeline result should still have a valid exit_code based on the assessor's decision, not a special error code",
+      "function": "run_pipeline",
+      "category": "invariant",
+      "setup_description": "Mock seal_report to raise an error, assessor returns 'pass' decision",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.exit_code is in {0, 1, 2}",
+        "result.exit_code reflects the assessor decision, not the seal failure"
+      ]
+    },
+    {
+      "id": "goodhart_init_stores_config_reference",
+      "description": "Root.__init__ should store the exact config object reference, not a copy — get_config() should return the same object",
+      "function": "__init__",
+      "category": "invariant",
+      "setup_description": "Create Root with a specific config mock, then call get_config() and check identity",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "get_config() returns the exact same object (is) as the config passed to __init__"
+      ]
+    },
+    {
+      "id": "goodhart_aenter_returns_self_identity",
+      "description": "__aenter__ should return the exact same Root instance (self), not a new object or wrapper",
+      "function": "__aenter__",
+      "category": "invariant",
+      "setup_description": "Create Root, call __aenter__, verify returned object is the same Root instance",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returned value from __aenter__ is root_instance (identity check)",
+        "type(returned) is the Root class"
+      ]
+    },
+    {
+      "id": "goodhart_run_pipeline_invalid_format_variations",
+      "description": "run_pipeline should reject output_format values that are close to valid but not exact: 'JSON', 'Md', 'GITHUB', 'yaml', 'html', 'text'",
+      "function": "run_pipeline",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Various invalid output_format strings",
+      "expected_output_description": "",
+      "expected_error": "invalid_output_format",
+      "assertions": [
+        "run_pipeline with output_format='JSON' raises error",
+        "run_pipeline with output_format='yaml' raises error",
+        "run_pipeline with output_format='html' raises error",
+        "run_pipeline with output_format='text' raises error",
+        "run_pipeline with output_format='Md' raises error"
+      ]
+    },
+    {
+      "id": "goodhart_pipeline_stage_enum_membership",
+      "description": "PipelineStage should have exactly 5 members — no additional hidden variants that could bypass error boundaries",
+      "function": "PipelineStage",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "len(PipelineStage) == 5",
+        "set of member names equals {'intake', 'circuit', 'assess', 'format', 'seal'}"
+      ]
+    },
+    {
+      "id": "goodhart_error_severity_enum_membership",
+      "description": "ErrorSeverity should have exactly 3 members — no extra variants",
+      "function": "ErrorSeverity",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "len(ErrorSeverity) == 3",
+        "set of member names equals {'fatal', 'recoverable', 'ignorable'}"
+      ]
+    },
+    {
+      "id": "goodhart_exemplar_error_severity_field",
+      "description": "ExemplarError should correctly store and return all ErrorSeverity variants, not just one hardcoded severity",
+      "function": "ExemplarError",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ExemplarError with error_severity=ErrorSeverity.fatal has error_severity == ErrorSeverity.fatal",
+        "ExemplarError with error_severity=ErrorSeverity.recoverable has error_severity == ErrorSeverity.recoverable",
+        "ExemplarError with error_severity=ErrorSeverity.ignorable has error_severity == ErrorSeverity.ignorable"
+      ]
+    },
+    {
+      "id": "goodhart_run_pipeline_different_diff_contents",
+      "description": "run_pipeline should handle varying diff_source content without returning hardcoded results — different inputs produce different review_request objects",
+      "function": "run_pipeline",
+      "category": "invariant",
+      "setup_description": "Run pipeline with two different non-empty diff strings, with intake mock that returns different hunks for each. Verify both return valid PipelineResult with the respective intake output",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result1.review_request reflects the first diff's intake output",
+        "result2.review_request reflects the second diff's intake output"
+      ]
+    },
+    {
+      "id": "goodhart_exemplar_error_long_pact_key",
+      "description": "ExemplarError pact_key validator should accept a long valid pact_key with many lowercase letters/underscores",
+      "function": "ExemplarError",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "pact_key='exemplar.root.this_is_a_very_long_method_name_with_many_underscores'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ExemplarError with pact_key='exemplar.root.this_is_a_very_long_method_name_with_many_underscores' is accepted"
+      ]
+    },
+    {
+      "id": "goodhart_run_pipeline_metadata_passed_through",
+      "description": "run_pipeline should pass the metadata dict through to the intake stage, not ignore it",
+      "function": "run_pipeline",
+      "category": "happy_path",
+      "setup_description": "Mock intake to capture the metadata argument and verify it matches what was passed to run_pipeline",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "metadata dict passed to run_pipeline reaches the intake stage"
+      ]
+    }
+  ],
+  "test_language": "python",
+  "generated_code": "\"\"\"\nAdversarial hidden acceptance tests for Root component.\nThese tests catch implementations that pass visible tests through shortcuts\nrather than truly satisfying the contract.\n\"\"\"\nimport pytest\nimport asyncio\nimport re\nfrom unittest.mock import MagicMock, AsyncMock, patch, PropertyMock\nfrom typing import Any\n\n# Import from the root module\nfrom exemplar.root import (\n    PipelineStage,\n    ErrorSeverity,\n    ExemplarError,\n    PipelineStageError,\n    PactKeyConstants,\n    RootConfig,\n    PipelineEvent,\n    ExitCodeMapping,\n    map_decision_to_exit_code,\n)\n\n# Try importing Root and create_root - they may be in different locations\ntry:\n    from exemplar.root import Root, create_root\nexcept ImportError:\n    Root = None\n    create_root = None\n\n\n# ============================================================\n# PACT KEY REGEX for validation\n# ============================================================\nPACT_KEY_REGEX = re.compile(r'^exemplar\\.root\\.[a-z_]+$')\n\n\n# ============================================================\n# map_decision_to_exit_code tests\n# ============================================================\n\nclass TestGoodhartMapDecision:\n\n    def test_goodhart_map_decision_case_sensitivity(self):\n        \"\"\"map_decision_to_exit_code should reject case variants — only lowercase variants are valid\"\"\"\n        for bad in ['Pass', 'PASS', 'Warn', 'WARN', 'Block', 'BLOCK']:\n            with pytest.raises((ValueError, KeyError, TypeError, Exception)):\n                map_decision_to_exit_code(bad)\n\n    def test_goodhart_map_decision_near_miss_strings(self):\n        \"\"\"map_decision_to_exit_code should reject strings similar to but not exactly valid decisions\"\"\"\n        for bad in ['passed', 'passing', 'warning', 'blocked', 'fail', 'error', 'none']:\n            with pytest.raises((ValueError, KeyError, TypeError, Exception)):\n                map_decision_to_exit_code(bad)\n\n    def test_goodhart_map_decision_whitespace(self):\n        \"\"\"map_decision_to_exit_code should reject decision strings with leading/trailing whitespace\"\"\"\n        for bad in [' pass', 'warn ', ' block ', '\\tpass', 'warn\\n']:\n            with pytest.raises((ValueError, KeyError, TypeError, Exception)):\n                map_decision_to_exit_code(bad)\n\n    def test_goodhart_map_decision_none_input(self):\n        \"\"\"map_decision_to_exit_code should raise an error when given None\"\"\"\n        with pytest.raises((ValueError, KeyError, TypeError, AttributeError, Exception)):\n            map_decision_to_exit_code(None)\n\n    def test_goodhart_map_decision_numeric_input(self):\n        \"\"\"map_decision_to_exit_code should reject numeric inputs\"\"\"\n        for bad in [0, 1, 2, 3]:\n            with pytest.raises((ValueError, KeyError, TypeError, Exception)):\n                map_decision_to_exit_code(bad)\n\n    def test_goodhart_map_decision_return_type(self):\n        \"\"\"map_decision_to_exit_code should return int type for all valid decisions\"\"\"\n        for decision in ['pass', 'warn', 'block']:\n            result = map_decision_to_exit_code(decision)\n            assert type(result) is int, f\"Expected int, got {type(result)} for '{decision}'\"\n\n    def test_goodhart_map_decision_exact_values(self):\n        \"\"\"map_decision_to_exit_code should return exactly 0, 1, 2 — not other integers\"\"\"\n        assert map_decision_to_exit_code('pass') == 0\n        assert map_decision_to_exit_code('warn') == 1\n        assert map_decision_to_exit_code('block') == 2\n\n\n# ============================================================\n# ExemplarError pact_key validation tests\n# ============================================================\n\nclass TestGoodhartPactKeyValidation:\n\n    def _make_error_kwargs(self, pact_key):\n        \"\"\"Helper to create ExemplarError kwargs with a specific pact_key.\"\"\"\n        return dict(\n            stage=PipelineStage.intake,\n            message=\"test error\",\n            pact_key=pact_key,\n            cause=\"\",\n            error_severity=ErrorSeverity.fatal,\n            context={},\n        )\n\n    def test_goodhart_pact_key_trailing_dot_rejected(self):\n        \"\"\"ExemplarError should reject pact_key ending with a dot\"\"\"\n        with pytest.raises((ValueError, Exception)):\n            ExemplarError(**self._make_error_kwargs('exemplar.root.'))\n\n    def test_goodhart_pact_key_hyphen_rejected(self):\n        \"\"\"ExemplarError should reject pact_key containing hyphens\"\"\"\n        with pytest.raises((ValueError, Exception)):\n            ExemplarError(**self._make_error_kwargs('exemplar.root.run-pipeline'))\n\n    def test_goodhart_pact_key_extra_dots_rejected(self):\n        \"\"\"ExemplarError should reject pact_key with extra dot-separated segments\"\"\"\n        with pytest.raises((ValueError, Exception)):\n            ExemplarError(**self._make_error_kwargs('exemplar.root.run.pipeline'))\n\n    def test_goodhart_pact_key_space_rejected(self):\n        \"\"\"ExemplarError should reject pact_key containing spaces\"\"\"\n        with pytest.raises((ValueError, Exception)):\n            ExemplarError(**self._make_error_kwargs('exemplar.root.run pipeline'))\n\n    def test_goodhart_pact_key_wrong_prefix_rejected(self):\n        \"\"\"ExemplarError should reject pact_keys that don't start with exemplar.root.\"\"\"\n        for bad in ['exemplar.cli.run', 'root.init', 'exemplar.root', 'other.root.init']:\n            with pytest.raises((ValueError, Exception)):\n                ExemplarError(**self._make_error_kwargs(bad))\n\n    def test_goodhart_pact_key_multiple_underscores_accepted(self):\n        \"\"\"ExemplarError should accept pact_key with multiple/consecutive underscores\"\"\"\n        e1 = ExemplarError(**self._make_error_kwargs('exemplar.root.__init__'))\n        assert e1.pact_key == 'exemplar.root.__init__'\n        e2 = ExemplarError(**self._make_error_kwargs('exemplar.root.a_b_c'))\n        assert e2.pact_key == 'exemplar.root.a_b_c'\n\n    def test_goodhart_pact_key_only_underscores_accepted(self):\n        \"\"\"ExemplarError should accept pact_key where suffix is only underscores\"\"\"\n        e = ExemplarError(**self._make_error_kwargs('exemplar.root.___'))\n        assert e.pact_key == 'exemplar.root.___'\n\n    def test_goodhart_pact_key_long_accepted(self):\n        \"\"\"ExemplarError should accept long pact_key with many lowercase letters/underscores\"\"\"\n        long_key = 'exemplar.root.this_is_a_very_long_method_name_with_many_underscores'\n        e = ExemplarError(**self._make_error_kwargs(long_key))\n        assert e.pact_key == long_key\n\n    def test_goodhart_pact_key_digits_in_various_positions_rejected(self):\n        \"\"\"ExemplarError should reject pact_key with digits anywhere in the suffix\"\"\"\n        for bad in ['exemplar.root.init1', 'exemplar.root.1init', 'exemplar.root.in1t']:\n            with pytest.raises((ValueError, Exception)):\n                ExemplarError(**self._make_error_kwargs(bad))\n\n\n# ============================================================\n# ExemplarError general tests\n# ============================================================\n\nclass TestGoodhartExemplarError:\n\n    def _make_error_kwargs(self, **overrides):\n        defaults = dict(\n            stage=PipelineStage.intake,\n            message=\"test message\",\n            pact_key=\"exemplar.root.test\",\n            cause=\"\",\n            error_severity=ErrorSeverity.fatal,\n            context={},\n        )\n        defaults.update(overrides)\n        return defaults\n\n    def test_goodhart_exemplar_error_is_exception(self):\n        \"\"\"ExemplarError should be a subclass of Exception\"\"\"\n        assert issubclass(ExemplarError, Exception)\n\n    def test_goodhart_pipeline_stage_error_is_exemplar_error(self):\n        \"\"\"PipelineStageError should be a subclass of ExemplarError\"\"\"\n        assert issubclass(PipelineStageError, ExemplarError)\n\n    def test_goodhart_exemplar_error_all_stages(self):\n        \"\"\"ExemplarError should accept any PipelineStage variant as the stage field\"\"\"\n        for stage in PipelineStage:\n            e = ExemplarError(**self._make_error_kwargs(stage=stage))\n            assert e.stage == stage\n\n    def test_goodhart_exemplar_error_all_severities(self):\n        \"\"\"ExemplarError should correctly store all ErrorSeverity variants\"\"\"\n        for severity in ErrorSeverity:\n            e = ExemplarError(**self._make_error_kwargs(error_severity=severity))\n            assert e.error_severity == severity\n\n    def test_goodhart_exemplar_error_message_whitespace_only(self):\n        \"\"\"ExemplarError should accept whitespace-only message since len(' ') >= 1\"\"\"\n        e = ExemplarError(**self._make_error_kwargs(message=' '))\n        assert e.message == ' '\n\n    def test_goodhart_exemplar_error_cause_empty_string(self):\n        \"\"\"ExemplarError should accept an empty string as cause\"\"\"\n        e = ExemplarError(**self._make_error_kwargs(cause=''))\n        assert e.cause == ''\n\n    def test_goodhart_exemplar_error_context_various_dicts(self):\n        \"\"\"ExemplarError context should accept empty and nested dicts\"\"\"\n        e1 = ExemplarError(**self._make_error_kwargs(context={}))\n        assert e1.context == {}\n        e2 = ExemplarError(**self._make_error_kwargs(context={'key': 'value', 'nested': {'a': 1}}))\n        assert e2.context == {'key': 'value', 'nested': {'a': 1}}\n\n\n# ============================================================\n# PipelineStageError tests\n# ============================================================\n\nclass TestGoodhartPipelineStageError:\n\n    def test_goodhart_pipeline_stage_error_all_stages(self):\n        \"\"\"PipelineStageError should correctly store each PipelineStage variant\"\"\"\n        for stage in PipelineStage:\n            kwargs = dict(\n                stage=stage,\n                message=\"stage error\",\n                pact_key=\"exemplar.root.run_pipeline\",\n                cause=\"underlying error\",\n                error_severity=ErrorSeverity.fatal,\n                context={},\n                component_id=\"test_component\",\n            )\n            e = PipelineStageError(**kwargs)\n            assert e.stage == stage\n            assert e.component_id == \"test_component\"\n\n\n# ============================================================\n# Enum tests\n# ============================================================\n\nclass TestGoodhartEnums:\n\n    def test_goodhart_pipeline_stage_is_strenum(self):\n        \"\"\"PipelineStage variants should be usable as strings (StrEnum behavior)\"\"\"\n        for stage in PipelineStage:\n            assert isinstance(stage, str), f\"{stage} is not a str instance\"\n            assert stage == stage.value\n        assert PipelineStage.intake == 'intake'\n        assert PipelineStage.circuit == 'circuit'\n        assert PipelineStage.assess == 'assess'\n        assert PipelineStage.format == 'format'\n        assert PipelineStage.seal == 'seal'\n\n    def test_goodhart_error_severity_is_strenum(self):\n        \"\"\"ErrorSeverity variants should behave as strings with values matching names\"\"\"\n        for sev in ErrorSeverity:\n            assert isinstance(sev, str), f\"{sev} is not a str instance\"\n            assert sev == sev.value\n        assert ErrorSeverity.fatal == 'fatal'\n        assert ErrorSeverity.recoverable == 'recoverable'\n        assert ErrorSeverity.ignorable == 'ignorable'\n\n    def test_goodhart_pipeline_stage_exact_membership(self):\n        \"\"\"PipelineStage should have exactly 5 members\"\"\"\n        assert len(PipelineStage) == 5\n        member_names = {m.name for m in PipelineStage}\n        assert member_names == {'intake', 'circuit', 'assess', 'format', 'seal'}\n\n    def test_goodhart_error_severity_exact_membership(self):\n        \"\"\"ErrorSeverity should have exactly 3 members\"\"\"\n        assert len(ErrorSeverity) == 3\n        member_names = {m.name for m in ErrorSeverity}\n        assert member_names == {'fatal', 'recoverable', 'ignorable'}\n\n\n# ============================================================\n# PactKeyConstants tests\n# ============================================================\n\nclass TestGoodhartPactKeyConstants:\n\n    def test_goodhart_pact_key_constants_match_regex(self):\n        \"\"\"All PactKeyConstants values should match the pact_key regex pattern\"\"\"\n        constant_names = ['ROOT_INIT', 'ROOT_RUN_PIPELINE', 'ROOT_AENTER', 'ROOT_AEXIT',\n                          'ROOT_CREATE', 'ROOT_BUILD_PIPELINE_RESULT']\n        for name in constant_names:\n            value = getattr(PactKeyConstants, name)\n            assert isinstance(value, str), f\"PactKeyConstants.{name} is not a string\"\n            assert PACT_KEY_REGEX.match(value), \\\n                f\"PactKeyConstants.{name}='{value}' doesn't match regex ^exemplar\\\\.root\\\\.[a-z_]+$\"\n\n    def test_goodhart_pact_key_constants_distinct(self):\n        \"\"\"All PactKeyConstants values should be distinct\"\"\"\n        constant_names = ['ROOT_INIT', 'ROOT_RUN_PIPELINE', 'ROOT_AENTER', 'ROOT_AEXIT',\n                          'ROOT_CREATE', 'ROOT_BUILD_PIPELINE_RESULT']\n        values = [getattr(PactKeyConstants, name) for name in constant_names]\n        assert len(set(values)) == len(values), \\\n            f\"PactKeyConstants has duplicate values: {values}\"\n\n    def test_goodhart_pact_key_constants_start_with_prefix(self):\n        \"\"\"All PactKeyConstants values should start with 'exemplar.root.'\"\"\"\n        constant_names = ['ROOT_INIT', 'ROOT_RUN_PIPELINE', 'ROOT_AENTER', 'ROOT_AEXIT',\n                          'ROOT_CREATE', 'ROOT_BUILD_PIPELINE_RESULT']\n        for name in constant_names:\n            value = getattr(PactKeyConstants, name)\n            assert value.startswith('exemplar.root.'), \\\n                f\"PactKeyConstants.{name}='{value}' doesn't start with 'exemplar.root.'\"\n\n\n# ============================================================\n# RootConfig tests\n# ============================================================\n\nclass TestGoodhartRootConfig:\n\n    def test_goodhart_root_config_frozen(self):\n        \"\"\"RootConfig should be frozen — mutation should raise an error\"\"\"\n        config = RootConfig(\n            chronicle_log_path=\"/tmp/chronicle\",\n            seal_chain_path=\"/tmp/seal\",\n            kindex_store_path=\"/tmp/kindex\",\n            stigmergy_store_path=\"/tmp/stigmergy\",\n        )\n        with pytest.raises((AttributeError, TypeError, Exception)):\n            config.chronicle_log_path = \"/new/path\"\n\n    def test_goodhart_root_config_each_path_validated_independently(self):\n        \"\"\"RootConfig should reject empty string in each individual path field\"\"\"\n        valid_paths = dict(\n            chronicle_log_path=\"/tmp/c\",\n            seal_chain_path=\"/tmp/s\",\n            kindex_store_path=\"/tmp/k\",\n            stigmergy_store_path=\"/tmp/st\",\n        )\n        for field in valid_paths:\n            kwargs = dict(valid_paths)\n            kwargs[field] = \"\"\n            with pytest.raises((ValueError, Exception)):\n                RootConfig(**kwargs)\n\n\n# ============================================================\n# ExitCodeMapping tests\n# ============================================================\n\nclass TestGoodhartExitCodeMapping:\n\n    def test_goodhart_exit_code_mapping_has_error_code(self):\n        \"\"\"ExitCodeMapping should have an error_code field (for the invariant pass→0, warn→1, block→2, error→3)\"\"\"\n        m = ExitCodeMapping(pass_code=0, warn_code=1, block_code=2, error_code=3)\n        assert m.pass_code == 0\n        assert m.warn_code == 1\n        assert m.block_code == 2\n        assert m.error_code == 3\n\n    def test_goodhart_exit_code_mapping_stores_values_not_defaults(self):\n        \"\"\"ExitCodeMapping should store the exact values passed, not hardcoded defaults\"\"\"\n        m = ExitCodeMapping(pass_code=10, warn_code=20, block_code=30, error_code=40)\n        assert m.pass_code == 10\n        assert m.warn_code == 20\n        assert m.block_code == 30\n        assert m.error_code == 40\n\n\n# ============================================================\n# PipelineEvent tests\n# ============================================================\n\nclass TestGoodhartPipelineEvent:\n\n    def test_goodhart_pipeline_event_stores_all_fields(self):\n        \"\"\"PipelineEvent should store all four fields correctly with various values\"\"\"\n        e = PipelineEvent(\n            event_type=\"stage.started\",\n            stage=\"circuit\",\n            message=\"starting circuit stage\",\n            payload={\"pact_key\": \"exemplar.root.run_pipeline\", \"extra\": 42},\n        )\n        assert e.event_type == \"stage.started\"\n        assert e.stage == \"circuit\"\n        assert e.message == \"starting circuit stage\"\n        assert e.payload == {\"pact_key\": \"exemplar.root.run_pipeline\", \"extra\": 42}\n\n    def test_goodhart_pipeline_event_various_stages(self):\n        \"\"\"PipelineEvent stage field should accept all pipeline stage name strings\"\"\"\n        for stage_name in ['intake', 'circuit', 'assess', 'format', 'seal']:\n            e = PipelineEvent(\n                event_type=\"stage.started\",\n                stage=stage_name,\n                message=\"test\",\n                payload={},\n            )\n            assert e.stage == stage_name\n"
+}

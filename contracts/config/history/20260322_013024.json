@@ -1,0 +1,933 @@
+{
+  "component_id": "config",
+  "name": "Configuration System",
+  "description": "YAML + Pydantic v2 frozen-model configuration loading with fail-fast validation. Defines the complete configuration hierarchy: ExemplarConfig (top-level), CircuitConfig (stage ordering, parallelism, thresholds), ReviewerConfig (per-reviewer enablement, trust weight, scope patterns), LedgerConfig (field classification rules for secrets/PII/internal APIs via LedgerFieldRule), and ApprenticeConfig (shadow/canary/primary mode, storage path). Provides a default_config() factory that returns a fully valid out-of-the-box configuration. Supports cascading path resolution: explicit flag > EXEMPLAR_CONFIG env var > .exemplar/config.yaml in CWD > built-in defaults. Deep-merges partial YAML onto defaults and validates via Pydantic. All errors wrapped in a ConfigError hierarchy with clear messages. No Chronicler dependency to avoid circular imports; callers handle event emission.",
+  "version": 2,
+  "types": [
+    {
+      "name": "ConfigSource",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "explicit",
+        "env_var",
+        "conventional",
+        "builtin"
+      ],
+      "inner_types": [],
+      "description": "StrEnum indicating how the configuration file path was resolved. Used to report provenance of the active configuration.",
+      "owner_component": ""
+    },
+    {
+      "name": "ConfigError",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable error description including resolved path context",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1",
+              "error_message": "Error message must not be empty"
+            }
+          ]
+        },
+        {
+          "name": "path",
+          "type_ref": "OptionalPath",
+          "required": false,
+          "default": "None",
+          "description": "The resolved config file path that caused the error, or None if no path was resolved",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Base configuration error. All config-related exceptions inherit from this. Carries a human-readable message and optional resolved path for diagnostics.",
+      "owner_component": ""
+    },
+    {
+      "name": "ConfigFileNotFoundError",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Error message including the missing file path",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1",
+              "error_message": "Error message must not be empty"
+            }
+          ]
+        },
+        {
+          "name": "path",
+          "type_ref": "Path",
+          "required": true,
+          "default": "",
+          "description": "The filesystem path that was not found",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Raised when an explicitly specified or env-var-resolved config path does not exist on the filesystem. Subclass of ConfigError.",
+      "owner_component": ""
+    },
+    {
+      "name": "ConfigValidationError",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Summary of validation failures",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1",
+              "error_message": "Error message must not be empty"
+            }
+          ]
+        },
+        {
+          "name": "path",
+          "type_ref": "OptionalPath",
+          "required": false,
+          "default": "None",
+          "description": "The config file path that produced invalid content",
+          "validators": []
+        },
+        {
+          "name": "validation_errors",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "List of Pydantic validation error dicts, each with loc, msg, and type fields",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Raised when YAML content is syntactically valid but fails Pydantic model validation (type errors, constraint violations, cross-field invariant failures). Wraps the underlying Pydantic ValidationError details. Subclass of ConfigError.",
+      "owner_component": ""
+    },
+    {
+      "name": "ConfigParseError",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "YAML parse error details including line/column if available",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1",
+              "error_message": "Error message must not be empty"
+            }
+          ]
+        },
+        {
+          "name": "path",
+          "type_ref": "Path",
+          "required": true,
+          "default": "",
+          "description": "The config file path that could not be parsed",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Raised when the YAML file cannot be parsed (syntax errors, encoding issues). Subclass of ConfigError.",
+      "owner_component": ""
+    },
+    {
+      "name": "Path",
+      "kind": "primitive",
+      "fields": [],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "pathlib.Path representing a filesystem path",
+      "owner_component": ""
+    },
+    {
+      "name": "OptionalPath",
+      "kind": "optional",
+      "fields": [],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [
+        "Path"
+      ],
+      "description": "Optional filesystem path, None when no path is applicable",
+      "owner_component": ""
+    },
+    {
+      "name": "LedgerFieldRule",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "pattern",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Regex pattern to match against diff hunk content.",
+          "validators": []
+        },
+        {
+          "name": "label",
+          "type_ref": "ClassificationLabel",
+          "required": true,
+          "default": "",
+          "description": "Classification label to apply when pattern matches.",
+          "validators": []
+        },
+        {
+          "name": "description",
+          "type_ref": "str",
+          "required": false,
+          "default": "",
+          "description": "Human-readable description of what this rule detects.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single Ledger classification rule: a regex pattern mapped to a classification label.",
+      "owner_component": "config"
+    },
+    {
+      "name": "LedgerConfig",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "rules",
+          "type_ref": "list[LedgerFieldRule]",
+          "required": true,
+          "default": "",
+          "description": "Ordered list of classification rules. First match wins per label category.",
+          "validators": []
+        },
+        {
+          "name": "default_label",
+          "type_ref": "ClassificationLabel",
+          "required": true,
+          "default": "public",
+          "description": "Default label when no rule matches.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Configuration for Ledger field classification: rules for detecting secrets, PII, and internal APIs.",
+      "owner_component": "config"
+    },
+    {
+      "name": "LedgerFieldRuleList",
+      "kind": "list",
+      "fields": [],
+      "item_type": "LedgerFieldRule",
+      "variants": [],
+      "inner_types": [],
+      "description": "Ordered list of LedgerFieldRule instances",
+      "owner_component": ""
+    },
+    {
+      "name": "ReviewerConfig",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "enabled",
+          "type_ref": "bool",
+          "required": true,
+          "default": "true",
+          "description": "Whether this reviewer is active.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "The stage this reviewer operates in.",
+          "validators": []
+        },
+        {
+          "name": "default_trust_weight",
+          "type_ref": "float",
+          "required": true,
+          "default": "0.5",
+          "description": "Initial trust weight for Arbiter scoring.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "0.0 <= value <= 1.0",
+              "error_message": "Trust weight must be between 0.0 and 1.0"
+            }
+          ]
+        },
+        {
+          "name": "allowed_file_patterns",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "['**/*']",
+          "description": "Glob patterns for files this reviewer may access.",
+          "validators": []
+        },
+        {
+          "name": "denied_file_patterns",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Glob patterns for files this reviewer must not access.",
+          "validators": []
+        },
+        {
+          "name": "allowed_classifications",
+          "type_ref": "list[ClassificationLabel]",
+          "required": true,
+          "default": "['public']",
+          "description": "Classification labels this reviewer may see.",
+          "validators": []
+        },
+        {
+          "name": "max_severity",
+          "type_ref": "Severity",
+          "required": true,
+          "default": "critical",
+          "description": "Maximum severity this reviewer may emit.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Per-reviewer configuration: enablement, default trust, and policy scope.",
+      "owner_component": "config"
+    },
+    {
+      "name": "ReviewerConfigMap",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "security",
+          "type_ref": "ReviewerConfig",
+          "required": false,
+          "default": "",
+          "description": "Configuration for the security reviewer (OWASP, secret detection)",
+          "validators": []
+        },
+        {
+          "name": "correctness",
+          "type_ref": "ReviewerConfig",
+          "required": false,
+          "default": "",
+          "description": "Configuration for the correctness reviewer (logic errors, null checks)",
+          "validators": []
+        },
+        {
+          "name": "style",
+          "type_ref": "ReviewerConfig",
+          "required": false,
+          "default": "",
+          "description": "Configuration for the style reviewer (convention violations)",
+          "validators": []
+        },
+        {
+          "name": "architecture",
+          "type_ref": "ReviewerConfig",
+          "required": false,
+          "default": "",
+          "description": "Configuration for the architecture reviewer (coupling, layer violations)",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Map of reviewer name to ReviewerConfig. Keys are canonical reviewer identifiers.",
+      "owner_component": ""
+    },
+    {
+      "name": "CircuitConfig",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "stages",
+          "type_ref": "list[ReviewStage]",
+          "required": true,
+          "default": "['security', 'correctness', 'style', 'architecture']",
+          "description": "Ordered list of review stages to execute.",
+          "validators": []
+        },
+        {
+          "name": "parallel_stages",
+          "type_ref": "list[list[ReviewStage]]",
+          "required": true,
+          "default": "[['security', 'correctness'], ['style', 'architecture']]",
+          "description": "Groups of stages that can run in parallel. Each inner list runs concurrently.",
+          "validators": []
+        },
+        {
+          "name": "stage_timeout_ms",
+          "type_ref": "int",
+          "required": true,
+          "default": "30000",
+          "description": "Default timeout per stage in milliseconds.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "value > 0",
+              "error_message": "Stage timeout must be positive."
+            }
+          ]
+        },
+        {
+          "name": "block_threshold",
+          "type_ref": "int",
+          "required": true,
+          "default": "1",
+          "description": "Minimum number of critical/high findings to trigger a block decision.",
+          "validators": []
+        },
+        {
+          "name": "warn_threshold",
+          "type_ref": "int",
+          "required": true,
+          "default": "3",
+          "description": "Minimum number of medium findings to trigger a warn decision.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Configuration for Baton circuit routing: stage ordering, parallelism, and timeouts.",
+      "owner_component": "config"
+    },
+    {
+      "name": "ApprenticeConfig",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "phase",
+          "type_ref": "LearnerPhase",
+          "required": true,
+          "default": "shadow",
+          "description": "Current learning phase.",
+          "validators": []
+        },
+        {
+          "name": "storage_path",
+          "type_ref": "str",
+          "required": true,
+          "default": ".exemplar/learner/",
+          "description": "Directory path for learning state files.",
+          "validators": []
+        },
+        {
+          "name": "shadow_to_canary_threshold",
+          "type_ref": "float",
+          "required": true,
+          "default": "0.7",
+          "description": "Accuracy threshold to progress from shadow to canary.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "0.0 <= value <= 1.0",
+              "error_message": "Threshold must be between 0.0 and 1.0"
+            }
+          ]
+        },
+        {
+          "name": "canary_to_primary_threshold",
+          "type_ref": "float",
+          "required": true,
+          "default": "0.9",
+          "description": "Accuracy threshold to progress from canary to primary.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "0.0 <= value <= 1.0",
+              "error_message": "Threshold must be between 0.0 and 1.0"
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Configuration for the Apprentice learning module: phase, thresholds, and storage.",
+      "owner_component": "config"
+    },
+    {
+      "name": "ExemplarConfig",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "circuit",
+          "type_ref": "CircuitConfig",
+          "required": true,
+          "default": "",
+          "description": "Circuit routing configuration.",
+          "validators": []
+        },
+        {
+          "name": "reviewers",
+          "type_ref": "dict[str, ReviewerConfig]",
+          "required": true,
+          "default": "",
+          "description": "Per-reviewer configuration keyed by reviewer_id.",
+          "validators": []
+        },
+        {
+          "name": "ledger",
+          "type_ref": "LedgerConfig",
+          "required": true,
+          "default": "",
+          "description": "Field classification rules.",
+          "validators": []
+        },
+        {
+          "name": "apprentice",
+          "type_ref": "ApprenticeConfig",
+          "required": true,
+          "default": "",
+          "description": "Learning module configuration.",
+          "validators": []
+        },
+        {
+          "name": "chronicle_log_path",
+          "type_ref": "str",
+          "required": true,
+          "default": ".exemplar/chronicle.jsonl",
+          "description": "File path for Chronicler JSON-lines log.",
+          "validators": []
+        },
+        {
+          "name": "kindex_store_path",
+          "type_ref": "str",
+          "required": true,
+          "default": ".exemplar/kindex.json",
+          "description": "File path for Kindex persistent store.",
+          "validators": []
+        },
+        {
+          "name": "stigmergy_store_path",
+          "type_ref": "str",
+          "required": true,
+          "default": ".exemplar/stigmergy.json",
+          "description": "File path for Stigmergy pattern store.",
+          "validators": []
+        },
+        {
+          "name": "seal_chain_path",
+          "type_ref": "str",
+          "required": true,
+          "default": ".exemplar/seal_chain.json",
+          "description": "File path for Tessera seal chain state.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Top-level configuration for the Exemplar code review service.",
+      "owner_component": "config"
+    },
+    {
+      "name": "StringList",
+      "kind": "list",
+      "fields": [],
+      "item_type": "str",
+      "variants": [],
+      "inner_types": [],
+      "description": "List of strings, used for stage names, patterns, etc.",
+      "owner_component": ""
+    },
+    {
+      "name": "ResolvedConfigPath",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "path",
+          "type_ref": "OptionalPath",
+          "required": true,
+          "default": "",
+          "description": "Resolved filesystem path, or None if using built-in defaults",
+          "validators": []
+        },
+        {
+          "name": "source",
+          "type_ref": "ConfigSource",
+          "required": true,
+          "default": "",
+          "description": "How the path was resolved",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Result of config path resolution: the resolved path (or None for builtin) and the source that provided it.",
+      "owner_component": ""
+    },
+    {
+      "name": "ConfigProvider",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "load_config",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Protocol method signature: (path: Path | None = None) -> ExemplarConfig",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Protocol (runtime_checkable) defining the config loading interface. Implementations must provide load_config(). Used for dependency injection and testability.",
+      "owner_component": ""
+    },
+    {
+      "name": "Severity",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ],
+      "inner_types": [],
+      "description": "Severity level of a review finding, ordered from most to least critical.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ReviewStage",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "security",
+        "correctness",
+        "style",
+        "architecture"
+      ],
+      "inner_types": [],
+      "description": "Named stage in the review circuit pipeline.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "LearnerPhase",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "shadow",
+        "canary",
+        "primary"
+      ],
+      "inner_types": [],
+      "description": "Apprentice learning phase progression stage.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ClassificationLabel",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "secret",
+        "pii",
+        "internal_api",
+        "public"
+      ],
+      "inner_types": [],
+      "description": "Ledger data classification label for diff content.",
+      "owner_component": "schemas"
+    }
+  ],
+  "functions": [
+    {
+      "name": "default_config",
+      "description": "Returns a complete, valid ExemplarConfig with all default values. All four reviewers enabled with trust_weight=1.0, standard stage ordering (intake, security, correctness, style, architecture, assess, report), common secret/PII detection patterns in Ledger, and shadow-mode Apprentice. This is the canonical baseline onto which partial YAML overrides are deep-merged.",
+      "inputs": [],
+      "output_type": "ExemplarConfig",
+      "error_cases": [],
+      "preconditions": [],
+      "postconditions": [
+        "Returned config passes all ExemplarConfig validators",
+        "All four reviewers (security, correctness, style, architecture) are enabled",
+        "CircuitConfig.stages contains at least: intake, security, correctness, style, architecture, assess, report",
+        "CircuitConfig.parallel_stages is a subset of CircuitConfig.stages",
+        "CircuitConfig.min_threshold <= CircuitConfig.max_threshold",
+        "LedgerConfig contains at least one SECRET and one PII detection rule",
+        "ApprenticeConfig.mode is 'shadow'",
+        "All LedgerFieldRule patterns compile as valid regex"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 5,
+        "max_memory_mb": null,
+        "complexity": "O(1)"
+      }
+    },
+    {
+      "name": "resolve_config_path",
+      "description": "Resolves the configuration file path using a cascading resolution chain: (1) explicit path parameter if provided, (2) EXEMPLAR_CONFIG environment variable if set, (3) .exemplar/config.yaml in the current working directory if it exists, (4) None indicating built-in defaults should be used. Returns both the resolved path and the source that provided it. Does NOT validate that the file exists for explicit/env_var sources — that is load_config's responsibility.",
+      "inputs": [
+        {
+          "name": "explicit",
+          "type_ref": "OptionalPath",
+          "required": false,
+          "default": "None",
+          "description": "Explicitly provided config file path, typically from CLI --config flag",
+          "validators": []
+        }
+      ],
+      "output_type": "ResolvedConfigPath",
+      "error_cases": [],
+      "preconditions": [],
+      "postconditions": [
+        "If explicit is not None, returns (explicit, ConfigSource.explicit)",
+        "If explicit is None and EXEMPLAR_CONFIG env var is set and non-empty, returns (Path(env_var_value), ConfigSource.env_var)",
+        "If no explicit or env var, and .exemplar/config.yaml exists in CWD, returns (cwd/.exemplar/config.yaml, ConfigSource.conventional)",
+        "If no path found by any method, returns (None, ConfigSource.builtin)",
+        "source field is never None"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": ".exemplar/config.yaml",
+          "description": "Checks existence of conventional config path in CWD (stat only, not read)"
+        },
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Reads EXEMPLAR_CONFIG environment variable via os.environ.get"
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "load_config",
+      "description": "Primary public API for configuration loading. Resolves config path via resolve_config_path, reads and parses the YAML file if one exists, deep-merges parsed content onto default_config() values, and validates the result via ExemplarConfig.model_validate(). Returns default_config() if no config file is found (builtin source). An empty YAML file (null document) also returns default_config(). All errors are wrapped in the ConfigError hierarchy with clear messages including the resolved path.",
+      "inputs": [
+        {
+          "name": "path",
+          "type_ref": "OptionalPath",
+          "required": false,
+          "default": "None",
+          "description": "Optional explicit config file path. Passed through to resolve_config_path.",
+          "validators": []
+        }
+      ],
+      "output_type": "ExemplarConfig",
+      "error_cases": [
+        {
+          "name": "file_not_found",
+          "condition": "Resolved path (from explicit or env_var source) does not exist on filesystem",
+          "error_type": "ConfigFileNotFoundError",
+          "error_data": {
+            "message": "Configuration file not found: {resolved_path}",
+            "path": "resolved_path"
+          }
+        },
+        {
+          "name": "yaml_parse_error",
+          "condition": "YAML file exists but contains invalid YAML syntax",
+          "error_type": "ConfigParseError",
+          "error_data": {
+            "message": "Failed to parse YAML config at {resolved_path}: {yaml_error}",
+            "path": "resolved_path"
+          }
+        },
+        {
+          "name": "validation_error",
+          "condition": "Parsed YAML content fails Pydantic model validation (type errors, constraint violations, cross-field invariant failures)",
+          "error_type": "ConfigValidationError",
+          "error_data": {
+            "message": "Configuration validation failed for {resolved_path}: {validation_summary}",
+            "path": "resolved_path",
+            "validation_errors": "pydantic_error_list"
+          }
+        },
+        {
+          "name": "permission_denied",
+          "condition": "Config file exists but is not readable due to filesystem permissions",
+          "error_type": "ConfigError",
+          "error_data": {
+            "message": "Permission denied reading config file: {resolved_path}",
+            "path": "resolved_path"
+          }
+        }
+      ],
+      "preconditions": [],
+      "postconditions": [
+        "Returned ExemplarConfig passes all model validators and field constraints",
+        "If no config file exists and no explicit path given, result equals default_config()",
+        "All LedgerFieldRule patterns in returned config compile as valid regex",
+        "CircuitConfig cross-field invariants hold (parallel_stages ⊆ stages, threshold ordering)",
+        "An empty YAML document returns default_config()"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": "resolved config YAML file",
+          "description": "Reads YAML configuration file from disk at the resolved path. File content is parsed via yaml.safe_load."
+        },
+        {
+          "kind": "reads_file",
+          "target": ".exemplar/config.yaml",
+          "description": "Delegates to resolve_config_path which may stat the conventional config path"
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 50,
+        "max_memory_mb": 10,
+        "complexity": "O(n)"
+      }
+    },
+    {
+      "name": "config_to_yaml",
+      "description": "Serializes an ExemplarConfig back to a YAML string. Useful for generating config templates, dumping effective configuration for debugging, and round-trip testing. Uses Pydantic model_dump() with mode='json' for serialization compatibility, then yaml.dump().",
+      "inputs": [
+        {
+          "name": "config",
+          "type_ref": "ExemplarConfig",
+          "required": true,
+          "default": "",
+          "description": "The configuration to serialize",
+          "validators": []
+        }
+      ],
+      "output_type": "str",
+      "error_cases": [],
+      "preconditions": [
+        "config is a valid ExemplarConfig instance"
+      ],
+      "postconditions": [
+        "Returned string is valid YAML that can be parsed by yaml.safe_load",
+        "yaml.safe_load(result) fed back through ExemplarConfig.model_validate produces an equivalent config"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 10,
+        "max_memory_mb": null,
+        "complexity": "O(n)"
+      }
+    }
+  ],
+  "dependencies": [
+    "schemas"
+  ],
+  "dependency_contracts": {
+    "schemas": [
+      "Severity",
+      "ApprenticeMode"
+    ]
+  },
+  "invariants": [
+    "All configuration models are frozen (immutable) after construction",
+    "default_config() always returns a valid ExemplarConfig that passes all validators",
+    "load_config() with no arguments and no config file present returns default_config()",
+    "Config path resolution order is always: explicit > env_var > conventional > builtin",
+    "parallel_stages is always a subset of stages in any valid CircuitConfig",
+    "min_threshold <= max_threshold in any valid CircuitConfig",
+    "LedgerFieldRule.pattern is always a compilable regex",
+    "ReviewerConfig.scope_patterns contains only valid glob patterns",
+    "CircuitConfig.excluded_file_patterns contains only valid glob patterns",
+    "An empty YAML file (null document) produces default_config()",
+    "Every public function carries a PACT key annotation for Sentinel attribution",
+    "No Chronicler events are emitted from this module; callers handle event emission"
+  ],
+  "requires": [
+    "schemas"
+  ],
+  "processing_register": "rigorous-analytical",
+  "data_access": {
+    "reads": [
+      "INTERNAL"
+    ],
+    "writes": [],
+    "rationale": "Reads YAML configuration files from the local filesystem containing INTERNAL-tier data (stage ordering, reviewer settings, secret/PII detection regex patterns, file glob exclusions, Apprentice storage paths). These files may encode organizational security policy via LedgerFieldRule patterns. No PII or secrets are stored in config files themselves; the patterns describe how to detect them elsewhere. No writes: config is read-only at load time.",
+    "side_effects": [
+      {
+        "type": "filesystem_read",
+        "classification": "INTERNAL",
+        "fields": [
+          "config_path",
+          "yaml_content"
+        ],
+        "rationale": "Reads a YAML config file from disk at a resolved path. File contents are INTERNAL as they encode review policy, secret detection patterns, and infrastructure paths."
+      },
+      {
+        "type": "environment_read",
+        "classification": "INTERNAL",
+        "fields": [
+          "EXEMPLAR_CONFIG"
+        ],
+        "rationale": "Reads the EXEMPLAR_CONFIG environment variable during path resolution to locate a user-specified configuration file path."
+      }
+    ]
+  },
+  "authority": {
+    "domains": [
+      "configuration",
+      "config.defaults",
+      "config.resolution",
+      "config.validation"
+    ],
+    "rationale": "The config component is the single authoritative source for all Exemplar configuration data: it owns the canonical shape of configuration models, the default values factory, the path resolution chain, and the validation rules. No other component may define or mutate configuration structures."
+  }
+}

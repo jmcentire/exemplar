@@ -1,0 +1,647 @@
+{
+  "component_id": "reviewers",
+  "contract_version": 1,
+  "test_cases": [
+    {
+      "id": "goodhart_derive_decision_mixed_critical_and_low_confidence",
+      "description": "derive_decision with mixed severities including CRITICAL should BLOCK, and min_confidence should reflect the lowest confidence finding even when findings span all severity levels",
+      "function": "derive_decision",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "decision is BLOCK when CRITICAL present among mixed severities",
+        "min_confidence is LOW when any finding has LOW confidence"
+      ]
+    },
+    {
+      "id": "goodhart_derive_decision_single_medium_confidence_low",
+      "description": "derive_decision with a single MEDIUM-severity LOW-confidence finding should produce WARN/ADVISORY decision with LOW confidence, not defaulting to HIGH",
+      "function": "derive_decision",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "decision is WARN for single MEDIUM finding",
+        "confidence is LOW not HIGH"
+      ]
+    },
+    {
+      "id": "goodhart_derive_decision_multiple_low_and_info",
+      "description": "derive_decision with a mix of only LOW and INFO findings should PASS regardless of how many findings exist, with confidence being the minimum across them",
+      "function": "derive_decision",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "decision is PASS",
+        "has_critical is False",
+        "has_high is False",
+        "min_confidence reflects minimum across all findings"
+      ]
+    },
+    {
+      "id": "goodhart_derive_decision_has_critical_flag",
+      "description": "DecisionDerivation must accurately report has_critical and has_high boolean flags based on which severity levels are present in findings",
+      "function": "derive_decision",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "has_critical is True only when CRITICAL severity present",
+        "has_high is True only when HIGH severity present"
+      ]
+    },
+    {
+      "id": "goodhart_derive_decision_high_and_medium_blocks",
+      "description": "derive_decision with both HIGH and MEDIUM findings should BLOCK (HIGH takes precedence over MEDIUM's WARN)",
+      "function": "derive_decision",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "decision is BLOCK not WARN"
+      ]
+    },
+    {
+      "id": "goodhart_build_assessment_deterministic_different_reviewers",
+      "description": "build_assessment must produce different deterministic assessment IDs for different reviewer_ids with the same review_request_id, confirming uuid5 uses both components",
+      "function": "build_assessment",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "assessment IDs differ across reviewer_ids",
+        "each ID is deterministic on repeated calls"
+      ]
+    },
+    {
+      "id": "goodhart_build_assessment_all_four_reviewer_ids",
+      "description": "build_assessment must accept all four canonical reviewer names (security, correctness, style, architecture) without error",
+      "function": "build_assessment",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "no error for 'security'",
+        "no error for 'correctness'",
+        "no error for 'style'",
+        "no error for 'architecture'"
+      ]
+    },
+    {
+      "id": "goodhart_build_assessment_decision_matches_derive",
+      "description": "build_assessment must derive its decision from findings via derive_decision, not hardcode PASS for empty or any other shortcut",
+      "function": "build_assessment",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "assessment with CRITICAL finding has BLOCK decision",
+        "assessment with no findings has PASS decision"
+      ]
+    },
+    {
+      "id": "goodhart_build_assessment_uuid5_namespace_dns",
+      "description": "build_assessment assessment_id must match uuid5(NAMESPACE_DNS, '{review_request_id}:{reviewer_id}') exactly, not some other namespace or format",
+      "function": "build_assessment",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "assessment.id matches computed uuid5 value"
+      ]
+    },
+    {
+      "id": "goodhart_filter_hunks_deny_pattern_glob_star",
+      "description": "filter_hunks_by_policy deny patterns using wildcards like '*.secret' must deny files matching the glob, not just exact string matches",
+      "function": "filter_hunks_by_policy",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "hunks with file_path matching glob denied_pattern are excluded",
+        "denied_count incremented for each denied hunk"
+      ]
+    },
+    {
+      "id": "goodhart_filter_hunks_allowed_pattern_no_match",
+      "description": "filter_hunks_by_policy with non-empty allowed_file_patterns must deny hunks whose file_path matches none of the allowed patterns",
+      "function": "filter_hunks_by_policy",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "hunks not matching any allowed pattern are denied",
+        "denied_count equals number of non-matching hunks"
+      ]
+    },
+    {
+      "id": "goodhart_filter_hunks_multiple_deny_patterns",
+      "description": "filter_hunks_by_policy with multiple deny patterns should exclude hunks matching any single deny pattern (OR semantics on deny)",
+      "function": "filter_hunks_by_policy",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "hunk matching first deny pattern excluded",
+        "hunk matching second deny pattern excluded",
+        "hunk matching neither pattern permitted"
+      ]
+    },
+    {
+      "id": "goodhart_filter_hunks_deny_overrides_allow_glob",
+      "description": "filter_hunks_by_policy deny-wins semantics must work with complex glob patterns where a file matches both an allowed and denied pattern simultaneously",
+      "function": "filter_hunks_by_policy",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "file matching both allowed and denied is excluded"
+      ]
+    },
+    {
+      "id": "goodhart_security_detects_path_traversal",
+      "description": "SecurityReviewer must detect path traversal patterns in added lines, not just hardcoded secrets and SQL injection",
+      "function": "SecurityReviewer.review",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "at least one finding with SEC-003 rule_id",
+        "finding severity is appropriate"
+      ]
+    },
+    {
+      "id": "goodhart_security_detects_command_injection",
+      "description": "SecurityReviewer must detect command injection patterns (e.g., os.system, subprocess with shell=True) in added lines",
+      "function": "SecurityReviewer.review",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "at least one finding with SEC-004 rule_id"
+      ]
+    },
+    {
+      "id": "goodhart_security_detects_insecure_deserialization",
+      "description": "SecurityReviewer must detect insecure deserialization patterns (e.g., pickle.loads) in added lines",
+      "function": "SecurityReviewer.review",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "at least one finding with SEC-005 rule_id"
+      ]
+    },
+    {
+      "id": "goodhart_security_multiple_findings_in_one_hunk",
+      "description": "SecurityReviewer must produce multiple findings when a single hunk contains multiple distinct security issues across different rules",
+      "function": "SecurityReviewer.review",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "findings count > 1",
+        "findings have distinct rule_ids"
+      ]
+    },
+    {
+      "id": "goodhart_security_only_scans_added_lines",
+      "description": "SecurityReviewer should primarily analyze added_lines (new code), not removed_lines or context, to avoid false positives on deleted code",
+      "function": "SecurityReviewer.review",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "no findings when vulnerability only in removed_lines",
+        "findings present when vulnerability in added_lines"
+      ]
+    },
+    {
+      "id": "goodhart_security_per_hunk_isolation",
+      "description": "SecurityReviewer must isolate hunk processing so that an error in one hunk does not prevent analysis of subsequent hunks",
+      "function": "SecurityReviewer.review",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "findings from valid hunk still present",
+        "assessment does not raise exception"
+      ]
+    },
+    {
+      "id": "goodhart_correctness_non_python_file_graceful",
+      "description": "CorrectnessReviewer must gracefully handle hunks from non-Python files (e.g., .js, .txt) without crashing, counting them as analyzed with no findings",
+      "function": "CorrectnessReviewer.review",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "no exception raised",
+        "assessment has PASS decision or appropriate decision",
+        "no COR findings for non-Python file"
+      ]
+    },
+    {
+      "id": "goodhart_correctness_idempotent",
+      "description": "CorrectnessReviewer.review must be idempotent — same inputs produce identical Assessment including findings and decision",
+      "function": "CorrectnessReviewer.review",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "two calls produce equal assessment id",
+        "two calls produce equal findings",
+        "two calls produce equal decision"
+      ]
+    },
+    {
+      "id": "goodhart_style_naming_convention_violation",
+      "description": "StyleReviewer must detect naming convention violations like camelCase function names that should be snake_case",
+      "function": "StyleReviewer.review",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "at least one finding with STY-002 rule_id"
+      ]
+    },
+    {
+      "id": "goodhart_style_severity_never_critical_or_high",
+      "description": "StyleReviewer findings must never have severity CRITICAL or HIGH for any input, enforcing the advisory-only constraint universally",
+      "function": "StyleReviewer.review",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "no finding has severity critical",
+        "no finding has severity high"
+      ]
+    },
+    {
+      "id": "goodhart_style_mixed_indentation",
+      "description": "StyleReviewer must detect mixed indentation (tabs and spaces) in added lines",
+      "function": "StyleReviewer.review",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "at least one finding with STY-006 rule_id or related style finding"
+      ]
+    },
+    {
+      "id": "goodhart_architecture_circular_dependency",
+      "description": "ArchitectureReviewer must detect circular dependency hints when hunks from file A import from B and hunks from file B import from A",
+      "function": "ArchitectureReviewer.review",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "at least one finding with ARC-003 rule_id"
+      ]
+    },
+    {
+      "id": "goodhart_architecture_cross_hunk_analysis",
+      "description": "ArchitectureReviewer must analyze all permitted hunks collectively for import graph, not just individually per-hunk",
+      "function": "ArchitectureReviewer.review",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "circular dependency detected across separate hunks",
+        "finding references cross-hunk relationship"
+      ]
+    },
+    {
+      "id": "goodhart_architecture_idempotent",
+      "description": "ArchitectureReviewer.review must be idempotent — same inputs produce identical Assessment",
+      "function": "ArchitectureReviewer.review",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "two calls produce identical assessments"
+      ]
+    },
+    {
+      "id": "goodhart_get_all_reviewers_protocol_conformance",
+      "description": "Each reviewer returned by get_all_reviewers must have a review method that is callable and a reviewer_id and stage property",
+      "function": "get_all_reviewers",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "each reviewer has callable review method",
+        "each reviewer has reviewer_id attribute",
+        "each reviewer has stage attribute"
+      ]
+    },
+    {
+      "id": "goodhart_get_reviewer_by_stage_all_stages",
+      "description": "get_reviewer_by_stage must return the correct reviewer for every stage, not just one or two stages checked in visible tests",
+      "function": "get_reviewer_by_stage",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "security stage returns reviewer with reviewer_id 'security'",
+        "correctness stage returns reviewer with reviewer_id 'correctness'",
+        "style stage returns reviewer with reviewer_id 'style'",
+        "architecture stage returns reviewer with reviewer_id 'architecture'"
+      ]
+    },
+    {
+      "id": "goodhart_reviewer_stage_property_matches",
+      "description": "Each reviewer's stage property must match the ReviewStage enum corresponding to its type, not be hardcoded to a single value",
+      "function": "get_all_reviewers",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "security reviewer stage is ReviewStage.SECURITY",
+        "correctness reviewer stage is ReviewStage.CORRECTNESS",
+        "style reviewer stage is ReviewStage.STYLE",
+        "architecture reviewer stage is ReviewStage.ARCHITECTURE"
+      ]
+    },
+    {
+      "id": "goodhart_filter_hunks_single_hunk_denied",
+      "description": "filter_hunks_by_policy correctly handles a single hunk that matches a deny pattern, resulting in empty permitted and denied_count=1",
+      "function": "filter_hunks_by_policy",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "permitted is empty",
+        "denied_count is 1"
+      ]
+    },
+    {
+      "id": "goodhart_security_review_request_id_in_assessment",
+      "description": "SecurityReviewer.review must propagate the review_request_id into the returned Assessment",
+      "function": "SecurityReviewer.review",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "assessment.review_request_id matches input review_request_id"
+      ]
+    },
+    {
+      "id": "goodhart_correctness_review_request_id_in_assessment",
+      "description": "CorrectnessReviewer.review must propagate the review_request_id into the returned Assessment",
+      "function": "CorrectnessReviewer.review",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "assessment.review_request_id matches input review_request_id"
+      ]
+    },
+    {
+      "id": "goodhart_style_decision_derived_from_findings",
+      "description": "StyleReviewer assessment decision must be derived from findings via derive_decision, with MEDIUM findings producing WARN not PASS",
+      "function": "StyleReviewer.review",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "assessment with MEDIUM findings has WARN decision, not PASS"
+      ]
+    },
+    {
+      "id": "goodhart_security_weak_crypto",
+      "description": "SecurityReviewer must detect weak cryptography patterns (e.g., MD5, SHA1 for security purposes) in added lines",
+      "function": "SecurityReviewer.review",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "at least one finding with SEC-006 rule_id"
+      ]
+    },
+    {
+      "id": "goodhart_build_assessment_review_request_id_stored",
+      "description": "build_assessment must store the review_request_id in the returned Assessment object, not discard it",
+      "function": "build_assessment",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "assessment.review_request_id equals input review_request_id"
+      ]
+    },
+    {
+      "id": "goodhart_filter_hunks_all_denied_by_pattern",
+      "description": "filter_hunks_by_policy with a deny pattern matching all hunks should return empty permitted and denied_count equal to input length",
+      "function": "filter_hunks_by_policy",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "permitted is empty",
+        "denied_count equals len(hunks)"
+      ]
+    },
+    {
+      "id": "goodhart_correctness_detects_unreachable_code",
+      "description": "CorrectnessReviewer must detect unreachable code after return statements in function bodies",
+      "function": "CorrectnessReviewer.review",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "at least one finding with COR-006 rule_id"
+      ]
+    },
+    {
+      "id": "goodhart_security_finding_hunk_id_reference",
+      "description": "Each SecurityReviewer finding must reference the correct hunk_id and file_path of the hunk where the issue was found",
+      "function": "SecurityReviewer.review",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "finding.hunk_id matches the hunk's id",
+        "finding.file_path matches the hunk's file_path"
+      ]
+    },
+    {
+      "id": "goodhart_all_reviewers_no_exception_on_varied_hunks",
+      "description": "All four reviewers must handle a mix of Python and non-Python hunks without any exception propagating",
+      "function": "get_all_reviewers",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "no exceptions from security reviewer",
+        "no exceptions from correctness reviewer",
+        "no exceptions from style reviewer",
+        "no exceptions from architecture reviewer"
+      ]
+    }
+  ],
+  "test_language": "python",
+  "generated_code": "\"\"\"\nAdversarial hidden acceptance tests for Reviewer Implementations.\nThese tests are designed to catch implementations that pass visible tests\nthrough shortcuts (hardcoded returns, incomplete logic) rather than truly\nsatisfying the contract.\n\"\"\"\nimport asyncio\nimport re\nimport time\nimport uuid\nfrom unittest.mock import MagicMock, patch\n\nimport pytest\n\nfrom exemplar.reviewers import (\n    filter_hunks_by_policy,\n    derive_decision,\n    build_assessment,\n    get_all_reviewers,\n    get_reviewer_by_stage,\n)\n\n# Try importing types from schemas\ntry:\n    from exemplar.schemas import (\n        ReviewStage,\n        Severity,\n        Confidence,\n        ReviewDecision,\n        DiffHunk,\n        PolicyToken,\n        Finding,\n        Assessment,\n        FilteredHunksResult,\n        DecisionDerivation,\n        ClassificationLabel,\n    )\nexcept ImportError:\n    # Fallback: try importing from reviewers module itself\n    from exemplar.reviewers import (\n        ReviewStage,\n        Severity,\n        Confidence,\n        ReviewDecision,\n        DiffHunk,\n        PolicyToken,\n        Finding,\n        Assessment,\n        FilteredHunksResult,\n        DecisionDerivation,\n        ClassificationLabel,\n    )\n\n\n# ============================================================\n# Helper factories\n# ============================================================\n\ndef make_hunk(\n    hunk_id=\"hunk-1\",\n    file_path=\"src/main.py\",\n    added_lines=None,\n    removed_lines=None,\n    context_before=None,\n    context_after=None,\n    start_line_new=1,\n    count_new=1,\n    start_line_old=1,\n    count_old=0,\n    classifications=None,\n    language=\"python\",\n    raw_header=\"@@ -1,0 +1,1 @@\",\n):\n    \"\"\"Create a minimal DiffHunk for testing.\"\"\"\n    kwargs = dict(\n        id=hunk_id,\n        file_path=file_path,\n        start_line_old=start_line_old,\n        count_old=count_old,\n        start_line_new=start_line_new,\n        count_new=count_new,\n        context_before=context_before or [],\n        added_lines=added_lines or [],\n        removed_lines=removed_lines or [],\n        context_after=context_after or [],\n        raw_header=raw_header,\n        classifications=classifications or [ClassificationLabel.public] if hasattr(ClassificationLabel, 'public') else classifications or [\"public\"],\n        language=language,\n    )\n    try:\n        return DiffHunk(**kwargs)\n    except Exception:\n        # If DiffHunk is a dataclass or namedtuple\n        return type(\"DiffHunk\", (), kwargs)()\n\n\ndef make_policy(\n    allowed_file_patterns=None,\n    denied_file_patterns=None,\n    allowed_classifications=None,\n    reviewer_id=\"security\",\n    max_severity=None,\n):\n    \"\"\"Create a minimal PolicyToken for testing.\"\"\"\n    sev = max_severity or (Severity.critical if hasattr(Severity, 'critical') else \"critical\")\n    kwargs = dict(\n        token_id=\"tok-001\",\n        reviewer_id=reviewer_id,\n        allowed_file_patterns=allowed_file_patterns or [],\n        denied_file_patterns=denied_file_patterns or [],\n        allowed_classifications=allowed_classifications or [],\n        max_severity=sev,\n        issued_at=\"2024-01-01T00:00:00Z\",\n        expires_at=None,\n    )\n    try:\n        return PolicyToken(**kwargs)\n    except Exception:\n        return type(\"PolicyToken\", (), kwargs)()\n\n\ndef make_finding(\n    severity=\"medium\",\n    confidence=\"high\",\n    rule_id=\"SEC-001\",\n    stage=\"security\",\n    hunk_id=\"hunk-1\",\n    file_path=\"src/main.py\",\n    finding_id=None,\n):\n    \"\"\"Create a minimal Finding for testing.\"\"\"\n    sev = getattr(Severity, severity, severity)\n    conf = getattr(Confidence, confidence, confidence)\n    stg = getattr(ReviewStage, stage, stage)\n    kwargs = dict(\n        id=finding_id or f\"finding-{uuid.uuid4().hex[:8]}\",\n        hunk_id=hunk_id,\n        file_path=file_path,\n        line_number=1,\n        severity=sev,\n        confidence=conf,\n        title=\"Test finding\",\n        description=\"Test description\",\n        suggestion=None,\n        rule_id=rule_id,\n        stage=stg,\n    )\n    try:\n        return Finding(**kwargs)\n    except Exception:\n        return type(\"Finding\", (), kwargs)()\n\n\nREVIEW_REQUEST_ID = \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\"\nREVIEW_REQUEST_ID_2 = \"11111111-2222-3333-4444-555555555555\"\n\n\n# ============================================================\n# derive_decision tests\n# ============================================================\n\nclass TestGoodhartDeriveDecision:\n\n    def test_goodhart_derive_decision_mixed_critical_and_low_confidence(self):\n        \"\"\"derive_decision with mixed severities including CRITICAL should BLOCK,\n        and min_confidence should reflect the lowest confidence finding.\"\"\"\n        findings = [\n            make_finding(severity=\"critical\", confidence=\"high\"),\n            make_finding(severity=\"low\", confidence=\"low\"),\n            make_finding(severity=\"medium\", confidence=\"medium\"),\n        ]\n        result = derive_decision(findings)\n        block = getattr(ReviewDecision, \"block\", None) or getattr(ReviewDecision, \"BLOCK\", \"block\")\n        assert result.decision == block\n        assert result.has_critical is True\n        low_conf = getattr(Confidence, \"low\", None) or getattr(Confidence, \"LOW\", \"low\")\n        assert result.min_confidence == low_conf\n\n    def test_goodhart_derive_decision_single_medium_confidence_low(self):\n        \"\"\"derive_decision with a single MEDIUM-severity LOW-confidence finding\n        should produce WARN decision with LOW confidence.\"\"\"\n        findings = [make_finding(severity=\"medium\", confidence=\"low\")]\n        result = derive_decision(findings)\n        # Decision should be WARN/ADVISORY, not PASS\n        pass_dec = getattr(ReviewDecision, \"pass_\", None) or getattr(ReviewDecision, \"PASS\", None) or getattr(ReviewDecision, \"pass\", \"pass\")\n        block_dec = getattr(ReviewDecision, \"block\", None) or getattr(ReviewDecision, \"BLOCK\", \"block\")\n        assert result.decision != pass_dec, \"MEDIUM severity must not produce PASS\"\n        assert result.decision != block_dec, \"MEDIUM severity alone must not produce BLOCK\"\n        low_conf = getattr(Confidence, \"low\", None) or getattr(Confidence, \"LOW\", \"low\")\n        assert result.min_confidence == low_conf\n\n    def test_goodhart_derive_decision_multiple_low_and_info(self):\n        \"\"\"derive_decision with a mix of LOW and INFO findings should PASS.\"\"\"\n        findings = [\n            make_finding(severity=\"low\", confidence=\"high\"),\n            make_finding(severity=\"info\", confidence=\"medium\"),\n            make_finding(severity=\"low\", confidence=\"medium\"),\n            make_finding(severity=\"info\", confidence=\"high\"),\n        ]\n        result = derive_decision(findings)\n        assert result.has_critical is False\n        assert result.has_high is False\n        # Should be PASS\n        pass_dec = getattr(ReviewDecision, \"pass_\", None) or getattr(ReviewDecision, \"PASS\", None) or getattr(ReviewDecision, \"pass\", \"pass\")\n        # Accept various enum representations\n        assert str(result.decision).lower().replace(\"reviewdecision.\", \"\") in (\"pass\", \"pass_\"), \\\n            f\"Expected PASS for LOW+INFO findings, got {result.decision}\"\n        med_conf = getattr(Confidence, \"medium\", None) or getattr(Confidence, \"MEDIUM\", \"medium\")\n        assert result.min_confidence == med_conf\n\n    def test_goodhart_derive_decision_has_critical_flag(self):\n        \"\"\"DecisionDerivation must accurately report has_critical and has_high flags.\"\"\"\n        # Only HIGH, no CRITICAL\n        findings_high = [make_finding(severity=\"high\", confidence=\"high\")]\n        result_high = derive_decision(findings_high)\n        assert result_high.has_high is True\n        assert result_high.has_critical is False\n\n        # Only CRITICAL, no HIGH\n        findings_crit = [make_finding(severity=\"critical\", confidence=\"high\")]\n        result_crit = derive_decision(findings_crit)\n        assert result_crit.has_critical is True\n        # has_high could be False since there's no HIGH finding specifically\n        # (the contract says \"has_high\" tracks HIGH, not CRITICAL)\n\n    def test_goodhart_derive_decision_high_and_medium_blocks(self):\n        \"\"\"HIGH + MEDIUM findings should BLOCK, not WARN.\"\"\"\n        findings = [\n            make_finding(severity=\"high\", confidence=\"high\"),\n            make_finding(severity=\"medium\", confidence=\"medium\"),\n        ]\n        result = derive_decision(findings)\n        block_dec = getattr(ReviewDecision, \"block\", None) or getattr(ReviewDecision, \"BLOCK\", \"block\")\n        assert result.decision == block_dec\n\n\n# ============================================================\n# build_assessment tests\n# ============================================================\n\nclass TestGoodhartBuildAssessment:\n\n    def test_goodhart_build_assessment_deterministic_different_reviewers(self):\n        \"\"\"Different reviewer_ids with same review_request_id must produce different assessment IDs.\"\"\"\n        start_ns = time.monotonic_ns()\n        a1 = build_assessment(\"security\", ReviewStage.security if hasattr(ReviewStage, 'security') else \"security\",\n                              [], 0, 0, [], REVIEW_REQUEST_ID, start_ns)\n        a2 = build_assessment(\"correctness\", ReviewStage.correctness if hasattr(ReviewStage, 'correctness') else \"correctness\",\n                              [], 0, 0, [], REVIEW_REQUEST_ID, start_ns)\n        assert a1.id != a2.id, \"Different reviewer_ids must produce different assessment IDs\"\n\n    def test_goodhart_build_assessment_all_four_reviewer_ids(self):\n        \"\"\"build_assessment must accept all four canonical reviewer names.\"\"\"\n        start_ns = time.monotonic_ns()\n        for rid, stage_name in [(\"security\", \"security\"), (\"correctness\", \"correctness\"),\n                                (\"style\", \"style\"), (\"architecture\", \"architecture\")]:\n            stage = getattr(ReviewStage, stage_name, stage_name)\n            a = build_assessment(rid, stage, [], 0, 0, [], REVIEW_REQUEST_ID, start_ns)\n            assert a is not None\n\n    def test_goodhart_build_assessment_decision_matches_derive(self):\n        \"\"\"build_assessment must derive decision from findings, not hardcode PASS.\"\"\"\n        start_ns = time.monotonic_ns()\n        critical_finding = make_finding(severity=\"critical\", confidence=\"high\", rule_id=\"SEC-001\", stage=\"security\")\n        a_with = build_assessment(\"security\", ReviewStage.security if hasattr(ReviewStage, 'security') else \"security\",\n                                  [critical_finding], 1, 0, [], REVIEW_REQUEST_ID, start_ns)\n        block_dec = getattr(ReviewDecision, \"block\", None) or getattr(ReviewDecision, \"BLOCK\", \"block\")\n        assert a_with.decision == block_dec, \"Assessment with CRITICAL finding must have BLOCK decision\"\n\n        a_empty = build_assessment(\"security\", ReviewStage.security if hasattr(ReviewStage, 'security') else \"security\",\n                                   [], 0, 0, [], REVIEW_REQUEST_ID, start_ns)\n        pass_dec = getattr(ReviewDecision, \"pass_\", None) or getattr(ReviewDecision, \"PASS\", None) or getattr(ReviewDecision, \"pass\", \"pass\")\n        assert str(a_empty.decision).lower().replace(\"reviewdecision.\", \"\") in (\"pass\", \"pass_\")\n\n    def test_goodhart_build_assessment_uuid5_namespace_dns(self):\n        \"\"\"Assessment ID must match uuid5(NAMESPACE_DNS, '{review_request_id}:{reviewer_id}').\"\"\"\n        start_ns = time.monotonic_ns()\n        rid = \"security\"\n        a = build_assessment(rid, ReviewStage.security if hasattr(ReviewStage, 'security') else \"security\",\n                             [], 0, 0, [], REVIEW_REQUEST_ID, start_ns)\n        expected_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, f\"{REVIEW_REQUEST_ID}:{rid}\"))\n        assert a.id == expected_id, f\"Expected {expected_id}, got {a.id}\"\n\n    def test_goodhart_build_assessment_review_request_id_stored(self):\n        \"\"\"Assessment must store the review_request_id.\"\"\"\n        start_ns = time.monotonic_ns()\n        a = build_assessment(\"security\", ReviewStage.security if hasattr(ReviewStage, 'security') else \"security\",\n                             [], 0, 0, [], REVIEW_REQUEST_ID_2, start_ns)\n        assert a.review_request_id == REVIEW_REQUEST_ID_2\n\n\n# ============================================================\n# filter_hunks_by_policy tests\n# ============================================================\n\nclass TestGoodhartFilterHunks:\n\n    def test_goodhart_filter_hunks_deny_pattern_glob_star(self):\n        \"\"\"Deny patterns with globs must actually use fnmatch, not string equality.\"\"\"\n        h1 = make_hunk(hunk_id=\"h1\", file_path=\"config/secrets.yaml\")\n        h2 = make_hunk(hunk_id=\"h2\", file_path=\"src/main.py\")\n        policy = make_policy(denied_file_patterns=[\"config/*.yaml\"])\n        stage = getattr(ReviewStage, \"security\", \"security\")\n        result = filter_hunks_by_policy([h1, h2], policy, stage)\n        permitted_paths = [h.file_path for h in result.permitted]\n        assert \"config/secrets.yaml\" not in permitted_paths\n        assert \"src/main.py\" in permitted_paths\n        assert result.denied_count == 1\n\n    def test_goodhart_filter_hunks_allowed_pattern_no_match(self):\n        \"\"\"Hunks not matching allowed patterns should be denied.\"\"\"\n        h1 = make_hunk(hunk_id=\"h1\", file_path=\"src/main.py\")\n        h2 = make_hunk(hunk_id=\"h2\", file_path=\"tests/test_main.py\")\n        policy = make_policy(allowed_file_patterns=[\"tests/*.py\"])\n        stage = getattr(ReviewStage, \"security\", \"security\")\n        result = filter_hunks_by_policy([h1, h2], policy, stage)\n        permitted_paths = [h.file_path for h in result.permitted]\n        assert \"src/main.py\" not in permitted_paths\n        assert \"tests/test_main.py\" in permitted_paths\n        assert result.denied_count == 1\n\n    def test_goodhart_filter_hunks_multiple_deny_patterns(self):\n        \"\"\"Multiple deny patterns should each independently exclude matching hunks.\"\"\"\n        h1 = make_hunk(hunk_id=\"h1\", file_path=\"vendor/lib.py\")\n        h2 = make_hunk(hunk_id=\"h2\", file_path=\"generated/output.py\")\n        h3 = make_hunk(hunk_id=\"h3\", file_path=\"src/app.py\")\n        policy = make_policy(denied_file_patterns=[\"vendor/*\", \"generated/*\"])\n        stage = getattr(ReviewStage, \"security\", \"security\")\n        result = filter_hunks_by_policy([h1, h2, h3], policy, stage)\n        permitted_paths = [h.file_path for h in result.permitted]\n        assert \"vendor/lib.py\" not in permitted_paths\n        assert \"generated/output.py\" not in permitted_paths\n        assert \"src/app.py\" in permitted_paths\n        assert result.denied_count == 2\n\n    def test_goodhart_filter_hunks_deny_overrides_allow_glob(self):\n        \"\"\"Deny-wins: a file matching both allowed and denied should be excluded.\"\"\"\n        h1 = make_hunk(hunk_id=\"h1\", file_path=\"src/secrets.py\")\n        policy = make_policy(\n            allowed_file_patterns=[\"src/*.py\"],\n            denied_file_patterns=[\"*secrets*\"],\n        )\n        stage = getattr(ReviewStage, \"security\", \"security\")\n        result = filter_hunks_by_policy([h1], policy, stage)\n        assert len(result.permitted) == 0\n        assert result.denied_count == 1\n\n    def test_goodhart_filter_hunks_single_hunk_denied(self):\n        \"\"\"Single hunk matching deny pattern gives empty permitted and denied_count=1.\"\"\"\n        h1 = make_hunk(hunk_id=\"h1\", file_path=\"secret.key\")\n        policy = make_policy(denied_file_patterns=[\"secret.*\"])\n        stage = getattr(ReviewStage, \"security\", \"security\")\n        result = filter_hunks_by_policy([h1], policy, stage)\n        assert result.permitted == [] or len(result.permitted) == 0\n        assert result.denied_count == 1\n\n    def test_goodhart_filter_hunks_all_denied_by_pattern(self):\n        \"\"\"Deny pattern matching all hunks returns empty permitted.\"\"\"\n        hunks = [\n            make_hunk(hunk_id=f\"h{i}\", file_path=f\"src/file{i}.py\")\n            for i in range(5)\n        ]\n        policy = make_policy(denied_file_patterns=[\"src/*\"])\n        stage = getattr(ReviewStage, \"security\", \"security\")\n        result = filter_hunks_by_policy(hunks, policy, stage)\n        assert len(result.permitted) == 0\n        assert result.denied_count == 5\n\n\n# ============================================================\n# SecurityReviewer tests\n# ============================================================\n\nclass TestGoodhartSecurityReviewer:\n\n    @pytest.fixture\n    def reviewer(self):\n        stage = getattr(ReviewStage, \"security\", \"security\")\n        return get_reviewer_by_stage(stage)\n\n    def test_goodhart_security_detects_path_traversal(self, reviewer):\n        \"\"\"SecurityReviewer must detect path traversal patterns.\"\"\"\n        hunk = make_hunk(\n            added_lines=[\"open('../../../etc/passwd')\", \"path = user_input + '/../secret'\"],\n            file_path=\"src/handler.py\",\n        )\n        policy = make_policy()\n        assessment = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk], policy, REVIEW_REQUEST_ID)\n        )\n        rule_ids = [f.rule_id for f in assessment.findings]\n        assert any(\"SEC-003\" in str(rid) for rid in rule_ids), \\\n            f\"Expected SEC-003 path traversal finding, got rule_ids: {rule_ids}\"\n\n    def test_goodhart_security_detects_command_injection(self, reviewer):\n        \"\"\"SecurityReviewer must detect command injection patterns.\"\"\"\n        hunk = make_hunk(\n            added_lines=[\n                \"import os\",\n                \"os.system(user_input)\",\n                \"subprocess.call(cmd, shell=True)\",\n            ],\n            file_path=\"src/executor.py\",\n        )\n        policy = make_policy()\n        assessment = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk], policy, REVIEW_REQUEST_ID)\n        )\n        rule_ids = [str(f.rule_id) for f in assessment.findings]\n        assert any(\"SEC-004\" in rid for rid in rule_ids), \\\n            f\"Expected SEC-004 command injection finding, got rule_ids: {rule_ids}\"\n\n    def test_goodhart_security_detects_insecure_deserialization(self, reviewer):\n        \"\"\"SecurityReviewer must detect insecure deserialization patterns.\"\"\"\n        hunk = make_hunk(\n            added_lines=[\n                \"import pickle\",\n                \"data = pickle.loads(user_data)\",\n            ],\n            file_path=\"src/loader.py\",\n        )\n        policy = make_policy()\n        assessment = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk], policy, REVIEW_REQUEST_ID)\n        )\n        rule_ids = [str(f.rule_id) for f in assessment.findings]\n        assert any(\"SEC-005\" in rid for rid in rule_ids), \\\n            f\"Expected SEC-005 insecure deserialization finding, got rule_ids: {rule_ids}\"\n\n    def test_goodhart_security_multiple_findings_in_one_hunk(self, reviewer):\n        \"\"\"A hunk with multiple distinct security issues should produce multiple findings.\"\"\"\n        hunk = make_hunk(\n            added_lines=[\n                \"API_KEY = 'sk-1234567890abcdef'\",\n                \"query = f'SELECT * FROM users WHERE id = {user_id}'\",\n                \"os.system(user_input)\",\n            ],\n            file_path=\"src/bad.py\",\n        )\n        policy = make_policy()\n        assessment = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk], policy, REVIEW_REQUEST_ID)\n        )\n        assert len(assessment.findings) > 1, \\\n            f\"Expected multiple findings, got {len(assessment.findings)}\"\n        rule_ids = set(str(f.rule_id) for f in assessment.findings)\n        assert len(rule_ids) > 1, \\\n            f\"Expected distinct rule_ids, got {rule_ids}\"\n\n    def test_goodhart_security_only_scans_added_lines(self, reviewer):\n        \"\"\"SecurityReviewer should not flag vulnerabilities that only appear in removed_lines.\"\"\"\n        # Hunk with vulnerability only in removed lines\n        hunk_removed = make_hunk(\n            hunk_id=\"h-removed\",\n            added_lines=[\"x = 1\"],\n            removed_lines=[\"API_KEY = 'sk-1234567890abcdef'\"],\n            file_path=\"src/cleaned.py\",\n        )\n        policy = make_policy()\n        assessment_removed = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk_removed], policy, REVIEW_REQUEST_ID)\n        )\n\n        # Hunk with vulnerability in added lines\n        hunk_added = make_hunk(\n            hunk_id=\"h-added\",\n            added_lines=[\"API_KEY = 'sk-1234567890abcdef'\"],\n            removed_lines=[],\n            file_path=\"src/bad.py\",\n        )\n        assessment_added = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk_added], policy, REVIEW_REQUEST_ID_2)\n        )\n\n        assert len(assessment_added.findings) > 0, \"Should detect vulnerability in added_lines\"\n        # Removed-only should have no findings (or fewer)\n        assert len(assessment_removed.findings) == 0, \\\n            \"Should not flag vulnerabilities only in removed_lines\"\n\n    def test_goodhart_security_per_hunk_isolation(self, reviewer):\n        \"\"\"Error in one hunk must not prevent analysis of other hunks.\"\"\"\n        good_hunk = make_hunk(\n            hunk_id=\"good\",\n            added_lines=[\"API_KEY = 'sk-1234567890abcdef'\"],\n            file_path=\"src/good.py\",\n        )\n        # Create a hunk that might cause issues but shouldn't crash\n        weird_hunk = make_hunk(\n            hunk_id=\"weird\",\n            added_lines=[\"normal_code = True\"],\n            file_path=\"src/weird.py\",\n        )\n        policy = make_policy()\n        assessment = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([weird_hunk, good_hunk], policy, REVIEW_REQUEST_ID)\n        )\n        # Should still have findings from the good hunk\n        assert len(assessment.findings) > 0, \"Findings from valid hunk should be present\"\n\n    def test_goodhart_security_review_request_id_in_assessment(self, reviewer):\n        \"\"\"Assessment must contain the correct review_request_id.\"\"\"\n        hunk = make_hunk(added_lines=[\"x = 1\"], file_path=\"src/clean.py\")\n        policy = make_policy()\n        assessment = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk], policy, REVIEW_REQUEST_ID_2)\n        )\n        assert assessment.review_request_id == REVIEW_REQUEST_ID_2\n\n    def test_goodhart_security_finding_hunk_id_reference(self, reviewer):\n        \"\"\"Findings must reference the correct hunk_id and file_path.\"\"\"\n        hunk = make_hunk(\n            hunk_id=\"specific-hunk-42\",\n            added_lines=[\"API_KEY = 'sk-1234567890abcdef'\"],\n            file_path=\"src/specific.py\",\n        )\n        policy = make_policy()\n        assessment = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk], policy, REVIEW_REQUEST_ID)\n        )\n        assert len(assessment.findings) > 0\n        for f in assessment.findings:\n            assert f.hunk_id == \"specific-hunk-42\", f\"Finding hunk_id should be 'specific-hunk-42', got '{f.hunk_id}'\"\n            assert f.file_path == \"src/specific.py\", f\"Finding file_path should be 'src/specific.py', got '{f.file_path}'\"\n\n    def test_goodhart_security_weak_crypto(self, reviewer):\n        \"\"\"SecurityReviewer must detect weak cryptography usage.\"\"\"\n        hunk = make_hunk(\n            added_lines=[\n                \"import hashlib\",\n                \"h = hashlib.md5(password.encode())\",\n                \"digest = hashlib.sha1(data)\",\n            ],\n            file_path=\"src/crypto.py\",\n        )\n        policy = make_policy()\n        assessment = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk], policy, REVIEW_REQUEST_ID)\n        )\n        rule_ids = [str(f.rule_id) for f in assessment.findings]\n        assert any(\"SEC-006\" in rid for rid in rule_ids), \\\n            f\"Expected SEC-006 weak crypto finding, got rule_ids: {rule_ids}\"\n\n\n# ============================================================\n# CorrectnessReviewer tests\n# ============================================================\n\nclass TestGoodhartCorrectnessReviewer:\n\n    @pytest.fixture\n    def reviewer(self):\n        stage = getattr(ReviewStage, \"correctness\", \"correctness\")\n        return get_reviewer_by_stage(stage)\n\n    def test_goodhart_correctness_non_python_file_graceful(self, reviewer):\n        \"\"\"Non-Python files should be handled gracefully without errors.\"\"\"\n        hunk = make_hunk(\n            hunk_id=\"js-hunk\",\n            added_lines=[\"const x = null;\", \"x.toString();\"],\n            file_path=\"src/app.js\",\n            language=\"javascript\",\n        )\n        policy = make_policy(reviewer_id=\"correctness\")\n        assessment = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk], policy, REVIEW_REQUEST_ID)\n        )\n        assert assessment is not None\n        # Should not have COR findings for non-Python files (or handle gracefully)\n        # Most importantly: no exception\n\n    def test_goodhart_correctness_idempotent(self, reviewer):\n        \"\"\"Two calls with same inputs must produce identical assessments.\"\"\"\n        hunk = make_hunk(\n            added_lines=[\"try:\", \"    x = 1\", \"except:\", \"    pass\"],\n            file_path=\"src/test.py\",\n        )\n        policy = make_policy(reviewer_id=\"correctness\")\n        a1 = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk], policy, REVIEW_REQUEST_ID)\n        )\n        a2 = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk], policy, REVIEW_REQUEST_ID)\n        )\n        assert a1.id == a2.id\n        assert a1.decision == a2.decision\n        assert len(a1.findings) == len(a2.findings)\n        for f1, f2 in zip(a1.findings, a2.findings):\n            assert f1.rule_id == f2.rule_id\n\n    def test_goodhart_correctness_review_request_id_in_assessment(self, reviewer):\n        \"\"\"Assessment must contain the correct review_request_id.\"\"\"\n        hunk = make_hunk(added_lines=[\"x = 1\"], file_path=\"src/clean.py\")\n        policy = make_policy(reviewer_id=\"correctness\")\n        assessment = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk], policy, REVIEW_REQUEST_ID_2)\n        )\n        assert assessment.review_request_id == REVIEW_REQUEST_ID_2\n\n    def test_goodhart_correctness_detects_unreachable_code(self, reviewer):\n        \"\"\"CorrectnessReviewer must detect unreachable code after return.\"\"\"\n        hunk = make_hunk(\n            added_lines=[\n                \"def foo():\",\n                \"    return 42\",\n                \"    x = 1\",\n                \"    print(x)\",\n            ],\n            file_path=\"src/unreachable.py\",\n        )\n        policy = make_policy(reviewer_id=\"correctness\")\n        assessment = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk], policy, REVIEW_REQUEST_ID)\n        )\n        rule_ids = [str(f.rule_id) for f in assessment.findings]\n        assert any(\"COR-006\" in rid for rid in rule_ids), \\\n            f\"Expected COR-006 unreachable code finding, got: {rule_ids}\"\n\n\n# ============================================================\n# StyleReviewer tests\n# ============================================================\n\nclass TestGoodhartStyleReviewer:\n\n    @pytest.fixture\n    def reviewer(self):\n        stage = getattr(ReviewStage, \"style\", \"style\")\n        return get_reviewer_by_stage(stage)\n\n    def test_goodhart_style_naming_convention_violation(self, reviewer):\n        \"\"\"StyleReviewer must detect camelCase function names.\"\"\"\n        hunk = make_hunk(\n            added_lines=[\n                \"def myBadFunction():\",\n                \"    pass\",\n                \"def anotherCamelCase():\",\n                \"    return True\",\n            ],\n            file_path=\"src/naming.py\",\n        )\n        policy = make_policy(reviewer_id=\"style\")\n        assessment = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk], policy, REVIEW_REQUEST_ID)\n        )\n        rule_ids = [str(f.rule_id) for f in assessment.findings]\n        assert any(\"STY-002\" in rid for rid in rule_ids), \\\n            f\"Expected STY-002 naming convention finding, got: {rule_ids}\"\n\n    def test_goodhart_style_severity_never_critical_or_high(self, reviewer):\n        \"\"\"Style findings must never exceed MEDIUM severity for any input.\"\"\"\n        hunk = make_hunk(\n            added_lines=[\n                \"x\" * 200,  # Very long line\n                \"def badName():  \",  # trailing whitespace + bad name\n                \"\\t    mixed = True\",  # mixed indentation\n                \"def anotherBadName():\",\n            ],\n            file_path=\"src/ugly.py\",\n        )\n        policy = make_policy(reviewer_id=\"style\")\n        assessment = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk], policy, REVIEW_REQUEST_ID)\n        )\n        critical_sev = getattr(Severity, \"critical\", \"critical\")\n        high_sev = getattr(Severity, \"high\", \"high\")\n        for f in assessment.findings:\n            assert f.severity != critical_sev, f\"Style finding should never be CRITICAL: {f}\"\n            assert f.severity != high_sev, f\"Style finding should never be HIGH: {f}\"\n\n    def test_goodhart_style_mixed_indentation(self, reviewer):\n        \"\"\"StyleReviewer must detect mixed indentation.\"\"\"\n        hunk = make_hunk(\n            added_lines=[\n                \"def foo():\",\n                \"    x = 1\",       # spaces\n                \"\\ty = 2\",         # tab\n                \"    z = x + y\",   # back to spaces\n            ],\n            file_path=\"src/indent.py\",\n        )\n        policy = make_policy(reviewer_id=\"style\")\n        assessment = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk], policy, REVIEW_REQUEST_ID)\n        )\n        # Should detect at least some style issue\n        assert len(assessment.findings) > 0, \\\n            \"Expected style findings for mixed indentation\"\n\n    def test_goodhart_style_decision_derived_from_findings(self, reviewer):\n        \"\"\"StyleReviewer decision must be derived from findings severity.\"\"\"\n        # Use code with many style issues to hopefully get MEDIUM findings\n        hunk = make_hunk(\n            added_lines=[\n                \"x\" * 200,  # long line → likely MEDIUM or LOW\n                \"def badName():  \",\n            ],\n            file_path=\"src/style_issues.py\",\n        )\n        policy = make_policy(reviewer_id=\"style\")\n        assessment = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk], policy, REVIEW_REQUEST_ID)\n        )\n        if len(assessment.findings) > 0:\n            # If there are findings, decision should be consistent with derive_decision\n            derived = derive_decision(assessment.findings)\n            assert assessment.decision == derived.decision, \\\n                f\"Assessment decision {assessment.decision} doesn't match derived {derived.decision}\"\n\n\n# ============================================================\n# ArchitectureReviewer tests\n# ============================================================\n\nclass TestGoodhartArchitectureReviewer:\n\n    @pytest.fixture\n    def reviewer(self):\n        stage = getattr(ReviewStage, \"architecture\", \"architecture\")\n        return get_reviewer_by_stage(stage)\n\n    def test_goodhart_architecture_circular_dependency(self, reviewer):\n        \"\"\"ArchitectureReviewer must detect circular imports across hunks.\"\"\"\n        hunk_a = make_hunk(\n            hunk_id=\"hunk-a\",\n            file_path=\"src/module_a.py\",\n            added_lines=[\n                \"from src.module_b import something\",\n                \"x = something()\",\n            ],\n        )\n        hunk_b = make_hunk(\n            hunk_id=\"hunk-b\",\n            file_path=\"src/module_b.py\",\n            added_lines=[\n                \"from src.module_a import other_thing\",\n                \"y = other_thing()\",\n            ],\n        )\n        policy = make_policy(reviewer_id=\"architecture\")\n        assessment = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk_a, hunk_b], policy, REVIEW_REQUEST_ID)\n        )\n        rule_ids = [str(f.rule_id) for f in assessment.findings]\n        assert any(\"ARC-003\" in rid for rid in rule_ids), \\\n            f\"Expected ARC-003 circular dependency finding, got: {rule_ids}\"\n\n    def test_goodhart_architecture_cross_hunk_analysis(self, reviewer):\n        \"\"\"ArchitectureReviewer must consider all hunks collectively for import analysis.\"\"\"\n        # Same as circular dependency but verifying cross-hunk behavior\n        hunk_a = make_hunk(\n            hunk_id=\"cross-a\",\n            file_path=\"src/alpha.py\",\n            added_lines=[\"from src.beta import helper\"],\n        )\n        hunk_b = make_hunk(\n            hunk_id=\"cross-b\",\n            file_path=\"src/beta.py\",\n            added_lines=[\"from src.alpha import util\"],\n        )\n        policy = make_policy(reviewer_id=\"architecture\")\n\n        # Review with both hunks\n        assessment_both = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk_a, hunk_b], policy, REVIEW_REQUEST_ID)\n        )\n\n        # Review with only one hunk - should NOT detect circular dependency\n        assessment_one = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk_a], policy, REVIEW_REQUEST_ID_2)\n        )\n\n        # With both hunks, we should see the circular dependency\n        both_rule_ids = [str(f.rule_id) for f in assessment_both.findings]\n        one_rule_ids = [str(f.rule_id) for f in assessment_one.findings]\n\n        circular_in_both = any(\"ARC-003\" in rid for rid in both_rule_ids)\n        circular_in_one = any(\"ARC-003\" in rid for rid in one_rule_ids)\n\n        assert circular_in_both, \"Circular dependency should be detected with both hunks\"\n        assert not circular_in_one, \"Circular dependency should NOT be detected with single hunk\"\n\n    def test_goodhart_architecture_idempotent(self, reviewer):\n        \"\"\"ArchitectureReviewer.review must be idempotent.\"\"\"\n        hunk = make_hunk(\n            added_lines=[\n                \"import os\",\n                \"import sys\",\n                \"from pathlib import Path\",\n            ],\n            file_path=\"src/imports.py\",\n        )\n        policy = make_policy(reviewer_id=\"architecture\")\n        a1 = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk], policy, REVIEW_REQUEST_ID)\n        )\n        a2 = asyncio.get_event_loop().run_until_complete(\n            reviewer.review([hunk], policy, REVIEW_REQUEST_ID)\n        )\n        assert a1.id == a2.id\n        assert a1.decision == a2.decision\n        assert len(a1.findings) == len(a2.findings)\n\n\n# ============================================================\n# get_all_reviewers / get_reviewer_by_stage tests\n# ============================================================\n\nclass TestGoodhartReviewerFactory:\n\n    def test_goodhart_get_all_reviewers_protocol_conformance(self):\n        \"\"\"Each reviewer must have review method, reviewer_id, and stage attributes.\"\"\"\n        reviewers = get_all_reviewers()\n        for r in reviewers:\n            assert hasattr(r, 'review'), f\"Reviewer {r} missing 'review' method\"\n            assert callable(r.review), f\"Reviewer {r}.review is not callable\"\n            assert hasattr(r, 'reviewer_id'), f\"Reviewer {r} missing 'reviewer_id'\"\n            assert hasattr(r, 'stage'), f\"Reviewer {r} missing 'stage'\"\n\n    def test_goodhart_get_reviewer_by_stage_all_stages(self):\n        \"\"\"get_reviewer_by_stage must return correct reviewer for every stage.\"\"\"\n        stage_to_id = {\n            \"security\": \"security\",\n            \"correctness\": \"correctness\",\n            \"style\": \"style\",\n            \"architecture\": \"architecture\",\n        }\n        for stage_name, expected_id in stage_to_id.items():\n            stage = getattr(ReviewStage, stage_name, stage_name)\n            reviewer = get_reviewer_by_stage(stage)\n            assert reviewer.reviewer_id == expected_id, \\\n                f\"Stage {stage_name} should give reviewer_id '{expected_id}', got '{reviewer.reviewer_id}'\"\n\n    def test_goodhart_reviewer_stage_property_matches(self):\n        \"\"\"Each reviewer's stage property must match its expected ReviewStage.\"\"\"\n        reviewers = get_all_reviewers()\n        expected_stages = [\"security\", \"correctness\", \"style\", \"architecture\"]\n        for r, expected_name in zip(reviewers, expected_stages):\n            expected_stage = getattr(ReviewStage, expected_name, expected_name)\n            assert r.stage == expected_stage, \\\n                f\"Reviewer '{r.reviewer_id}' has stage {r.stage}, expected {expected_stage}\"\n\n    def test_goodhart_all_reviewers_no_exception_on_varied_hunks(self):\n        \"\"\"All four reviewers must handle mixed Python and non-Python hunks without exceptions.\"\"\"\n        hunks = [\n            make_hunk(hunk_id=\"py\", file_path=\"src/main.py\", added_lines=[\"x = 1\"], language=\"python\"),\n            make_hunk(hunk_id=\"js\", file_path=\"src/app.js\", added_lines=[\"const x = 1;\"], language=\"javascript\"),\n            make_hunk(hunk_id=\"md\", file_path=\"README.md\", added_lines=[\"# Hello\"], language=None),\n        ]\n        policy = make_policy()\n        reviewers = get_all_reviewers()\n        for r in reviewers:\n            try:\n                assessment = asyncio.get_event_loop().run_until_complete(\n                    r.review(hunks, policy, REVIEW_REQUEST_ID)\n                )\n                assert assessment is not None, f\"Reviewer {r.reviewer_id} returned None\"\n            except Exception as e:\n                pytest.fail(f\"Reviewer {r.reviewer_id} raised exception: {e}\")\n"
+}

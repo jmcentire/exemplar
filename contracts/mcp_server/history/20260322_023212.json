@@ -1,0 +1,1058 @@
+{
+  "component_id": "mcp_server",
+  "name": "MCP Server",
+  "description": "MCP tool server over stdio transport exposing three tools: exemplar_review (accepts diff text or file path, config overrides, format preference; returns formatted ReviewReport), exemplar_trust (returns current trust scores as structured data), exemplar_history (accepts query parameters, returns matching past reviews from Kindex). Uses same core pipeline as CLI via injected PipelineProtocol. Implements MCP protocol message handling (JSON-RPC over stdio). Tool schemas generated from frozen Pydantic v2 models. Async request handling. All logging to stderr; stdout reserved exclusively for JSON-RPC protocol traffic.",
+  "version": 1,
+  "types": [
+    {
+      "name": "OutputFormat",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "json",
+        "md",
+        "github"
+      ],
+      "inner_types": [],
+      "description": "Supported report output formats.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ReviewToolInput",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "diff_text",
+          "type_ref": "optional[str]",
+          "required": false,
+          "default": "None",
+          "description": "Raw unified diff text to review. Mutually sufficient with file_path; at least one must be provided.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1, max=1048576",
+              "error_message": "diff_text must be between 1 and 1MB of text when provided"
+            }
+          ]
+        },
+        {
+          "name": "file_path",
+          "type_ref": "optional[str]",
+          "required": false,
+          "default": "None",
+          "description": "Path to a diff file on disk. Mutually sufficient with diff_text; at least one must be provided.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1, max=4096",
+              "error_message": "file_path must be a non-empty string up to 4096 characters"
+            }
+          ]
+        },
+        {
+          "name": "config_overrides",
+          "type_ref": "optional[dict]",
+          "required": false,
+          "default": "None",
+          "description": "Optional key-value config overrides applied on top of the base ExemplarConfig for this review invocation. Keys and values are strings.",
+          "validators": []
+        },
+        {
+          "name": "format",
+          "type_ref": "OutputFormat",
+          "required": false,
+          "default": "json",
+          "description": "Desired output format for the review report.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Frozen Pydantic v2 input model for the exemplar_review tool. At least one of diff_text or file_path must be provided. Generates MCP-compatible JSON Schema via model_json_schema().",
+      "owner_component": ""
+    },
+    {
+      "name": "TrustToolInput",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "reviewer_id",
+          "type_ref": "optional[str]",
+          "required": false,
+          "default": "None",
+          "description": "Optional filter to retrieve trust score for a specific reviewer. If None, returns all scores.",
+          "validators": [
+            {
+              "kind": "regex",
+              "expression": "^[a-zA-Z0-9_\\-\\.]{1,128}$",
+              "error_message": "reviewer_id must be 1-128 alphanumeric, underscore, hyphen, or dot characters"
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Frozen Pydantic v2 input model for the exemplar_trust tool. No required fields; returns all current trust scores.",
+      "owner_component": ""
+    },
+    {
+      "name": "HistoryToolInput",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "tags",
+          "type_ref": "optional[list[str]]",
+          "required": false,
+          "default": "None",
+          "description": "Filter reviews by tags. Returns entries matching any of the provided tags.",
+          "validators": []
+        },
+        {
+          "name": "kind",
+          "type_ref": "optional[str]",
+          "required": false,
+          "default": "None",
+          "description": "Filter reviews by kind/category (e.g. 'security', 'correctness').",
+          "validators": [
+            {
+              "kind": "regex",
+              "expression": "^[a-zA-Z0-9_\\-]{1,64}$",
+              "error_message": "kind must be 1-64 alphanumeric, underscore, or hyphen characters"
+            }
+          ]
+        },
+        {
+          "name": "date_from",
+          "type_ref": "optional[str]",
+          "required": false,
+          "default": "None",
+          "description": "ISO 8601 date string for the start of the query range (inclusive).",
+          "validators": [
+            {
+              "kind": "regex",
+              "expression": "^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}:\\d{2}(Z|[+-]\\d{2}:\\d{2})?)?$",
+              "error_message": "date_from must be a valid ISO 8601 date or datetime string"
+            }
+          ]
+        },
+        {
+          "name": "date_to",
+          "type_ref": "optional[str]",
+          "required": false,
+          "default": "None",
+          "description": "ISO 8601 date string for the end of the query range (inclusive).",
+          "validators": [
+            {
+              "kind": "regex",
+              "expression": "^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}:\\d{2}(Z|[+-]\\d{2}:\\d{2})?)?$",
+              "error_message": "date_to must be a valid ISO 8601 date or datetime string"
+            }
+          ]
+        },
+        {
+          "name": "limit",
+          "type_ref": "int",
+          "required": false,
+          "default": "50",
+          "description": "Maximum number of results to return.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=1, max=500",
+              "error_message": "limit must be between 1 and 500"
+            }
+          ]
+        },
+        {
+          "name": "offset",
+          "type_ref": "int",
+          "required": false,
+          "default": "0",
+          "description": "Pagination offset for result set.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0, max=100000",
+              "error_message": "offset must be between 0 and 100000"
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Frozen Pydantic v2 input model for the exemplar_history tool. All fields optional; returns matching past reviews from Kindex.",
+      "owner_component": ""
+    },
+    {
+      "name": "ToolError",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "error_type",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Classification of the error: 'validation_error', 'pipeline_error', 'io_error', 'internal_error'.",
+          "validators": [
+            {
+              "kind": "custom",
+              "expression": "value in ('validation_error', 'pipeline_error', 'io_error', 'internal_error')",
+              "error_message": "error_type must be one of: validation_error, pipeline_error, io_error, internal_error"
+            }
+          ]
+        },
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable error summary.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1, max=4096",
+              "error_message": "Error message must be 1-4096 characters"
+            }
+          ]
+        },
+        {
+          "name": "field_errors",
+          "type_ref": "optional[list[FieldError]]",
+          "required": false,
+          "default": "None",
+          "description": "Field-level validation error details, present when error_type is 'validation_error'.",
+          "validators": []
+        },
+        {
+          "name": "pact_key",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "PACT attribution key identifying the tool handler that produced this error.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Frozen Pydantic v2 model for structured MCP tool error responses. Serialized with isError=True in the MCP content block.",
+      "owner_component": ""
+    },
+    {
+      "name": "FieldError",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "field",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Dotted path to the invalid field (e.g. 'config_overrides.severity_threshold').",
+          "validators": []
+        },
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Description of the validation failure.",
+          "validators": []
+        },
+        {
+          "name": "input_value",
+          "type_ref": "optional[str]",
+          "required": false,
+          "default": "None",
+          "description": "String representation of the rejected value, if safe to include.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Per-field validation error detail within a ToolError.",
+      "owner_component": ""
+    },
+    {
+      "name": "McpContentBlock",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "type",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Content block type, always 'text' for this server's responses.",
+          "validators": [
+            {
+              "kind": "custom",
+              "expression": "value == 'text'",
+              "error_message": "Content block type must be 'text'"
+            }
+          ]
+        },
+        {
+          "name": "text",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Serialized JSON payload (ReviewReport, list[TrustScore], list[KindexEntry], or ToolError).",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single MCP tool result content block. The MCP SDK uses this shape for tool responses.",
+      "owner_component": ""
+    },
+    {
+      "name": "McpToolResult",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "content",
+          "type_ref": "list[McpContentBlock]",
+          "required": true,
+          "default": "",
+          "description": "One or more content blocks containing the tool output.",
+          "validators": []
+        },
+        {
+          "name": "isError",
+          "type_ref": "bool",
+          "required": false,
+          "default": "false",
+          "description": "True if this result represents an error condition.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "MCP tool call result shape returned from tool handlers.",
+      "owner_component": ""
+    },
+    {
+      "name": "PipelineProtocol",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "run_review",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Async callable: (diff_text: str, config: ExemplarConfig) -> ReviewReport",
+          "validators": []
+        },
+        {
+          "name": "get_trust_scores",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Async callable: (reviewer_id: Optional[str]) -> list[TrustScore]",
+          "validators": []
+        },
+        {
+          "name": "query_history",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Async callable: (tags, kind, date_from, date_to, limit, offset) -> list[KindexEntry]",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Runtime-checkable Protocol defining the core pipeline interface that the MCP server depends on. Allows dependency injection and test mocking of the pipeline layer. Implementation must provide run_review, get_trust_scores, and query_history async methods.",
+      "owner_component": ""
+    },
+    {
+      "name": "ServerConfig",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "server_name",
+          "type_ref": "str",
+          "required": false,
+          "default": "exemplar",
+          "description": "MCP server name reported in initialization.",
+          "validators": [
+            {
+              "kind": "regex",
+              "expression": "^[a-zA-Z0-9_\\-]{1,64}$",
+              "error_message": "server_name must be 1-64 alphanumeric, underscore, or hyphen characters"
+            }
+          ]
+        },
+        {
+          "name": "server_version",
+          "type_ref": "str",
+          "required": false,
+          "default": "0.1.0",
+          "description": "Semantic version string for the MCP server.",
+          "validators": [
+            {
+              "kind": "regex",
+              "expression": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9\\.]+)?$",
+              "error_message": "server_version must be a valid semver string"
+            }
+          ]
+        },
+        {
+          "name": "enable_chronicler",
+          "type_ref": "bool",
+          "required": false,
+          "default": "true",
+          "description": "Whether to emit Chronicler events from tool handlers. Fire-and-forget when enabled.",
+          "validators": []
+        },
+        {
+          "name": "max_diff_size_bytes",
+          "type_ref": "int",
+          "required": false,
+          "default": "1048576",
+          "description": "Maximum allowed diff size in bytes (1MB default).",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=1024, max=10485760",
+              "error_message": "max_diff_size_bytes must be between 1KB and 10MB"
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Configuration subset relevant to the MCP server: server name, version metadata, and optional feature flags.",
+      "owner_component": ""
+    },
+    {
+      "name": "optional",
+      "kind": "struct",
+      "fields": [],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Auto-stubbed type — referenced but not defined in contract 'mcp_server'",
+      "owner_component": ""
+    }
+  ],
+  "functions": [
+    {
+      "name": "create_server",
+      "description": "Factory function that creates and configures an mcp.Server instance with all three tools registered (exemplar_review, exemplar_trust, exemplar_history). The pipeline and config are injected, allowing tests to call tool handlers directly without stdio transport. PACT key: mcp_server.create_server.",
+      "inputs": [
+        {
+          "name": "pipeline",
+          "type_ref": "PipelineProtocol",
+          "required": true,
+          "default": "",
+          "description": "Injected core pipeline implementing run_review, get_trust_scores, and query_history.",
+          "validators": []
+        },
+        {
+          "name": "config",
+          "type_ref": "ServerConfig",
+          "required": false,
+          "default": "ServerConfig()",
+          "description": "Server configuration. Uses defaults if not provided.",
+          "validators": []
+        }
+      ],
+      "output_type": "any",
+      "error_cases": [
+        {
+          "name": "invalid_pipeline",
+          "condition": "pipeline does not satisfy PipelineProtocol at runtime",
+          "error_type": "TypeError",
+          "error_data": {
+            "message": "pipeline must implement PipelineProtocol (run_review, get_trust_scores, query_history)"
+          }
+        },
+        {
+          "name": "invalid_config",
+          "condition": "config fails ServerConfig validation",
+          "error_type": "ValidationError",
+          "error_data": {
+            "message": "ServerConfig validation failed"
+          }
+        }
+      ],
+      "preconditions": [
+        "pipeline satisfies PipelineProtocol (runtime_checkable)",
+        "config is a valid ServerConfig instance"
+      ],
+      "postconditions": [
+        "Returned mcp.Server has exactly 3 tools registered: exemplar_review, exemplar_trust, exemplar_history",
+        "Each tool's JSON schema matches the corresponding ToolInput model's model_json_schema()",
+        "Server is not yet running (no transport bound)"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure factory function; no I/O or state mutation beyond object creation."
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "run_server",
+      "description": "Async entry point that binds the mcp.Server to stdio transport and runs the JSON-RPC message loop until the transport closes. Called from CLI or __main__. Blocks until stdin EOF or shutdown signal. PACT key: mcp_server.run_server.",
+      "inputs": [
+        {
+          "name": "server",
+          "type_ref": "any",
+          "required": true,
+          "default": "",
+          "description": "A configured mcp.Server instance as returned by create_server().",
+          "validators": []
+        }
+      ],
+      "output_type": "None",
+      "error_cases": [
+        {
+          "name": "stdio_unavailable",
+          "condition": "stdin or stdout is closed or unavailable",
+          "error_type": "OSError",
+          "error_data": {
+            "message": "stdio transport requires open stdin and stdout"
+          }
+        },
+        {
+          "name": "transport_error",
+          "condition": "Unrecoverable error in the MCP stdio transport layer",
+          "error_type": "RuntimeError",
+          "error_data": {
+            "message": "MCP transport failed unexpectedly"
+          }
+        }
+      ],
+      "preconditions": [
+        "server was created via create_server() with a valid pipeline",
+        "stdin and stdout are available file descriptors",
+        "stdout is not being written to by any other component (reserved for JSON-RPC)"
+      ],
+      "postconditions": [
+        "Server has cleanly shut down and released stdio handles",
+        "No orphaned async tasks remain"
+      ],
+      "idempotent": false,
+      "is_async": true,
+      "side_effects": [
+        "Reads from stdin (JSON-RPC requests)",
+        "Writes to stdout (JSON-RPC responses)",
+        "Writes to stderr (logging)"
+      ],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": "stdin",
+          "description": "Reads JSON-RPC request messages from stdin."
+        },
+        {
+          "kind": "writes_file",
+          "target": "stdout",
+          "description": "Writes JSON-RPC response messages to stdout. No other content is written to stdout."
+        },
+        {
+          "kind": "logging",
+          "target": "stderr",
+          "description": "All server logging output directed to stderr via Python logging module."
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "handle_review",
+      "description": "Tool handler for exemplar_review. Validates ReviewToolInput, reads diff from text or file, applies config overrides, runs the review pipeline, formats the report, and returns an McpToolResult. Emits chronicler events (review.started, review.complete) around pipeline execution. Never raises unhandled exceptions. PACT key: mcp_server.handle_review.",
+      "inputs": [
+        {
+          "name": "input",
+          "type_ref": "ReviewToolInput",
+          "required": true,
+          "default": "",
+          "description": "Validated tool input containing diff source and options.",
+          "validators": []
+        }
+      ],
+      "output_type": "McpToolResult",
+      "error_cases": [
+        {
+          "name": "validation_error",
+          "condition": "ReviewToolInput fails Pydantic validation (e.g. neither diff_text nor file_path provided)",
+          "error_type": "ToolError",
+          "error_data": {
+            "error_type": "validation_error",
+            "message": "Input validation failed"
+          }
+        },
+        {
+          "name": "file_not_found",
+          "condition": "file_path is provided but the file does not exist or is not readable",
+          "error_type": "ToolError",
+          "error_data": {
+            "error_type": "io_error",
+            "message": "Diff file not found or not readable"
+          }
+        },
+        {
+          "name": "diff_too_large",
+          "condition": "Diff content exceeds max_diff_size_bytes from ServerConfig",
+          "error_type": "ToolError",
+          "error_data": {
+            "error_type": "validation_error",
+            "message": "Diff exceeds maximum allowed size"
+          }
+        },
+        {
+          "name": "pipeline_failure",
+          "condition": "Core review pipeline raises an exception during execution",
+          "error_type": "ToolError",
+          "error_data": {
+            "error_type": "pipeline_error",
+            "message": "Review pipeline failed"
+          }
+        },
+        {
+          "name": "internal_error",
+          "condition": "Unexpected exception in handler logic (catch-all)",
+          "error_type": "ToolError",
+          "error_data": {
+            "error_type": "internal_error",
+            "message": "Unexpected internal error"
+          }
+        }
+      ],
+      "preconditions": [
+        "At least one of input.diff_text or input.file_path is not None",
+        "If input.file_path is provided, the file exists and is readable",
+        "Pipeline has been injected via create_server()"
+      ],
+      "postconditions": [
+        "Result contains exactly one McpContentBlock of type 'text'",
+        "If isError is false, content.text is valid JSON deserializable to ReviewReport",
+        "If isError is true, content.text is valid JSON deserializable to ToolError",
+        "Chronicler review.started event was emitted (fire-and-forget) before pipeline invocation",
+        "Chronicler review.complete event was emitted (fire-and-forget) after pipeline invocation"
+      ],
+      "idempotent": false,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": "input.file_path",
+          "description": "Reads diff content from disk when file_path is provided instead of diff_text."
+        },
+        {
+          "kind": "network_call",
+          "target": "chronicler",
+          "description": "Emits review.started and review.complete events to Chronicler. Fire-and-forget; failures are logged but do not affect the result."
+        },
+        {
+          "kind": "logging",
+          "target": "stderr",
+          "description": "Logs handler entry, pipeline invocation, and completion or error to stderr."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 30000,
+        "max_memory_mb": 256,
+        "complexity": "O(n) where n is diff size in lines"
+      }
+    },
+    {
+      "name": "handle_trust",
+      "description": "Tool handler for exemplar_trust. Validates TrustToolInput, retrieves current trust scores via the pipeline, and returns them as structured JSON in an McpToolResult. Never raises unhandled exceptions. PACT key: mcp_server.handle_trust.",
+      "inputs": [
+        {
+          "name": "input",
+          "type_ref": "TrustToolInput",
+          "required": true,
+          "default": "",
+          "description": "Validated tool input with optional reviewer_id filter.",
+          "validators": []
+        }
+      ],
+      "output_type": "McpToolResult",
+      "error_cases": [
+        {
+          "name": "validation_error",
+          "condition": "TrustToolInput fails Pydantic validation",
+          "error_type": "ToolError",
+          "error_data": {
+            "error_type": "validation_error",
+            "message": "Input validation failed"
+          }
+        },
+        {
+          "name": "pipeline_failure",
+          "condition": "Trust score retrieval raises an exception in the pipeline",
+          "error_type": "ToolError",
+          "error_data": {
+            "error_type": "pipeline_error",
+            "message": "Trust score retrieval failed"
+          }
+        },
+        {
+          "name": "internal_error",
+          "condition": "Unexpected exception in handler logic (catch-all)",
+          "error_type": "ToolError",
+          "error_data": {
+            "error_type": "internal_error",
+            "message": "Unexpected internal error"
+          }
+        }
+      ],
+      "preconditions": [
+        "Pipeline has been injected via create_server()"
+      ],
+      "postconditions": [
+        "Result contains exactly one McpContentBlock of type 'text'",
+        "If isError is false, content.text is valid JSON deserializable to list of TrustScore objects",
+        "If isError is true, content.text is valid JSON deserializable to ToolError"
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "logging",
+          "target": "stderr",
+          "description": "Logs handler entry and completion or error to stderr."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 500,
+        "max_memory_mb": null,
+        "complexity": "O(r) where r is number of reviewers"
+      }
+    },
+    {
+      "name": "handle_history",
+      "description": "Tool handler for exemplar_history. Validates HistoryToolInput, queries Kindex for matching past reviews via the pipeline, and returns them as structured JSON in an McpToolResult. Never raises unhandled exceptions. PACT key: mcp_server.handle_history.",
+      "inputs": [
+        {
+          "name": "input",
+          "type_ref": "HistoryToolInput",
+          "required": true,
+          "default": "",
+          "description": "Validated tool input with optional query filters and pagination.",
+          "validators": []
+        }
+      ],
+      "output_type": "McpToolResult",
+      "error_cases": [
+        {
+          "name": "validation_error",
+          "condition": "HistoryToolInput fails Pydantic validation (e.g. invalid date format, limit out of range)",
+          "error_type": "ToolError",
+          "error_data": {
+            "error_type": "validation_error",
+            "message": "Input validation failed"
+          }
+        },
+        {
+          "name": "invalid_date_range",
+          "condition": "date_from is after date_to",
+          "error_type": "ToolError",
+          "error_data": {
+            "error_type": "validation_error",
+            "message": "date_from must not be after date_to"
+          }
+        },
+        {
+          "name": "pipeline_failure",
+          "condition": "Kindex query raises an exception in the pipeline",
+          "error_type": "ToolError",
+          "error_data": {
+            "error_type": "pipeline_error",
+            "message": "History query failed"
+          }
+        },
+        {
+          "name": "internal_error",
+          "condition": "Unexpected exception in handler logic (catch-all)",
+          "error_type": "ToolError",
+          "error_data": {
+            "error_type": "internal_error",
+            "message": "Unexpected internal error"
+          }
+        }
+      ],
+      "preconditions": [
+        "Pipeline has been injected via create_server()",
+        "If date_from and date_to are both provided, date_from <= date_to"
+      ],
+      "postconditions": [
+        "Result contains exactly one McpContentBlock of type 'text'",
+        "If isError is false, content.text is valid JSON deserializable to list of KindexEntry objects",
+        "If isError is true, content.text is valid JSON deserializable to ToolError",
+        "Returned list length <= input.limit"
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "logging",
+          "target": "stderr",
+          "description": "Logs handler entry, query parameters, and completion or error to stderr."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 2000,
+        "max_memory_mb": null,
+        "complexity": "O(n) where n is number of matched Kindex entries up to limit"
+      }
+    },
+    {
+      "name": "build_tool_error",
+      "description": "Pure helper that constructs a ToolError and wraps it in an McpToolResult with isError=True. Used by all tool handlers for consistent error response formatting. PACT key: mcp_server.build_tool_error.",
+      "inputs": [
+        {
+          "name": "error_type",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Error classification: 'validation_error', 'pipeline_error', 'io_error', 'internal_error'.",
+          "validators": [
+            {
+              "kind": "custom",
+              "expression": "value in ('validation_error', 'pipeline_error', 'io_error', 'internal_error')",
+              "error_message": "error_type must be one of the defined error classifications"
+            }
+          ]
+        },
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable error summary.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1, max=4096",
+              "error_message": "Error message must be 1-4096 characters"
+            }
+          ]
+        },
+        {
+          "name": "pact_key",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "PACT attribution key of the calling handler.",
+          "validators": []
+        },
+        {
+          "name": "field_errors",
+          "type_ref": "optional[list[FieldError]]",
+          "required": false,
+          "default": "None",
+          "description": "Optional field-level validation details.",
+          "validators": []
+        }
+      ],
+      "output_type": "McpToolResult",
+      "error_cases": [],
+      "preconditions": [],
+      "postconditions": [
+        "Returned McpToolResult.isError is True",
+        "Returned content has exactly one McpContentBlock of type 'text'",
+        "content.text is valid JSON deserializable to ToolError"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure function; constructs error response without I/O."
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "build_success_result",
+      "description": "Pure helper that serializes a Pydantic model (or list of models) to deterministic JSON and wraps it in an McpToolResult with isError=False. PACT key: mcp_server.build_success_result.",
+      "inputs": [
+        {
+          "name": "data",
+          "type_ref": "any",
+          "required": true,
+          "default": "",
+          "description": "A frozen Pydantic model or list of frozen Pydantic models to serialize. Must support model_dump_json() or be a list of such objects.",
+          "validators": []
+        }
+      ],
+      "output_type": "McpToolResult",
+      "error_cases": [
+        {
+          "name": "serialization_error",
+          "condition": "data cannot be serialized to JSON (not a valid Pydantic model)",
+          "error_type": "TypeError",
+          "error_data": {
+            "message": "Data must be a Pydantic BaseModel or list of BaseModel instances"
+          }
+        }
+      ],
+      "preconditions": [
+        "data is a Pydantic BaseModel instance or a list of Pydantic BaseModel instances"
+      ],
+      "postconditions": [
+        "Returned McpToolResult.isError is False",
+        "Returned content has exactly one McpContentBlock of type 'text'",
+        "content.text is deterministic JSON (sorted keys, no extra whitespace beyond standard compact form)"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure function; serializes data without I/O."
+        }
+      ],
+      "performance_budget": null
+    }
+  ],
+  "dependencies": [
+    "intake",
+    "assessor",
+    "reporter",
+    "chronicle",
+    "schemas",
+    "config",
+    "learner"
+  ],
+  "dependency_contracts": {
+    "intake": [
+      "parse_diff",
+      "classify_fields"
+    ],
+    "assessor": [
+      "assess",
+      "compute_trust_scores"
+    ],
+    "reporter": [
+      "format_report"
+    ],
+    "chronicle": [
+      "emit_event"
+    ],
+    "schemas": [
+      "ReviewReport",
+      "TrustScore",
+      "KindexEntry",
+      "OutputFormat",
+      "DiffPayload",
+      "ReviewConfig"
+    ],
+    "config": [
+      "load_config",
+      "ExemplarConfig"
+    ],
+    "learner": [
+      "query_history"
+    ]
+  },
+  "invariants": [
+    "stdout is exclusively reserved for JSON-RPC protocol traffic; no logging or diagnostic output may be written to stdout",
+    "All logging output is written to stderr via Python logging module",
+    "Tool handlers never raise unhandled exceptions; all errors are caught and returned as McpToolResult with isError=True",
+    "All tool input models are frozen Pydantic v2 models (frozen=True)",
+    "All public functions carry a PACT key for Sentinel attribution",
+    "Chronicler event emission is fire-and-forget: unreachable Chronicler does not block or fail tool responses",
+    "Tool JSON schemas are generated from Pydantic model_json_schema() and are deterministic",
+    "JSON serialization in tool responses is deterministic (sorted keys) for testability",
+    "The MCP server holds no mutable state between requests; all state is in the injected pipeline",
+    "ReviewToolInput requires at least one of diff_text or file_path to be non-None (model-level validator)"
+  ],
+  "requires": [
+    "schemas",
+    "config",
+    "intake",
+    "assessor",
+    "reporter",
+    "chronicle",
+    "learner"
+  ],
+  "processing_register": "rigorous-analytical",
+  "data_access": {
+    "reads": [
+      "INTERNAL",
+      "PII"
+    ],
+    "writes": [
+      "INTERNAL"
+    ],
+    "rationale": "Reads diff content (INTERNAL: source code from pull requests which may contain secrets or proprietary logic). Reads trust scores (INTERNAL: reviewer reliability metrics). Reads Kindex history entries (INTERNAL: past review results; may reference PII such as author names or email addresses in commit metadata). Writes Chronicler events (INTERNAL: review lifecycle telemetry including diff hashes and timing data). Does not persist any data directly; all persistence is delegated to pipeline components.",
+    "side_effects": [
+      {
+        "type": "file_read",
+        "classification": "INTERNAL",
+        "fields": [
+          "file_path",
+          "diff_text"
+        ],
+        "rationale": "Reads source code diffs from stdin (via JSON-RPC) or from disk paths provided by the caller. Diff content is proprietary source code classified as INTERNAL."
+      },
+      {
+        "type": "event_emission",
+        "classification": "INTERNAL",
+        "fields": [
+          "review_id",
+          "diff_hash",
+          "timestamp",
+          "duration_ms",
+          "tool_name"
+        ],
+        "rationale": "Emits review.started and review.complete Chronicler events containing review identifiers, diff hashes, and timing data for governance audit trails."
+      },
+      {
+        "type": "stdio_transport",
+        "classification": "INTERNAL",
+        "fields": [
+          "json_rpc_request",
+          "json_rpc_response"
+        ],
+        "rationale": "Reads JSON-RPC requests from stdin and writes JSON-RPC responses to stdout. Payloads may contain source code diffs and review results classified as INTERNAL."
+      },
+      {
+        "type": "history_query",
+        "classification": "PII",
+        "fields": [
+          "tags",
+          "kind",
+          "date_from",
+          "date_to",
+          "author_name",
+          "author_email"
+        ],
+        "rationale": "Queries Kindex for past review entries which may contain author PII (names, emails) embedded in commit metadata. Query parameters themselves do not contain PII but results may."
+      }
+    ]
+  },
+  "authority": {
+    "domains": [
+      "mcp_tool_schemas",
+      "mcp_transport_lifecycle"
+    ],
+    "rationale": "The MCP Server is the sole authority for MCP tool schema definitions (ReviewToolInput, TrustToolInput, HistoryToolInput JSON schemas) and the stdio transport lifecycle (server creation, startup, shutdown). No other component defines MCP tool interfaces or manages the JSON-RPC transport."
+  }
+}

@@ -1,0 +1,1084 @@
+{
+  "component_id": "intake",
+  "contract_version": 1,
+  "test_cases": [
+    {
+      "id": "goodhart_hunk_id_sha256_verification",
+      "description": "generate_hunk_id must compute its output using SHA-256 over the concatenation of file_path, raw_header, and joined added_lines — not a lookup table or other hash function",
+      "function": "generate_hunk_id",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "src/controllers/auth.rb",
+        "raw_header": "@@ -50,7 +50,9 @@ def authenticate",
+        "added_lines": "[\"  token = generate_jwt(user)\", \"  cache.set(token, user.id)\"]"
+      },
+      "input_description": "Novel inputs not seen in any visible test, verified against independently computed SHA-256",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Result starts with 'hunk-'",
+        "Result[5:] is exactly 12 lowercase hex characters",
+        "Result matches independently computed SHA-256 of the concatenation of the inputs truncated to 12 hex chars"
+      ]
+    },
+    {
+      "id": "goodhart_hunk_id_added_lines_order_matters",
+      "description": "generate_hunk_id must produce different IDs when the same added_lines are provided in different order, proving it uses actual line content not just set membership",
+      "function": "generate_hunk_id",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "app.py",
+        "raw_header": "@@ -1,3 +1,5 @@",
+        "added_lines_a": "[\"line_alpha\", \"line_beta\"]",
+        "added_lines_b": "[\"line_beta\", \"line_alpha\"]"
+      },
+      "input_description": "Two calls with same file_path and raw_header but added_lines in reversed order",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "generate_hunk_id with lines [alpha, beta] differs from generate_hunk_id with lines [beta, alpha]"
+      ]
+    },
+    {
+      "id": "goodhart_hunk_id_empty_raw_header_error",
+      "description": "generate_hunk_id must reject empty raw_header since the precondition requires it to be non-empty",
+      "function": "generate_hunk_id",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "somefile.py",
+        "raw_header": "",
+        "added_lines": "[\"x\"]"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "empty raw_header should raise an error",
+      "assertions": [
+        "Calling generate_hunk_id with empty raw_header raises ValueError or similar"
+      ]
+    },
+    {
+      "id": "goodhart_hunk_id_special_characters",
+      "description": "generate_hunk_id must handle unicode and special characters in inputs without crashing and still produce valid format",
+      "function": "generate_hunk_id",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "src/日本語/файл.py",
+        "raw_header": "@@ -1,2 +1,3 @@ функция",
+        "added_lines": "[\"  r\\u00e9sultat = donn\\u00e9es + '\\u00e9moji \\ud83c\\udf89'\"]"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Result starts with 'hunk-'",
+        "Result[5:] is exactly 12 lowercase hex characters",
+        "Result is deterministic across repeated calls"
+      ]
+    },
+    {
+      "id": "goodhart_request_id_uuid4_hex_no_hyphens",
+      "description": "generate_request_id must produce a 32-char hex string after the 'req-' prefix with no hyphens, dashes, or other separators",
+      "function": "generate_request_id",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Result has total length of 36 (4 prefix + 32 hex)",
+        "Result[4:] contains only characters from [0-9a-f]",
+        "No hyphens anywhere in the result"
+      ]
+    },
+    {
+      "id": "goodhart_request_id_bulk_uniqueness",
+      "description": "generate_request_id must produce unique values across many calls, not cycling or repeating from a small pool",
+      "function": "generate_request_id",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "100 consecutive calls produce 100 distinct values"
+      ]
+    },
+    {
+      "id": "goodhart_detect_language_java",
+      "description": "detect_language must correctly map .java extension to 'java', verifying the language map includes common languages beyond just py/js/ts",
+      "function": "detect_language",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "com/example/Main.java"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Result is 'java'"
+      ]
+    },
+    {
+      "id": "goodhart_detect_language_go",
+      "description": "detect_language must correctly map .go extension, verifying breadth of EXTENSION_LANGUAGE_MAP",
+      "function": "detect_language",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "cmd/server/main.go"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Result is 'go'"
+      ]
+    },
+    {
+      "id": "goodhart_detect_language_rust",
+      "description": "detect_language must correctly map .rs extension to 'rust'",
+      "function": "detect_language",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "src/lib.rs"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Result is 'rust'"
+      ]
+    },
+    {
+      "id": "goodhart_detect_language_cpp_extensions",
+      "description": "detect_language must handle C++ file extensions like .cpp and .hpp",
+      "function": "detect_language",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "src/engine.cpp"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Result is a recognized C++ language name (e.g., 'cpp' or 'c++')"
+      ]
+    },
+    {
+      "id": "goodhart_detect_language_ruby",
+      "description": "detect_language must correctly map .rb extension to 'ruby'",
+      "function": "detect_language",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "app/models/user.rb"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Result is 'ruby'"
+      ]
+    },
+    {
+      "id": "goodhart_detect_language_mixed_case_PY",
+      "description": "detect_language must be case-insensitive on extension — .PY should map to 'python' just like .py",
+      "function": "detect_language",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "script.PY"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Result equals detect_language('script.py')"
+      ]
+    },
+    {
+      "id": "goodhart_detect_language_path_with_dots",
+      "description": "detect_language must use only the final extension component for language detection when the path contains multiple dots",
+      "function": "detect_language",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "my.module.config.json"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Result corresponds to .json extension mapping"
+      ]
+    },
+    {
+      "id": "goodhart_detect_language_result_always_lowercase",
+      "description": "detect_language must always return a lowercase string regardless of the input path casing",
+      "function": "detect_language",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "DIR/FILE.Py"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Result == result.lower()"
+      ]
+    },
+    {
+      "id": "goodhart_detect_language_hidden_dotfile_with_extension",
+      "description": "detect_language should handle dotfiles with secondary extensions like .bashrc.bak differently from plain dotfiles",
+      "function": "detect_language",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": ".config.yml"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Result corresponds to the .yml extension, not 'unknown'"
+      ]
+    },
+    {
+      "id": "goodhart_parse_diff_context_lines_separated",
+      "description": "parse_diff must correctly separate context lines (lines starting with space) into context_before and context_after relative to the change region",
+      "function": "parse_diff",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A unified diff with context lines before and after the added/removed lines",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "context_before contains lines that appear before the first +/- line in the hunk",
+        "context_after contains lines that appear after the last +/- line in the hunk",
+        "Context lines do not appear in added_lines or removed_lines"
+      ]
+    },
+    {
+      "id": "goodhart_parse_diff_added_removed_separation",
+      "description": "parse_diff must correctly categorize lines starting with '+' as added_lines and lines starting with '-' as removed_lines, stripping the prefix",
+      "function": "parse_diff",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A diff hunk containing both additions and deletions intermixed",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "added_lines contains content from '+' prefixed lines without the '+' prefix",
+        "removed_lines contains content from '-' prefixed lines without the '-' prefix"
+      ]
+    },
+    {
+      "id": "goodhart_parse_diff_line_numbers_consistency",
+      "description": "parse_diff must set start_line_old, count_old, start_line_new, count_new from the @@ header accurately for various range formats",
+      "function": "parse_diff",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A diff with @@ -10,5 +12,8 @@ header",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "start_line_old == 10",
+        "count_old == 5",
+        "start_line_new == 12",
+        "count_new == 8"
+      ]
+    },
+    {
+      "id": "goodhart_parse_diff_hunk_id_matches_generate_hunk_id",
+      "description": "DiffHunk.id produced by parse_diff must be identical to calling generate_hunk_id with the same file_path, raw_header, and added_lines",
+      "function": "parse_diff",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A valid single-hunk diff; compare the hunk's id with generate_hunk_id called independently",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "hunk.id == generate_hunk_id(hunk.file_path, hunk.raw_header, hunk.added_lines)"
+      ]
+    },
+    {
+      "id": "goodhart_parse_diff_git_format_header",
+      "description": "parse_diff must handle 'diff --git a/path b/path' format headers in addition to plain ---/+++ headers",
+      "function": "parse_diff",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A diff using the full git format with 'diff --git' prefix lines",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Hunks are parsed successfully with correct file_path extracted from the git header"
+      ]
+    },
+    {
+      "id": "goodhart_parse_diff_new_file_mode",
+      "description": "parse_diff must handle diffs for newly created files where the old side is /dev/null",
+      "function": "parse_diff",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A diff where --- is /dev/null and +++ is a new file path",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "file_path is the new file path, not /dev/null",
+        "Hunk is parsed successfully"
+      ]
+    },
+    {
+      "id": "goodhart_parse_diff_deleted_file",
+      "description": "parse_diff must handle diffs for deleted files where the new side is /dev/null, correctly extracting the original file path",
+      "function": "parse_diff",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A diff where +++ is /dev/null and --- is the original file path",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "file_path is the original file path, not /dev/null",
+        "Hunk is parsed with removed_lines populated and added_lines empty"
+      ]
+    },
+    {
+      "id": "goodhart_parse_diff_no_newline_at_eof",
+      "description": "parse_diff must handle the '\\ No newline at end of file' marker without treating it as a diff line or erroring",
+      "function": "parse_diff",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A diff containing the 'No newline at end of file' marker",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "The marker line does not appear in added_lines, removed_lines, or context",
+        "Hunk parses successfully without error"
+      ]
+    },
+    {
+      "id": "goodhart_parse_diff_whitespace_only_diff",
+      "description": "parse_diff must handle diffs that contain only whitespace changes (added/removed lines that are blank or whitespace-only)",
+      "function": "parse_diff",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A valid unified diff where the only changes are whitespace additions/removals",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Hunks are parsed successfully",
+        "added_lines and/or removed_lines contain the whitespace-only content"
+      ]
+    },
+    {
+      "id": "goodhart_parse_diff_multiple_errors_for_multiple_bad_hunks",
+      "description": "parse_diff must produce separate IntakeError records for each malformed section, not just a single error for the whole input",
+      "function": "parse_diff",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A diff with multiple files, two of which have malformed hunk headers",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Number of IntakeErrors >= 2",
+        "Each error has phase='parse' and non-empty message"
+      ]
+    },
+    {
+      "id": "goodhart_parse_diff_large_line_numbers",
+      "description": "parse_diff must handle diffs with very large line numbers (e.g., @@ -99999,3 +100001,5 @@) without overflow or error",
+      "function": "parse_diff",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A valid diff with @@ -99999,3 +100001,5 @@ header",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "start_line_old == 99999",
+        "start_line_new == 100001",
+        "Hunk parses without error"
+      ]
+    },
+    {
+      "id": "goodhart_classify_hunks_context_lines_ignored",
+      "description": "classify_hunks must not scan context_before or context_after even if they contain pattern matches — only added_lines should trigger classification",
+      "function": "classify_hunks",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A hunk where context_before contains a secret pattern but added_lines do not",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Output hunk has empty classifications",
+        "No classification evidence from context lines"
+      ]
+    },
+    {
+      "id": "goodhart_classify_hunks_same_label_multiple_lines",
+      "description": "classify_hunks must not produce duplicate ClassificationLabels even when the same pattern matches multiple added_lines",
+      "function": "classify_hunks",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A hunk with 3 added_lines all matching the same 'secret' pattern",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "classifications contains 'secret' exactly once (no duplicates)"
+      ]
+    },
+    {
+      "id": "goodhart_classify_hunks_evidence_matches_classifications_length",
+      "description": "classify_hunks must ensure classification_evidence has the same length as classifications for every hunk",
+      "function": "classify_hunks",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Multiple hunks with varying numbers of matching labels (0, 1, 2, 3)",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "For each output hunk: len(classification_evidence) == len(classifications)"
+      ]
+    },
+    {
+      "id": "goodhart_classify_hunks_preserves_id_exactly",
+      "description": "classify_hunks must preserve the exact hunk id from input — not regenerate or modify it",
+      "function": "classify_hunks",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Hunks with known IDs passed through classify_hunks",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Output hunk.id is identical to input hunk.id for each corresponding hunk"
+      ]
+    },
+    {
+      "id": "goodhart_classify_hunks_preserves_language",
+      "description": "classify_hunks must preserve the language field from input hunks exactly",
+      "function": "classify_hunks",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Hunks with various language values including 'unknown'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Output hunk.language == input hunk.language for each hunk"
+      ]
+    },
+    {
+      "id": "goodhart_classify_hunks_all_four_labels_possible",
+      "description": "classify_hunks must be able to assign any of the four ClassificationLabel values (secret, pii, internal_api, public) depending on config rules",
+      "function": "classify_hunks",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Config with rules for secret, pii, internal_api, and public patterns, each matching different hunks",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "At least one hunk classified as 'secret'",
+        "At least one hunk classified as 'pii'",
+        "At least one hunk classified as 'internal_api'",
+        "At least one hunk classified as 'public'"
+      ]
+    },
+    {
+      "id": "goodhart_run_intake_file_paths_deduped_and_from_hunks",
+      "description": "run_intake must populate ReviewRequest.file_paths from the parsed hunks' file_path values, with unique paths only",
+      "function": "run_intake",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {
+        "source": "Mock DiffSource returning multi-file diff",
+        "config": "LedgerConfig with no matching rules",
+        "emit": "Mock EventEmitter"
+      },
+      "input_values": {},
+      "input_description": "A diff with 3 hunks across 2 files — expect file_paths to have exactly 2 entries",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "file_paths has exactly 2 entries",
+        "All entries in file_paths appear as file_path in at least one hunk"
+      ]
+    },
+    {
+      "id": "goodhart_run_intake_hunk_count_equals_hunks_length",
+      "description": "IntakeResult.hunk_count must always equal the actual length of review_request.hunks, not a separately tracked counter",
+      "function": "run_intake",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {
+        "source": "Mock DiffSource returning valid diff",
+        "config": "LedgerConfig with rules",
+        "emit": "Mock EventEmitter"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.hunk_count == len(result.review_request.hunks)"
+      ]
+    },
+    {
+      "id": "goodhart_run_intake_classified_count_lte_hunk_count",
+      "description": "IntakeResult.classified_hunk_count must be less than or equal to hunk_count",
+      "function": "run_intake",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {
+        "source": "Mock DiffSource returning valid diff",
+        "config": "LedgerConfig with rules matching some but not all hunks",
+        "emit": "Mock EventEmitter"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.classified_hunk_count <= result.hunk_count"
+      ]
+    },
+    {
+      "id": "goodhart_run_intake_emitter_warnings_not_errors",
+      "description": "When EventEmitter.emit() fails on some but not all calls, failures must appear in warnings (not errors) and the result must still contain all parsed hunks",
+      "function": "run_intake",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {
+        "source": "Mock DiffSource returning valid diff",
+        "config": "LedgerConfig with no rules",
+        "emit": "Mock EventEmitter that fails on second emit call only"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.warnings is non-empty",
+        "result.errors does not contain emitter-related entries",
+        "result.review_request.hunks is non-empty"
+      ]
+    },
+    {
+      "id": "goodhart_run_intake_permission_error_handling",
+      "description": "run_intake must handle PermissionError from source.read() as gracefully as IOError, producing an error in the result rather than crashing",
+      "function": "run_intake",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {
+        "source": "Mock DiffSource whose read() raises PermissionError",
+        "config": "Valid LedgerConfig",
+        "emit": "Mock EventEmitter"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "PermissionError handled gracefully",
+      "assertions": [
+        "Result contains error related to source read failure",
+        "Function does not raise an unhandled exception"
+      ]
+    },
+    {
+      "id": "goodhart_run_intake_file_not_found_error_handling",
+      "description": "run_intake must handle FileNotFoundError from source.read() gracefully",
+      "function": "run_intake",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {
+        "source": "Mock DiffSource whose read() raises FileNotFoundError",
+        "config": "Valid LedgerConfig",
+        "emit": "Mock EventEmitter"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Result contains error related to source read failure",
+        "Function does not raise an unhandled exception"
+      ]
+    },
+    {
+      "id": "goodhart_run_intake_totally_unparseable_diff",
+      "description": "run_intake must handle the case where parse_diff returns zero hunks and errors, producing an IntakeResult with empty hunks and populated errors",
+      "function": "run_intake",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {
+        "source": "Mock DiffSource returning garbled non-diff text",
+        "config": "Valid LedgerConfig",
+        "emit": "Mock EventEmitter"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.review_request.hunks is empty",
+        "result.errors is non-empty",
+        "result.hunk_count == 0"
+      ]
+    },
+    {
+      "id": "goodhart_run_intake_review_request_id_format_deep",
+      "description": "The review_request.id must be exactly 'req-' followed by 32 lowercase hex characters — verifying no hyphens, correct length, proper casing",
+      "function": "run_intake",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {
+        "source": "Mock DiffSource returning valid diff",
+        "config": "Valid LedgerConfig",
+        "emit": "Mock EventEmitter"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.review_request.id starts with 'req-'",
+        "len(result.review_request.id) == 36",
+        "result.review_request.id[4:] matches regex ^[0-9a-f]{32}$",
+        "No hyphens in result.review_request.id[4:]"
+      ]
+    },
+    {
+      "id": "goodhart_run_intake_created_at_has_timezone",
+      "description": "The created_at timestamp must include UTC timezone indicator (Z or +00:00), not be a naive datetime string",
+      "function": "run_intake",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {
+        "source": "Mock DiffSource returning valid diff",
+        "config": "Valid LedgerConfig",
+        "emit": "Mock EventEmitter"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.review_request.created_at ends with 'Z' or '+00:00'",
+        "result.review_request.created_at is parseable as ISO 8601"
+      ]
+    },
+    {
+      "id": "goodhart_run_intake_hunks_are_classified",
+      "description": "Hunks in IntakeResult.review_request.hunks must have passed through classify_hunks — they should have classifications populated when patterns match",
+      "function": "run_intake",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {
+        "source": "Mock DiffSource returning diff with added lines containing 'API_KEY=secret123'",
+        "config": "LedgerConfig with a secret rule matching 'API_KEY'",
+        "emit": "Mock EventEmitter"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "At least one hunk in review_request.hunks has non-empty classifications",
+        "The matching hunk has 'secret' in classifications"
+      ]
+    },
+    {
+      "id": "goodhart_line_range_start_exactly_one",
+      "description": "LineRange must accept start=1 as the minimum valid value (boundary)",
+      "function": "LineRange",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "start": "1",
+        "count": "0"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "LineRange(start=1, count=0) is created successfully",
+        "lr.start == 1",
+        "lr.count == 0"
+      ]
+    },
+    {
+      "id": "goodhart_line_range_start_zero_rejected",
+      "description": "LineRange must reject start=0 since the validator requires start >= 1",
+      "function": "LineRange",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "start": "0",
+        "count": "5"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "LineRange(start=0, count=5) raises ValidationError"
+      ]
+    },
+    {
+      "id": "goodhart_line_range_large_values",
+      "description": "LineRange must accept large valid values without overflow",
+      "function": "LineRange",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "start": "999999",
+        "count": "999999"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "LineRange(start=999999, count=999999) is created successfully"
+      ]
+    },
+    {
+      "id": "goodhart_parse_diff_renaming_file",
+      "description": "parse_diff must handle rename diffs (similarity index) and extract the new file path correctly",
+      "function": "parse_diff",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A git diff showing a file rename with optional content changes",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Hunk file_path reflects the new (renamed) file path",
+        "No error is produced for the rename header"
+      ]
+    },
+    {
+      "id": "goodhart_parse_diff_only_additions",
+      "description": "parse_diff must correctly handle a hunk that contains only additions and no removals",
+      "function": "parse_diff",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A diff hunk with @@ -5,0 +6,3 @@ where count_old is 0",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "removed_lines is empty",
+        "added_lines has the expected content",
+        "count_old == 0"
+      ]
+    },
+    {
+      "id": "goodhart_parse_diff_only_removals",
+      "description": "parse_diff must correctly handle a hunk that contains only removals and no additions",
+      "function": "parse_diff",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A diff hunk where only lines are removed",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "added_lines is empty",
+        "removed_lines is non-empty"
+      ]
+    },
+    {
+      "id": "goodhart_parse_diff_file_path_with_spaces",
+      "description": "parse_diff must handle file paths containing spaces correctly",
+      "function": "parse_diff",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A diff where the file path contains spaces like 'my folder/my file.py'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "file_path preserves the spaces",
+        "file_path uses forward slashes",
+        "Hunk parses without error"
+      ]
+    },
+    {
+      "id": "goodhart_classify_hunks_regex_anchoring",
+      "description": "classify_hunks must apply regex patterns against the full content of each added line, not just check for substring presence — patterns with anchors must work correctly",
+      "function": "classify_hunks",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A config rule with pattern '^SECRET=' and a hunk with added_lines ['MY_SECRET=foo', 'SECRET=bar']",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "The pattern '^SECRET=' matches only the line starting with SECRET=, not MY_SECRET=",
+        "Classification is applied correctly based on regex semantics"
+      ]
+    },
+    {
+      "id": "goodhart_run_intake_source_kind_file",
+      "description": "run_intake must set ReviewRequest source field matching the DiffSource kind 'file'",
+      "function": "run_intake",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {
+        "source": "Mock DiffSource with kind=DiffSourceKind.file",
+        "config": "Valid LedgerConfig",
+        "emit": "Mock EventEmitter"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.review_request.source matches the source kind 'file'"
+      ]
+    },
+    {
+      "id": "goodhart_run_intake_source_kind_stdin",
+      "description": "run_intake must set ReviewRequest source field matching the DiffSource kind 'stdin'",
+      "function": "run_intake",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {
+        "source": "Mock DiffSource with kind=DiffSourceKind.stdin",
+        "config": "Valid LedgerConfig",
+        "emit": "Mock EventEmitter"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.review_request.source matches the source kind 'stdin'"
+      ]
+    },
+    {
+      "id": "goodhart_run_intake_events_have_review_request_id",
+      "description": "All three emitted events must reference the same review_request_id that appears in the final IntakeResult",
+      "function": "run_intake",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {
+        "source": "Mock DiffSource returning valid diff",
+        "config": "Valid LedgerConfig",
+        "emit": "Mock EventEmitter that records all events"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All 3 emitted events have review_request_id == result.review_request.id"
+      ]
+    },
+    {
+      "id": "goodhart_intake_error_phase_values",
+      "description": "IntakeError must accept all four IntakePhase values (read, parse, classify, orchestrate)",
+      "function": "IntakeError",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "IntakeError with phase='read' is valid",
+        "IntakeError with phase='parse' is valid",
+        "IntakeError with phase='classify' is valid",
+        "IntakeError with phase='orchestrate' is valid"
+      ]
+    },
+    {
+      "id": "goodhart_hunk_id_whitespace_sensitivity",
+      "description": "generate_hunk_id must be sensitive to whitespace differences in added_lines, producing different IDs for lines that differ only by whitespace",
+      "function": "generate_hunk_id",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "f.py",
+        "raw_header": "@@ -1,1 +1,1 @@",
+        "added_lines_a": "[\"  x = 1\"]",
+        "added_lines_b": "[\"x = 1\"]"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "generate_hunk_id with '  x = 1' differs from generate_hunk_id with 'x = 1'"
+      ]
+    },
+    {
+      "id": "goodhart_detect_language_c_header",
+      "description": "detect_language must handle .h extension (C/C++ header files)",
+      "function": "detect_language",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "include/types.h"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Result is a recognized C/C++ header language name, not 'unknown'"
+      ]
+    },
+    {
+      "id": "goodhart_detect_language_yaml",
+      "description": "detect_language must handle .yml or .yaml extensions",
+      "function": "detect_language",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "config/settings.yml"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Result is 'yaml' or 'yml', not 'unknown'"
+      ]
+    },
+    {
+      "id": "goodhart_detect_language_markdown",
+      "description": "detect_language must handle .md extension for markdown files",
+      "function": "detect_language",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "file_path": "README.md"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Result is 'markdown' or 'md', not 'unknown'"
+      ]
+    },
+    {
+      "id": "goodhart_classify_hunks_new_hunk_instances",
+      "description": "classify_hunks must return new DiffHunk instances, not mutate the input hunks (since they are frozen)",
+      "function": "classify_hunks",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Output hunks are not the same object references as input hunks",
+        "Input hunks remain unchanged after classify_hunks returns"
+      ]
+    },
+    {
+      "id": "goodhart_parse_diff_crlf_line_endings",
+      "description": "parse_diff must handle diff text with CRLF line endings (\\r\\n) without producing errors or mangled output",
+      "function": "parse_diff",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A valid unified diff where all line endings are \\r\\n instead of \\n",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Hunks are parsed successfully",
+        "No parse errors related to line ending issues",
+        "Added/removed lines do not contain trailing \\r"
+      ]
+    },
+    {
+      "id": "goodhart_run_intake_multiple_sequential_calls",
+      "description": "run_intake must produce different review_request.id values on each call, proving IDs are not hardcoded or cached",
+      "function": "run_intake",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {
+        "source": "Mock DiffSource returning same valid diff",
+        "config": "Same valid LedgerConfig",
+        "emit": "Mock EventEmitter"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Two sequential calls to run_intake produce different review_request.id values"
+      ]
+    }
+  ],
+  "test_language": "python",
+  "generated_code": "\"\"\"\nAdversarial hidden acceptance tests for the Diff Intake & Classification component.\nThese tests catch implementations that pass visible tests through shortcuts\n(hardcoded returns, incomplete validation, etc.) rather than truly satisfying the contract.\n\"\"\"\nimport asyncio\nimport hashlib\nimport re\nfrom unittest.mock import AsyncMock, MagicMock, patch\nimport pytest\n\nfrom exemplar.intake import (\n    parse_diff,\n    classify_hunks,\n    run_intake,\n    generate_hunk_id,\n    generate_request_id,\n    detect_language,\n    LineRange,\n    IntakeError,\n    IntakePhase,\n    DiffSourceKind,\n    ClassificationLabel,\n    LedgerConfig,\n    LedgerFieldRule,\n    DiffHunk,\n)\n\n\n# ============================================================\n# Helpers\n# ============================================================\n\ndef make_simple_diff(file_path=\"src/app.py\", old_start=1, old_count=3, new_start=1, new_count=5,\n                     context_before=None, removed=None, added=None, context_after=None,\n                     section_header=\"\"):\n    \"\"\"Build a minimal valid unified diff string.\"\"\"\n    cb = context_before or [\" existing line\"]\n    rm = removed or [\"-old line\"]\n    ad = added or [\"+new line 1\", \"+new line 2\", \"+new line 3\"]\n    ca = context_after or [\" trailing context\"]\n\n    lines = [\n        f\"diff --git a/{file_path} b/{file_path}\",\n        f\"--- a/{file_path}\",\n        f\"+++ b/{file_path}\",\n        f\"@@ -{old_start},{old_count} +{new_start},{new_count} @@ {section_header}\",\n    ]\n    lines.extend(cb)\n    lines.extend(rm)\n    lines.extend(ad)\n    lines.extend(ca)\n    return \"\\n\".join(lines) + \"\\n\"\n\n\ndef make_mock_source(content, kind=DiffSourceKind.file):\n    \"\"\"Create a mock DiffSource.\"\"\"\n    source = AsyncMock()\n    source.kind = kind\n    source.read = AsyncMock(return_value=content)\n    return source\n\n\ndef make_failing_source(exc_type=IOError, kind=DiffSourceKind.file):\n    \"\"\"Create a mock DiffSource that raises on read.\"\"\"\n    source = AsyncMock()\n    source.kind = kind\n    source.read = AsyncMock(side_effect=exc_type(\"test error\"))\n    return source\n\n\ndef make_config(rules=None):\n    \"\"\"Create a LedgerConfig with optional rules.\"\"\"\n    if rules is None:\n        rules = []\n    return LedgerConfig(rules=rules, default_label=ClassificationLabel.public)\n\n\ndef make_secret_config():\n    return make_config(rules=[\n        LedgerFieldRule(pattern=r\"API_KEY\\s*=\", label=ClassificationLabel.secret, description=\"API key detection\"),\n    ])\n\n\ndef make_pii_config():\n    return make_config(rules=[\n        LedgerFieldRule(pattern=r\"SSN\\s*[:=]\", label=ClassificationLabel.pii, description=\"SSN detection\"),\n    ])\n\n\ndef make_multi_rule_config():\n    return make_config(rules=[\n        LedgerFieldRule(pattern=r\"API_KEY\", label=ClassificationLabel.secret, description=\"secret\"),\n        LedgerFieldRule(pattern=r\"SSN\", label=ClassificationLabel.pii, description=\"pii\"),\n        LedgerFieldRule(pattern=r\"__internal_api\", label=ClassificationLabel.internal_api, description=\"internal api\"),\n        LedgerFieldRule(pattern=r\"public_docs\", label=ClassificationLabel.public, description=\"public\"),\n    ])\n\n\ndef make_mock_emitter():\n    emitter = AsyncMock()\n    emitter.emit = AsyncMock()\n    return emitter\n\n\ndef make_recording_emitter():\n    \"\"\"Emitter that records all events.\"\"\"\n    events = []\n    emitter = AsyncMock()\n    async def record_event(event):\n        events.append(event)\n    emitter.emit = AsyncMock(side_effect=record_event)\n    emitter._recorded_events = events\n    return emitter\n\n\n# ============================================================\n# generate_hunk_id tests\n# ============================================================\n\nclass TestGoodhartGenerateHunkId:\n\n    def test_goodhart_hunk_id_sha256_verification(self):\n        \"\"\"generate_hunk_id must compute its output using SHA-256 over the concatenation of file_path, raw_header, and joined added_lines\"\"\"\n        fp = \"src/controllers/auth.rb\"\n        rh = \"@@ -50,7 +50,9 @@ def authenticate\"\n        al = [\"  token = generate_jwt(user)\", \"  cache.set(token, user.id)\"]\n\n        result = generate_hunk_id(fp, rh, al)\n\n        assert result.startswith(\"hunk-\")\n        assert len(result) == 17  # 5 + 12\n        assert re.match(r'^[0-9a-f]{12}$', result[5:])\n\n        # Independently compute SHA-256\n        content = fp + rh + \"\\n\".join(al)\n        expected_hash = hashlib.sha256(content.encode()).hexdigest()[:12]\n        assert result[5:] == expected_hash, (\n            f\"Hunk ID hash portion {result[5:]} does not match independently computed SHA-256 {expected_hash}\"\n        )\n\n    def test_goodhart_hunk_id_added_lines_order_matters(self):\n        \"\"\"generate_hunk_id must produce different IDs when the same added_lines are provided in different order\"\"\"\n        fp = \"app.py\"\n        rh = \"@@ -1,3 +1,5 @@\"\n\n        id_a = generate_hunk_id(fp, rh, [\"line_alpha\", \"line_beta\"])\n        id_b = generate_hunk_id(fp, rh, [\"line_beta\", \"line_alpha\"])\n\n        assert id_a != id_b, \"Hunk IDs should differ when added_lines order differs\"\n\n    def test_goodhart_hunk_id_empty_raw_header_error(self):\n        \"\"\"generate_hunk_id must reject empty raw_header since the precondition requires it to be non-empty\"\"\"\n        with pytest.raises((ValueError, TypeError, Exception)):\n            generate_hunk_id(\"somefile.py\", \"\", [\"x\"])\n\n    def test_goodhart_hunk_id_special_characters(self):\n        \"\"\"generate_hunk_id must handle unicode and special characters in inputs without crashing\"\"\"\n        fp = \"src/日本語/файл.py\"\n        rh = \"@@ -1,2 +1,3 @@ функция\"\n        al = [\"  résultat = données + 'émoji 🎉'\"]\n\n        result = generate_hunk_id(fp, rh, al)\n        assert result.startswith(\"hunk-\")\n        assert re.match(r'^[0-9a-f]{12}$', result[5:])\n\n        # Deterministic\n        assert result == generate_hunk_id(fp, rh, al)\n\n    def test_goodhart_hunk_id_whitespace_sensitivity(self):\n        \"\"\"generate_hunk_id must be sensitive to whitespace differences in added_lines\"\"\"\n        fp = \"f.py\"\n        rh = \"@@ -1,1 +1,1 @@\"\n\n        id_a = generate_hunk_id(fp, rh, [\"  x = 1\"])\n        id_b = generate_hunk_id(fp, rh, [\"x = 1\"])\n\n        assert id_a != id_b, \"IDs should differ when added lines differ only by leading whitespace\"\n\n\n# ============================================================\n# generate_request_id tests\n# ============================================================\n\nclass TestGoodhartGenerateRequestId:\n\n    def test_goodhart_request_id_uuid4_hex_no_hyphens(self):\n        \"\"\"generate_request_id must produce a 32-char hex string after 'req-' with no hyphens\"\"\"\n        result = generate_request_id()\n        assert result.startswith(\"req-\")\n        assert len(result) == 36, f\"Expected length 36, got {len(result)}\"\n        hex_part = result[4:]\n        assert re.match(r'^[0-9a-f]{32}$', hex_part), f\"Hex part {hex_part!r} does not match expected format\"\n        assert \"-\" not in result, \"Result should not contain hyphens\"\n\n    def test_goodhart_request_id_bulk_uniqueness(self):\n        \"\"\"generate_request_id must produce unique values across many calls\"\"\"\n        ids = {generate_request_id() for _ in range(100)}\n        assert len(ids) == 100, f\"Expected 100 unique IDs, got {len(ids)}\"\n\n\n# ============================================================\n# detect_language tests\n# ============================================================\n\nclass TestGoodhartDetectLanguage:\n\n    def test_goodhart_detect_language_java(self):\n        \"\"\"detect_language must correctly map .java extension\"\"\"\n        assert detect_language(\"com/example/Main.java\") == \"java\"\n\n    def test_goodhart_detect_language_go(self):\n        \"\"\"detect_language must correctly map .go extension\"\"\"\n        assert detect_language(\"cmd/server/main.go\") == \"go\"\n\n    def test_goodhart_detect_language_rust(self):\n        \"\"\"detect_language must correctly map .rs extension\"\"\"\n        assert detect_language(\"src/lib.rs\") == \"rust\"\n\n    def test_goodhart_detect_language_cpp(self):\n        \"\"\"detect_language must handle C++ file extensions like .cpp\"\"\"\n        result = detect_language(\"src/engine.cpp\")\n        assert result != \"unknown\", \".cpp should be recognized\"\n        assert result.lower() in (\"cpp\", \"c++\"), f\"Expected cpp or c++, got {result}\"\n\n    def test_goodhart_detect_language_ruby(self):\n        \"\"\"detect_language must correctly map .rb extension\"\"\"\n        assert detect_language(\"app/models/user.rb\") == \"ruby\"\n\n    def test_goodhart_detect_language_mixed_case_PY(self):\n        \"\"\"detect_language must be case-insensitive — .PY should map same as .py\"\"\"\n        assert detect_language(\"script.PY\") == detect_language(\"script.py\")\n\n    def test_goodhart_detect_language_path_with_dots(self):\n        \"\"\"detect_language must use only the final extension for language detection\"\"\"\n        result = detect_language(\"my.module.config.json\")\n        assert result != \"unknown\", \".json should be recognized\"\n\n    def test_goodhart_detect_language_result_always_lowercase(self):\n        \"\"\"detect_language must always return a lowercase string\"\"\"\n        result = detect_language(\"DIR/FILE.Py\")\n        assert result == result.lower(), f\"Result {result!r} is not lowercase\"\n\n    def test_goodhart_detect_language_hidden_dotfile_with_extension(self):\n        \"\"\"detect_language should detect language from secondary extension on dotfiles\"\"\"\n        result = detect_language(\".config.yml\")\n        # .yml should be recognized as yaml\n        assert result != \"unknown\", \".yml secondary extension should be recognized\"\n\n    def test_goodhart_detect_language_c_header(self):\n        \"\"\"detect_language must handle .h extension\"\"\"\n        result = detect_language(\"include/types.h\")\n        assert result != \"unknown\", \".h should be recognized\"\n\n    def test_goodhart_detect_language_yaml(self):\n        \"\"\"detect_language must handle .yml extension\"\"\"\n        result = detect_language(\"config/settings.yml\")\n        assert result != \"unknown\", \".yml should be recognized\"\n\n    def test_goodhart_detect_language_markdown(self):\n        \"\"\"detect_language must handle .md extension\"\"\"\n        result = detect_language(\"README.md\")\n        assert result != \"unknown\", \".md should be recognized\"\n\n\n# ============================================================\n# parse_diff tests\n# ============================================================\n\nclass TestGoodhartParseDiff:\n\n    @pytest.mark.asyncio\n    async def test_goodhart_parse_diff_context_lines_separated(self):\n        \"\"\"parse_diff must correctly separate context lines from added/removed lines\"\"\"\n        diff = (\n            \"diff --git a/hello.py b/hello.py\\n\"\n            \"--- a/hello.py\\n\"\n            \"+++ b/hello.py\\n\"\n            \"@@ -1,5 +1,6 @@\\n\"\n            \" first context\\n\"\n            \" second context\\n\"\n            \"-removed line\\n\"\n            \"+added line A\\n\"\n            \"+added line B\\n\"\n            \" trailing context\\n\"\n        )\n        hunks, errors = await parse_diff(diff)\n        assert len(hunks) >= 1\n        hunk = hunks[0]\n        # Context should not be in added or removed\n        for line in hunk.added_lines:\n            assert \"first context\" not in line\n            assert \"trailing context\" not in line\n        for line in hunk.removed_lines:\n            assert \"first context\" not in line\n            assert \"trailing context\" not in line\n        # Added lines should contain the additions\n        added_text = \"\\n\".join(hunk.added_lines)\n        assert \"added line A\" in added_text\n        assert \"added line B\" in added_text\n        # Removed lines should contain the removal\n        removed_text = \"\\n\".join(hunk.removed_lines)\n        assert \"removed line\" in removed_text\n\n    @pytest.mark.asyncio\n    async def test_goodhart_parse_diff_line_numbers_consistency(self):\n        \"\"\"parse_diff must set line number fields from @@ header accurately\"\"\"\n        diff = (\n            \"diff --git a/x.py b/x.py\\n\"\n            \"--- a/x.py\\n\"\n            \"+++ b/x.py\\n\"\n            \"@@ -10,5 +12,8 @@ def foo\\n\"\n            \" context\\n\"\n            \"-old\\n\"\n            \"+new1\\n\"\n            \"+new2\\n\"\n            \" context\\n\"\n        )\n        hunks, errors = await parse_diff(diff)\n        assert len(hunks) >= 1\n        hunk = hunks[0]\n        assert hunk.start_line_old == 10\n        assert hunk.count_old == 5\n        assert hunk.start_line_new == 12\n        assert hunk.count_new == 8\n\n    @pytest.mark.asyncio\n    async def test_goodhart_parse_diff_hunk_id_matches_generate_hunk_id(self):\n        \"\"\"DiffHunk.id from parse_diff must match generate_hunk_id called independently\"\"\"\n        diff = make_simple_diff(file_path=\"verify/test.py\")\n        hunks, errors = await parse_diff(diff)\n        assert len(hunks) >= 1\n        for hunk in hunks:\n            expected_id = generate_hunk_id(hunk.file_path, hunk.raw_header, hunk.added_lines)\n            assert hunk.id == expected_id, (\n                f\"Hunk ID {hunk.id} does not match generate_hunk_id result {expected_id}\"\n            )\n\n    @pytest.mark.asyncio\n    async def test_goodhart_parse_diff_git_format_header(self):\n        \"\"\"parse_diff must handle 'diff --git a/path b/path' format headers\"\"\"\n        diff = (\n            \"diff --git a/lib/util.js b/lib/util.js\\n\"\n            \"--- a/lib/util.js\\n\"\n            \"+++ b/lib/util.js\\n\"\n            \"@@ -1,3 +1,4 @@\\n\"\n            \" const x = 1;\\n\"\n            \"+const y = 2;\\n\"\n            \" module.exports = x;\\n\"\n        )\n        hunks, errors = await parse_diff(diff)\n        assert len(hunks) >= 1\n        assert hunks[0].file_path == \"lib/util.js\"\n        assert hunks[0].language == \"javascript\"\n\n    @pytest.mark.asyncio\n    async def test_goodhart_parse_diff_new_file_mode(self):\n        \"\"\"parse_diff must handle newly created files where old side is /dev/null\"\"\"\n        diff = (\n            \"diff --git a/new_file.py b/new_file.py\\n\"\n            \"--- /dev/null\\n\"\n            \"+++ b/new_file.py\\n\"\n            \"@@ -0,0 +1,3 @@\\n\"\n            \"+line 1\\n\"\n            \"+line 2\\n\"\n            \"+line 3\\n\"\n        )\n        hunks, errors = await parse_diff(diff)\n        assert len(hunks) >= 1\n        assert hunks[0].file_path != \"/dev/null\"\n        assert \"new_file.py\" in hunks[0].file_path\n\n    @pytest.mark.asyncio\n    async def test_goodhart_parse_diff_deleted_file(self):\n        \"\"\"parse_diff must handle deleted files where new side is /dev/null\"\"\"\n        diff = (\n            \"diff --git a/old_file.py b/old_file.py\\n\"\n            \"--- a/old_file.py\\n\"\n            \"+++ /dev/null\\n\"\n            \"@@ -1,3 +0,0 @@\\n\"\n            \"-line 1\\n\"\n            \"-line 2\\n\"\n            \"-line 3\\n\"\n        )\n        hunks, errors = await parse_diff(diff)\n        assert len(hunks) >= 1\n        hunk = hunks[0]\n        assert hunk.file_path != \"/dev/null\"\n        assert \"old_file.py\" in hunk.file_path\n        assert len(hunk.removed_lines) > 0\n        assert len(hunk.added_lines) == 0\n\n    @pytest.mark.asyncio\n    async def test_goodhart_parse_diff_no_newline_at_eof(self):\n        \"\"\"parse_diff must handle 'No newline at end of file' marker gracefully\"\"\"\n        diff = (\n            \"diff --git a/f.py b/f.py\\n\"\n            \"--- a/f.py\\n\"\n            \"+++ b/f.py\\n\"\n            \"@@ -1,2 +1,2 @@\\n\"\n            \"-old line\\n\"\n            \"\\\\ No newline at end of file\\n\"\n            \"+new line\\n\"\n            \"\\\\ No newline at end of file\\n\"\n        )\n        hunks, errors = await parse_diff(diff)\n        assert len(hunks) >= 1\n        hunk = hunks[0]\n        # The marker should not appear in content\n        for line in hunk.added_lines + hunk.removed_lines:\n            assert \"No newline at end of file\" not in line\n\n    @pytest.mark.asyncio\n    async def test_goodhart_parse_diff_multiple_errors_for_multiple_bad_hunks(self):\n        \"\"\"parse_diff must produce separate IntakeError records for each malformed section\"\"\"\n        diff = (\n            \"diff --git a/a.py b/a.py\\n\"\n            \"--- a/a.py\\n\"\n            \"+++ b/a.py\\n\"\n            \"@@ INVALID HEADER 1 @@\\n\"\n            \"+content\\n\"\n            \"diff --git a/b.py b/b.py\\n\"\n            \"--- a/b.py\\n\"\n            \"+++ b/b.py\\n\"\n            \"@@ ALSO INVALID @@\\n\"\n            \"+more content\\n\"\n        )\n        hunks, errors = await parse_diff(diff)\n        assert len(errors) >= 2, f\"Expected at least 2 errors, got {len(errors)}\"\n        for err in errors:\n            assert err.phase == IntakePhase.parse or str(err.phase) == \"parse\"\n            assert err.message and len(err.message) > 0\n\n    @pytest.mark.asyncio\n    async def test_goodhart_parse_diff_large_line_numbers(self):\n        \"\"\"parse_diff must handle very large line numbers without overflow\"\"\"\n        diff = (\n            \"diff --git a/big.py b/big.py\\n\"\n            \"--- a/big.py\\n\"\n            \"+++ b/big.py\\n\"\n            \"@@ -99999,3 +100001,5 @@ class Huge\\n\"\n            \" context\\n\"\n            \"-old\\n\"\n            \"+new1\\n\"\n            \"+new2\\n\"\n            \"+new3\\n\"\n            \" context\\n\"\n        )\n        hunks, errors = await parse_diff(diff)\n        assert len(hunks) >= 1\n        assert hunks[0].start_line_old == 99999\n        assert hunks[0].start_line_new == 100001\n\n    @pytest.mark.asyncio\n    async def test_goodhart_parse_diff_only_additions(self):\n        \"\"\"parse_diff must handle a hunk with only additions and no removals\"\"\"\n        diff = (\n            \"diff --git a/add.py b/add.py\\n\"\n            \"--- a/add.py\\n\"\n            \"+++ b/add.py\\n\"\n            \"@@ -5,2 +5,5 @@\\n\"\n            \" context\\n\"\n            \"+added1\\n\"\n            \"+added2\\n\"\n            \"+added3\\n\"\n            \" context\\n\"\n        )\n        hunks, errors = await parse_diff(diff)\n        assert len(hunks) >= 1\n        assert len(hunks[0].removed_lines) == 0\n        assert len(hunks[0].added_lines) >= 3\n\n    @pytest.mark.asyncio\n    async def test_goodhart_parse_diff_only_removals(self):\n        \"\"\"parse_diff must handle a hunk with only removals and no additions\"\"\"\n        diff = (\n            \"diff --git a/rm.py b/rm.py\\n\"\n            \"--- a/rm.py\\n\"\n            \"+++ b/rm.py\\n\"\n            \"@@ -1,5 +1,2 @@\\n\"\n            \" context\\n\"\n            \"-removed1\\n\"\n            \"-removed2\\n\"\n            \"-removed3\\n\"\n            \" context\\n\"\n        )\n        hunks, errors = await parse_diff(diff)\n        assert len(hunks) >= 1\n        assert len(hunks[0].added_lines) == 0\n        assert len(hunks[0].removed_lines) >= 3\n\n    @pytest.mark.asyncio\n    async def test_goodhart_parse_diff_file_path_with_spaces(self):\n        \"\"\"parse_diff must handle file paths containing spaces\"\"\"\n        diff = (\n            \"diff --git a/my folder/my file.py b/my folder/my file.py\\n\"\n            \"--- a/my folder/my file.py\\n\"\n            \"+++ b/my folder/my file.py\\n\"\n            \"@@ -1,2 +1,3 @@\\n\"\n            \" ctx\\n\"\n            \"+new\\n\"\n            \" ctx\\n\"\n        )\n        hunks, errors = await parse_diff(diff)\n        assert len(hunks) >= 1\n        assert \" \" in hunks[0].file_path\n        assert \"/\" in hunks[0].file_path\n\n    @pytest.mark.asyncio\n    async def test_goodhart_parse_diff_crlf_line_endings(self):\n        \"\"\"parse_diff must handle CRLF line endings without errors or mangled output\"\"\"\n        diff = (\n            \"diff --git a/crlf.py b/crlf.py\\r\\n\"\n            \"--- a/crlf.py\\r\\n\"\n            \"+++ b/crlf.py\\r\\n\"\n            \"@@ -1,3 +1,4 @@\\r\\n\"\n            \" context\\r\\n\"\n            \"-old line\\r\\n\"\n            \"+new line\\r\\n\"\n            \"+extra line\\r\\n\"\n            \" context\\r\\n\"\n        )\n        hunks, errors = await parse_diff(diff)\n        assert len(hunks) >= 1\n        # Added lines should not have trailing \\r\n        for line in hunks[0].added_lines:\n            assert not line.endswith(\"\\r\"), f\"Line should not end with \\\\r: {line!r}\"\n\n    @pytest.mark.asyncio\n    async def test_goodhart_parse_diff_classifications_always_empty_novel_input(self):\n        \"\"\"parse_diff must never populate classifications, verified with a novel diff input\"\"\"\n        diff = (\n            \"diff --git a/secret.py b/secret.py\\n\"\n            \"--- a/secret.py\\n\"\n            \"+++ b/secret.py\\n\"\n            \"@@ -1,1 +1,2 @@\\n\"\n            \" x\\n\"\n            \"+API_KEY = 'super_secret_value_12345'\\n\"\n        )\n        hunks, errors = await parse_diff(diff)\n        assert len(hunks) >= 1\n        for hunk in hunks:\n            assert hunk.classifications == [], \"parse_diff must never populate classifications\"\n\n\n# ============================================================\n# classify_hunks tests\n# ============================================================\n\nclass TestGoodhartClassifyHunks:\n\n    def _make_hunk(self, added_lines, removed_lines=None, context_before=None,\n                   context_after=None, file_path=\"test.py\", hunk_id=None):\n        \"\"\"Create a minimal DiffHunk-like object for testing.\"\"\"\n        if removed_lines is None:\n            removed_lines = []\n        if context_before is None:\n            context_before = []\n        if context_after is None:\n            context_after = []\n        raw_header = \"@@ -1,3 +1,5 @@\"\n        if hunk_id is None:\n            hunk_id = generate_hunk_id(file_path, raw_header, added_lines)\n        return DiffHunk(\n            id=hunk_id,\n            file_path=file_path,\n            start_line_old=1,\n            count_old=3,\n            start_line_new=1,\n            count_new=5,\n            context_before=context_before,\n            added_lines=added_lines,\n            removed_lines=removed_lines,\n            context_after=context_after,\n            raw_header=raw_header,\n            classifications=[],\n            language=\"python\",\n        )\n\n    def test_goodhart_classify_context_lines_ignored(self):\n        \"\"\"classify_hunks must not scan context_before or context_after for classification\"\"\"\n        hunk = self._make_hunk(\n            added_lines=[\"x = 1\"],\n            context_before=[\"API_KEY = secret123\"],\n            context_after=[\"SSN: 123-45-6789\"],\n        )\n        config = make_config(rules=[\n            LedgerFieldRule(pattern=r\"API_KEY\", label=ClassificationLabel.secret, description=\"secret\"),\n            LedgerFieldRule(pattern=r\"SSN\", label=ClassificationLabel.pii, description=\"pii\"),\n        ])\n        result = classify_hunks([hunk], config)\n        assert len(result) == 1\n        assert result[0].classifications == [], (\n            \"Context lines should not trigger classification\"\n        )\n\n    def test_goodhart_classify_same_label_multiple_lines_no_dup(self):\n        \"\"\"classify_hunks must not produce duplicate labels even when same pattern matches multiple lines\"\"\"\n        hunk = self._make_hunk(\n            added_lines=[\n                \"API_KEY = 'key1'\",\n                \"API_KEY = 'key2'\",\n                \"API_KEY = 'key3'\",\n            ]\n        )\n        config = make_config(rules=[\n            LedgerFieldRule(pattern=r\"API_KEY\", label=ClassificationLabel.secret, description=\"secret\"),\n        ])\n        result = classify_hunks([hunk], config)\n        assert len(result) == 1\n        labels = result[0].classifications\n        assert labels.count(ClassificationLabel.secret) == 1, (\n            f\"Expected exactly one 'secret' label, got {labels}\"\n        )\n\n    def test_goodhart_classify_evidence_matches_classifications_length(self):\n        \"\"\"classification_evidence must have same length as classifications\"\"\"\n        hunks = [\n            self._make_hunk(added_lines=[\"nothing here\"], file_path=\"a.py\"),\n            self._make_hunk(added_lines=[\"API_KEY=x\"], file_path=\"b.py\"),\n            self._make_hunk(added_lines=[\"API_KEY=x\", \"SSN: 123\"], file_path=\"c.py\"),\n        ]\n        config = make_config(rules=[\n            LedgerFieldRule(pattern=r\"API_KEY\", label=ClassificationLabel.secret, description=\"secret\"),\n            LedgerFieldRule(pattern=r\"SSN\", label=ClassificationLabel.pii, description=\"pii\"),\n        ])\n        result = classify_hunks(hunks, config)\n        assert len(result) == 3\n        for h in result:\n            if hasattr(h, 'classification_evidence'):\n                assert len(h.classification_evidence) == len(h.classifications), (\n                    f\"Evidence length {len(h.classification_evidence)} != classifications length {len(h.classifications)}\"\n                )\n\n    def test_goodhart_classify_preserves_id_exactly(self):\n        \"\"\"classify_hunks must preserve exact hunk IDs from input\"\"\"\n        hunk = self._make_hunk(added_lines=[\"API_KEY=secret\"], file_path=\"id_test.py\")\n        original_id = hunk.id\n        config = make_secret_config()\n        result = classify_hunks([hunk], config)\n        assert result[0].id == original_id\n\n    def test_goodhart_classify_preserves_language(self):\n        \"\"\"classify_hunks must preserve the language field\"\"\"\n        hunk = self._make_hunk(added_lines=[\"x\"], file_path=\"test.py\")\n        config = make_config()\n        result = classify_hunks([hunk], config)\n        assert result[0].language == hunk.language\n\n    def test_goodhart_classify_all_four_labels_possible(self):\n        \"\"\"classify_hunks must be able to assign any of the four ClassificationLabel values\"\"\"\n        hunks = [\n            self._make_hunk(added_lines=[\"API_KEY=x\"], file_path=\"1.py\"),\n            self._make_hunk(added_lines=[\"SSN: 123-45-6789\"], file_path=\"2.py\"),\n            self._make_hunk(added_lines=[\"__internal_api.call()\"], file_path=\"3.py\"),\n            self._make_hunk(added_lines=[\"public_docs link\"], file_path=\"4.py\"),\n        ]\n        config = make_multi_rule_config()\n        result = classify_hunks(hunks, config)\n\n        all_labels = set()\n        for h in result:\n            for label in h.classifications:\n                all_labels.add(label)\n\n        assert ClassificationLabel.secret in all_labels, \"secret label missing\"\n        assert ClassificationLabel.pii in all_labels, \"pii label missing\"\n        assert ClassificationLabel.internal_api in all_labels, \"internal_api label missing\"\n        assert ClassificationLabel.public in all_labels, \"public label missing\"\n\n    def test_goodhart_classify_new_hunk_instances(self):\n        \"\"\"classify_hunks must return new DiffHunk instances, not the same objects\"\"\"\n        hunk = self._make_hunk(added_lines=[\"API_KEY=x\"])\n        config = make_secret_config()\n        result = classify_hunks([hunk], config)\n        assert result[0] is not hunk, \"Output hunk should be a new instance, not the same object\"\n\n    def test_goodhart_classify_regex_anchoring(self):\n        \"\"\"classify_hunks must apply regex patterns correctly including anchors\"\"\"\n        hunk = self._make_hunk(\n            added_lines=[\"MY_SECRET=foo\", \"SECRET=bar\"]\n        )\n        config = make_config(rules=[\n            LedgerFieldRule(pattern=r\"^SECRET=\", label=ClassificationLabel.secret, description=\"anchored secret\"),\n        ])\n        result = classify_hunks([hunk], config)\n        assert len(result) == 1\n        # The pattern should match the line starting with SECRET= but the test is that\n        # regex semantics are properly applied (not just substring search)\n        assert ClassificationLabel.secret in result[0].classifications\n\n\n# ============================================================\n# run_intake tests\n# ============================================================\n\nclass TestGoodhartRunIntake:\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_intake_file_paths_deduped(self):\n        \"\"\"run_intake must populate file_paths with unique paths from parsed hunks\"\"\"\n        diff = (\n            \"diff --git a/file1.py b/file1.py\\n\"\n            \"--- a/file1.py\\n\"\n            \"+++ b/file1.py\\n\"\n            \"@@ -1,2 +1,3 @@\\n\"\n            \" ctx\\n\"\n            \"+add1\\n\"\n            \" ctx\\n\"\n            \"@@ -10,2 +11,3 @@\\n\"\n            \" ctx\\n\"\n            \"+add2\\n\"\n            \" ctx\\n\"\n            \"diff --git a/file2.js b/file2.js\\n\"\n            \"--- a/file2.js\\n\"\n            \"+++ b/file2.js\\n\"\n            \"@@ -1,2 +1,3 @@\\n\"\n            \" ctx\\n\"\n            \"+add3\\n\"\n            \" ctx\\n\"\n        )\n        source = make_mock_source(diff)\n        config = make_config()\n        emitter = make_mock_emitter()\n\n        result = await run_intake(source, config, emitter)\n        fps = result.review_request.file_paths\n        assert len(fps) == 2, f\"Expected 2 file paths, got {len(fps)}: {fps}\"\n        assert len(set(fps)) == len(fps), \"file_paths should be unique\"\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_intake_hunk_count_equals_hunks_length(self):\n        \"\"\"IntakeResult.hunk_count must equal the actual length of review_request.hunks\"\"\"\n        diff = make_simple_diff()\n        source = make_mock_source(diff)\n        config = make_config()\n        emitter = make_mock_emitter()\n\n        result = await run_intake(source, config, emitter)\n        assert result.hunk_count == len(result.review_request.hunks)\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_intake_classified_count_lte_hunk_count(self):\n        \"\"\"IntakeResult.classified_hunk_count must be <= hunk_count\"\"\"\n        diff = make_simple_diff()\n        source = make_mock_source(diff)\n        config = make_config()\n        emitter = make_mock_emitter()\n\n        result = await run_intake(source, config, emitter)\n        assert result.classified_hunk_count <= result.hunk_count\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_intake_emitter_partial_failure_warnings(self):\n        \"\"\"When emitter fails on some calls, failures appear in warnings, not errors\"\"\"\n        diff = make_simple_diff()\n        source = make_mock_source(diff)\n        config = make_config()\n        call_count = 0\n        emitter = AsyncMock()\n\n        async def partial_fail(event):\n            nonlocal call_count\n            call_count += 1\n            if call_count == 2:\n                raise RuntimeError(\"emit failed\")\n\n        emitter.emit = AsyncMock(side_effect=partial_fail)\n\n        result = await run_intake(source, config, emitter)\n        assert len(result.warnings) > 0, \"Emitter failure should appear in warnings\"\n        # Errors should not contain emitter failures\n        for err in result.errors:\n            if hasattr(err, 'phase'):\n                assert str(err.phase) != \"orchestrate\" or \"emit\" not in str(err.message).lower()\n        assert len(result.review_request.hunks) > 0, \"Hunks should still be present\"\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_intake_permission_error(self):\n        \"\"\"run_intake must handle PermissionError from source.read() gracefully\"\"\"\n        source = make_failing_source(PermissionError)\n        config = make_config()\n        emitter = make_mock_emitter()\n\n        # Should not raise an unhandled exception\n        result = await run_intake(source, config, emitter)\n        assert len(result.errors) > 0\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_intake_file_not_found_error(self):\n        \"\"\"run_intake must handle FileNotFoundError from source.read() gracefully\"\"\"\n        source = make_failing_source(FileNotFoundError)\n        config = make_config()\n        emitter = make_mock_emitter()\n\n        result = await run_intake(source, config, emitter)\n        assert len(result.errors) > 0\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_intake_totally_unparseable(self):\n        \"\"\"run_intake must handle completely unparseable input producing empty hunks with errors\"\"\"\n        source = make_mock_source(\"this is not a diff at all\\njust random text\\n\")\n        config = make_config()\n        emitter = make_mock_emitter()\n\n        result = await run_intake(source, config, emitter)\n        assert len(result.review_request.hunks) == 0\n        assert result.hunk_count == 0\n        assert len(result.errors) > 0\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_intake_request_id_format_deep(self):\n        \"\"\"review_request.id must be exactly 'req-' + 32 lowercase hex chars with no hyphens\"\"\"\n        diff = make_simple_diff()\n        source = make_mock_source(diff)\n        config = make_config()\n        emitter = make_mock_emitter()\n\n        result = await run_intake(source, config, emitter)\n        rid = result.review_request.id\n        assert rid.startswith(\"req-\")\n        assert len(rid) == 36\n        hex_part = rid[4:]\n        assert re.match(r'^[0-9a-f]{32}$', hex_part), f\"Hex part {hex_part!r} invalid\"\n        assert \"-\" not in rid\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_intake_created_at_has_timezone(self):\n        \"\"\"created_at timestamp must include UTC timezone indicator\"\"\"\n        diff = make_simple_diff()\n        source = make_mock_source(diff)\n        config = make_config()\n        emitter = make_mock_emitter()\n\n        result = await run_intake(source, config, emitter)\n        ts = result.review_request.created_at\n        assert ts.endswith(\"Z\") or ts.endswith(\"+00:00\"), (\n            f\"Timestamp {ts!r} must end with Z or +00:00\"\n        )\n        # Also verify it's parseable\n        from datetime import datetime\n        try:\n            # Try parsing ISO format\n            datetime.fromisoformat(ts.replace(\"Z\", \"+00:00\"))\n        except ValueError:\n            pytest.fail(f\"Timestamp {ts!r} is not valid ISO 8601\")\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_intake_hunks_are_classified(self):\n        \"\"\"Hunks in result must have been through classify_hunks (classifications populated when rules match)\"\"\"\n        diff = (\n            \"diff --git a/secret.py b/secret.py\\n\"\n            \"--- a/secret.py\\n\"\n            \"+++ b/secret.py\\n\"\n            \"@@ -1,1 +1,2 @@\\n\"\n            \" x\\n\"\n            \"+API_KEY = 'super_secret_value'\\n\"\n        )\n        source = make_mock_source(diff)\n        config = make_secret_config()\n        emitter = make_mock_emitter()\n\n        result = await run_intake(source, config, emitter)\n        assert len(result.review_request.hunks) >= 1\n        classified = [h for h in result.review_request.hunks if len(h.classifications) > 0]\n        assert len(classified) > 0, \"At least one hunk should be classified with secret\"\n        assert ClassificationLabel.secret in classified[0].classifications\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_intake_source_kind_file(self):\n        \"\"\"run_intake must set source field matching DiffSource kind 'file'\"\"\"\n        diff = make_simple_diff()\n        source = make_mock_source(diff, kind=DiffSourceKind.file)\n        config = make_config()\n        emitter = make_mock_emitter()\n\n        result = await run_intake(source, config, emitter)\n        # The source field should reflect the kind\n        src = result.review_request.source\n        assert \"file\" in str(src).lower() or src == \"file\" or src == DiffSourceKind.file\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_intake_source_kind_stdin(self):\n        \"\"\"run_intake must set source field matching DiffSource kind 'stdin'\"\"\"\n        diff = make_simple_diff()\n        source = make_mock_source(diff, kind=DiffSourceKind.stdin)\n        config = make_config()\n        emitter = make_mock_emitter()\n\n        result = await run_intake(source, config, emitter)\n        src = result.review_request.source\n        assert \"stdin\" in str(src).lower() or src == \"stdin\" or src == DiffSourceKind.stdin\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_intake_events_have_review_request_id(self):\n        \"\"\"All emitted events must reference the same review_request_id as the final result\"\"\"\n        diff = make_simple_diff()\n        source = make_mock_source(diff)\n        config = make_config()\n        emitter = make_recording_emitter()\n\n        result = await run_intake(source, config, emitter)\n        events = emitter._recorded_events\n\n        rid = result.review_request.id\n        for event in events:\n            assert event.review_request_id == rid, (\n                f\"Event review_request_id {event.review_request_id!r} != result id {rid!r}\"\n            )\n\n    @pytest.mark.asyncio\n    async def test_goodhart_run_intake_multiple_calls_unique_ids(self):\n        \"\"\"Multiple calls to run_intake must produce different review_request.id values\"\"\"\n        diff = make_simple_diff()\n        config = make_config()\n        emitter = make_mock_emitter()\n\n        source1 = make_mock_source(diff)\n        result1 = await run_intake(source1, config, emitter)\n\n        source2 = make_mock_source(diff)\n        result2 = await run_intake(source2, config, emitter)\n\n        assert result1.review_request.id != result2.review_request.id, (\n            \"Two run_intake calls should produce different request IDs\"\n        )\n\n\n# ============================================================\n# LineRange / IntakeError additional tests\n# ============================================================\n\nclass TestGoodhartModels:\n\n    def test_goodhart_line_range_start_exactly_one(self):\n        \"\"\"LineRange must accept start=1 as the boundary minimum\"\"\"\n        lr = LineRange(start=1, count=0)\n        assert lr.start == 1\n        assert lr.count == 0\n\n    def test_goodhart_line_range_start_zero_rejected(self):\n        \"\"\"LineRange must reject start=0\"\"\"\n        with pytest.raises(Exception):\n            LineRange(start=0, count=5)\n\n    def test_goodhart_line_range_large_values(self):\n        \"\"\"LineRange must accept large valid values\"\"\"\n        lr = LineRange(start=999999, count=999999)\n        assert lr.start == 999999\n        assert lr.count == 999999\n\n    def test_goodhart_intake_error_all_phases(self):\n        \"\"\"IntakeError must accept all four IntakePhase values\"\"\"\n        for phase in [IntakePhase.read, IntakePhase.parse, IntakePhase.classify, IntakePhase.orchestrate]:\n            err = IntakeError(line_number=1, message=\"test\", raw_content=\"x\", phase=phase)\n            assert err.phase == phase\n"
+}

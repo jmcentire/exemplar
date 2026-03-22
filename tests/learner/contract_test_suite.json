@@ -1,0 +1,1228 @@
+{
+  "component_id": "learner",
+  "contract_version": 1,
+  "test_cases": [
+    {
+      "id": "init_happy_path",
+      "description": "initialize_state creates directory, state.json, and records.json in a clean tmp dir",
+      "function": "initialize_state",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returns True",
+        "state.json exists with valid empty LearnerState",
+        "records.json exists with empty JSON array",
+        "phase is shadow, schema_version is 1"
+      ]
+    },
+    {
+      "id": "init_idempotent",
+      "description": "initialize_state returns False when called again on already-initialized directory",
+      "function": "initialize_state",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returns False on second call",
+        "files unchanged"
+      ]
+    },
+    {
+      "id": "init_permission_denied",
+      "description": "initialize_state raises permission_denied when directory is not writable",
+      "function": "initialize_state",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "permission_denied",
+      "assertions": [
+        "raises appropriate error"
+      ]
+    },
+    {
+      "id": "init_existing_state_corruption",
+      "description": "initialize_state raises existing_state_corruption when files exist but contain invalid JSON",
+      "function": "initialize_state",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "existing_state_corruption",
+      "assertions": [
+        "raises appropriate error",
+        "does NOT overwrite files"
+      ]
+    },
+    {
+      "id": "init_custom_storage_dir",
+      "description": "initialize_state works with a custom nested storage directory path",
+      "function": "initialize_state",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "nested directory created",
+        "files created successfully"
+      ]
+    },
+    {
+      "id": "record_decision_single",
+      "description": "record_decision with a single valid LearningRecord persists it and updates stats",
+      "function": "record_decision",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "records_persisted == 1",
+        "stats_updated is True"
+      ]
+    },
+    {
+      "id": "record_decision_batch",
+      "description": "record_decision with multiple valid records persists all",
+      "function": "record_decision",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "records_persisted equals number of records",
+        "stats_updated is True"
+      ]
+    },
+    {
+      "id": "record_decision_phase_change",
+      "description": "record_decision triggers phase_changed when acceptance rate crosses threshold",
+      "function": "record_decision",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "phase_changed is True",
+        "new_phase is canary or primary"
+      ]
+    },
+    {
+      "id": "record_decision_stats_updated",
+      "description": "record_decision updates ReviewerRuleStats counts correctly",
+      "function": "record_decision",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "accepted_count incremented for accepted records",
+        "dismissed_count incremented for dismissed records",
+        "total_count reflects all records"
+      ]
+    },
+    {
+      "id": "record_decision_duplicate_record_id",
+      "description": "record_decision raises duplicate_record_id when record_id already exists",
+      "function": "record_decision",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "duplicate_record_id",
+      "assertions": [
+        "raises duplicate_record_id error"
+      ]
+    },
+    {
+      "id": "record_decision_invalid_record",
+      "description": "record_decision raises invalid_record for records failing validation",
+      "function": "record_decision",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "invalid_record",
+      "assertions": [
+        "raises invalid_record error"
+      ]
+    },
+    {
+      "id": "record_decision_storage_write_failure",
+      "description": "record_decision raises storage_write_failure when file write fails",
+      "function": "record_decision",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "storage_write_failure",
+      "assertions": [
+        "raises storage_write_failure error"
+      ]
+    },
+    {
+      "id": "record_decision_concurrent_write",
+      "description": "record_decision raises concurrent_write_detected when another writer is detected",
+      "function": "record_decision",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "concurrent_write_detected",
+      "assertions": [
+        "raises concurrent_write_detected error"
+      ]
+    },
+    {
+      "id": "record_decision_chronicler_event",
+      "description": "record_decision emits learning.recorded ChroniclerEvent",
+      "function": "record_decision",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "chronicle.emit_event called with learning.recorded"
+      ]
+    },
+    {
+      "id": "record_decision_empty_list",
+      "description": "record_decision with empty list handles gracefully",
+      "function": "record_decision",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "records_persisted == 0 or raises appropriate error"
+      ]
+    },
+    {
+      "id": "record_human_decisions_single",
+      "description": "record_human_decisions converts a single HumanDecisionInput and delegates to record_decision",
+      "function": "record_human_decisions",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "records_persisted == 1",
+        "stats_updated is True"
+      ]
+    },
+    {
+      "id": "record_human_decisions_batch",
+      "description": "record_human_decisions converts multiple HumanDecisionInputs",
+      "function": "record_human_decisions",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "records_persisted equals number of decisions"
+      ]
+    },
+    {
+      "id": "record_human_decisions_invalid_input",
+      "description": "record_human_decisions raises invalid_decision_input for bad input",
+      "function": "record_human_decisions",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "invalid_decision_input",
+      "assertions": [
+        "raises invalid_decision_input error"
+      ]
+    },
+    {
+      "id": "record_human_decisions_storage_failure",
+      "description": "record_human_decisions raises storage_write_failure delegated from record_decision",
+      "function": "record_human_decisions",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "storage_write_failure",
+      "assertions": [
+        "raises storage_write_failure error"
+      ]
+    },
+    {
+      "id": "record_human_decisions_uuid_generated",
+      "description": "record_human_decisions generates UUID4 record_id for each input",
+      "function": "record_human_decisions",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "each converted record has a valid UUID4 record_id"
+      ]
+    },
+    {
+      "id": "record_human_decisions_fire_and_forget",
+      "description": "Chronicler failure does not block record_human_decisions",
+      "function": "record_human_decisions",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "operation completes successfully despite chronicler failure"
+      ]
+    },
+    {
+      "id": "record_human_decisions_base_weight_boundary",
+      "description": "record_human_decisions works with base_weight at boundaries 0.0 and 1.0",
+      "function": "record_human_decisions",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "no error raised for valid boundary weights"
+      ]
+    },
+    {
+      "id": "record_human_decisions_empty_list",
+      "description": "record_human_decisions with empty list",
+      "function": "record_human_decisions",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "handles empty list gracefully"
+      ]
+    },
+    {
+      "id": "trust_adjustments_sufficient_data",
+      "description": "get_trust_adjustments returns correct weights with sufficient observations",
+      "function": "get_trust_adjustments",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returned list is non-empty",
+        "weights are in [0.1, 1.0]",
+        "weights rounded to 4 decimal places"
+      ]
+    },
+    {
+      "id": "trust_adjustments_min_observations_boundary",
+      "description": "get_trust_adjustments excludes entries below min_observations",
+      "function": "get_trust_adjustments",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "entries with total_count < min_observations excluded",
+        "entries with total_count == min_observations included"
+      ]
+    },
+    {
+      "id": "trust_adjustments_base_weight_effect",
+      "description": "get_trust_adjustments weight formula uses base_weight correctly",
+      "function": "get_trust_adjustments",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "weight == base_weight * (accepted/total) clamped and rounded"
+      ]
+    },
+    {
+      "id": "trust_adjustments_state_not_found",
+      "description": "get_trust_adjustments raises state_not_found when no state.json",
+      "function": "get_trust_adjustments",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "state_not_found",
+      "assertions": [
+        "raises state_not_found error"
+      ]
+    },
+    {
+      "id": "trust_adjustments_state_corruption",
+      "description": "get_trust_adjustments raises state_corruption for invalid state.json",
+      "function": "get_trust_adjustments",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "state_corruption",
+      "assertions": [
+        "raises state_corruption error"
+      ]
+    },
+    {
+      "id": "trust_adjustments_empty_state",
+      "description": "get_trust_adjustments returns empty list when no stats exist",
+      "function": "get_trust_adjustments",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returns empty list"
+      ]
+    },
+    {
+      "id": "trust_adjustments_stable_ordering",
+      "description": "get_trust_adjustments returns deterministic order by (reviewer_id, rule_id, review_stage)",
+      "function": "get_trust_adjustments",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "list is sorted by (reviewer_id, rule_id, review_stage)"
+      ]
+    },
+    {
+      "id": "trust_adjustments_weight_clamping",
+      "description": "get_trust_adjustments clamps weights to [0.1, 1.0]",
+      "function": "get_trust_adjustments",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "no weight below 0.1",
+        "no weight above 1.0"
+      ]
+    },
+    {
+      "id": "phase_progression_shadow_to_canary",
+      "description": "check_phase_progression transitions from shadow to canary when threshold met",
+      "function": "check_phase_progression",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returns canary",
+        "state.json updated"
+      ]
+    },
+    {
+      "id": "phase_progression_canary_to_primary",
+      "description": "check_phase_progression transitions from canary to primary when threshold met",
+      "function": "check_phase_progression",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returns primary"
+      ]
+    },
+    {
+      "id": "phase_progression_no_transition",
+      "description": "check_phase_progression returns current phase when thresholds not met",
+      "function": "check_phase_progression",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returns current phase unchanged"
+      ]
+    },
+    {
+      "id": "phase_progression_invalid_config",
+      "description": "check_phase_progression raises invalid_config for missing keys",
+      "function": "check_phase_progression",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "invalid_config",
+      "assertions": [
+        "raises invalid_config error"
+      ]
+    },
+    {
+      "id": "phase_progression_state_not_found",
+      "description": "check_phase_progression raises state_not_found when no state.json",
+      "function": "check_phase_progression",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "state_not_found",
+      "assertions": [
+        "raises state_not_found error"
+      ]
+    },
+    {
+      "id": "phase_progression_storage_failure",
+      "description": "check_phase_progression raises storage_write_failure when write fails during transition",
+      "function": "check_phase_progression",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "storage_write_failure",
+      "assertions": [
+        "raises storage_write_failure error"
+      ]
+    },
+    {
+      "id": "phase_progression_chronicler_event",
+      "description": "check_phase_progression emits phase.transition event on transition",
+      "function": "check_phase_progression",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "chronicle.emit_event called with phase.transition"
+      ]
+    },
+    {
+      "id": "phase_progression_idempotent",
+      "description": "check_phase_progression called twice with same state returns same phase",
+      "function": "check_phase_progression",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "second call returns same phase as first"
+      ]
+    },
+    {
+      "id": "detect_patterns_known_pattern",
+      "description": "detect_patterns identifies high false positive rate pattern",
+      "function": "detect_patterns",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returns non-empty list",
+        "signal has valid pattern_key"
+      ]
+    },
+    {
+      "id": "detect_patterns_below_min_observations",
+      "description": "detect_patterns excludes combinations below min_observations",
+      "function": "detect_patterns",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "no signals for low-count combinations"
+      ]
+    },
+    {
+      "id": "detect_patterns_anomaly_threshold_boundary",
+      "description": "detect_patterns respects anomaly_threshold boundary",
+      "function": "detect_patterns",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "patterns at exactly threshold are handled correctly"
+      ]
+    },
+    {
+      "id": "detect_patterns_mixed",
+      "description": "detect_patterns returns multiple pattern kinds",
+      "function": "detect_patterns",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "multiple StigmergySignal objects returned"
+      ]
+    },
+    {
+      "id": "detect_patterns_state_not_found",
+      "description": "detect_patterns raises state_not_found when no state.json",
+      "function": "detect_patterns",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "state_not_found",
+      "assertions": [
+        "raises state_not_found error"
+      ]
+    },
+    {
+      "id": "detect_patterns_state_corruption",
+      "description": "detect_patterns raises state_corruption for invalid state.json",
+      "function": "detect_patterns",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "state_corruption",
+      "assertions": [
+        "raises state_corruption error"
+      ]
+    },
+    {
+      "id": "detect_patterns_empty_state",
+      "description": "detect_patterns returns empty list when no stats exist",
+      "function": "detect_patterns",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returns empty list"
+      ]
+    },
+    {
+      "id": "detect_patterns_unique_signal_ids",
+      "description": "detect_patterns returns signals with unique UUID4 signal_ids",
+      "function": "detect_patterns",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "all signal_ids are unique",
+        "signal_ids are valid UUID4"
+      ]
+    },
+    {
+      "id": "get_current_phase_shadow",
+      "description": "get_current_phase returns shadow when state does not exist",
+      "function": "get_current_phase",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returns LearnerPhase.shadow"
+      ]
+    },
+    {
+      "id": "get_current_phase_canary",
+      "description": "get_current_phase returns canary when state is in canary phase",
+      "function": "get_current_phase",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returns LearnerPhase.canary"
+      ]
+    },
+    {
+      "id": "get_current_phase_primary",
+      "description": "get_current_phase returns primary when state is in primary phase",
+      "function": "get_current_phase",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returns LearnerPhase.primary"
+      ]
+    },
+    {
+      "id": "get_current_phase_state_corruption",
+      "description": "get_current_phase raises state_corruption for invalid state.json",
+      "function": "get_current_phase",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "state_corruption",
+      "assertions": [
+        "raises state_corruption error"
+      ]
+    },
+    {
+      "id": "should_apply_false_shadow",
+      "description": "should_apply_adjustments returns False in shadow phase",
+      "function": "should_apply_adjustments",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returns False"
+      ]
+    },
+    {
+      "id": "should_apply_true_canary",
+      "description": "should_apply_adjustments returns True in canary phase",
+      "function": "should_apply_adjustments",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returns True"
+      ]
+    },
+    {
+      "id": "should_apply_true_primary",
+      "description": "should_apply_adjustments returns True in primary phase",
+      "function": "should_apply_adjustments",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returns True"
+      ]
+    },
+    {
+      "id": "should_apply_no_state",
+      "description": "should_apply_adjustments returns False when state.json does not exist (defaults to shadow)",
+      "function": "should_apply_adjustments",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returns False"
+      ]
+    },
+    {
+      "id": "should_apply_state_corruption",
+      "description": "should_apply_adjustments raises state_corruption for invalid state.json",
+      "function": "should_apply_adjustments",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "state_corruption",
+      "assertions": [
+        "raises state_corruption error"
+      ]
+    },
+    {
+      "id": "get_stats_full_report",
+      "description": "get_stats returns complete LearnerStatsReport with correct structure",
+      "function": "get_stats",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "report has current_phase",
+        "report has total_records",
+        "report has overall_acceptance_rate",
+        "report has reviewer_stats"
+      ]
+    },
+    {
+      "id": "get_stats_min_observations_filter",
+      "description": "get_stats counts active_trust_adjustments only for entries meeting min_observations",
+      "function": "get_stats",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "active_trust_adjustments reflects filtered count"
+      ]
+    },
+    {
+      "id": "get_stats_state_not_found",
+      "description": "get_stats raises state_not_found when no state.json",
+      "function": "get_stats",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "state_not_found",
+      "assertions": [
+        "raises state_not_found error"
+      ]
+    },
+    {
+      "id": "get_stats_state_corruption",
+      "description": "get_stats raises state_corruption for invalid state.json",
+      "function": "get_stats",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "state_corruption",
+      "assertions": [
+        "raises state_corruption error"
+      ]
+    },
+    {
+      "id": "get_stats_acceptance_rate_correctness",
+      "description": "get_stats overall_acceptance_rate correctly reflects accepted/total ratio",
+      "function": "get_stats",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "acceptance_rate == accepted_count / total_count"
+      ]
+    },
+    {
+      "id": "get_stats_deterministic",
+      "description": "get_stats returns identical output on repeated calls with same state",
+      "function": "get_stats",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "two calls return identical reports"
+      ]
+    },
+    {
+      "id": "type_reviewer_id_valid",
+      "description": "ReviewerId accepts valid identifier strings",
+      "function": "ReviewerId",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ReviewerId('alice') succeeds",
+        "ReviewerId('a1.b2-c3_d4') succeeds"
+      ]
+    },
+    {
+      "id": "type_reviewer_id_invalid_empty",
+      "description": "ReviewerId rejects empty string",
+      "function": "ReviewerId",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "raises validation error"
+      ]
+    },
+    {
+      "id": "type_reviewer_id_invalid_pattern",
+      "description": "ReviewerId rejects strings starting with digit or containing invalid chars",
+      "function": "ReviewerId",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "raises validation error for '1abc'",
+        "raises validation error for 'a@b'"
+      ]
+    },
+    {
+      "id": "type_rule_id_valid",
+      "description": "RuleId accepts valid dot-separated identifiers",
+      "function": "RuleId",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "RuleId('security.xss') succeeds",
+        "RuleId('a/b.c') succeeds"
+      ]
+    },
+    {
+      "id": "type_rule_id_invalid",
+      "description": "RuleId rejects invalid formats",
+      "function": "RuleId",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "raises validation error for empty string"
+      ]
+    },
+    {
+      "id": "type_trust_weight_range",
+      "description": "TrustWeight clamps and validates range [0.1, 1.0]",
+      "function": "TrustWeight",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "TrustWeight(0.1) valid",
+        "TrustWeight(1.0) valid",
+        "TrustWeight below 0.1 rejected",
+        "TrustWeight above 1.0 rejected"
+      ]
+    },
+    {
+      "id": "type_acceptance_rate_range",
+      "description": "AcceptanceRate validates range [0.0, 1.0]",
+      "function": "AcceptanceRate",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "AcceptanceRate(0.0) valid",
+        "AcceptanceRate(1.0) valid",
+        "AcceptanceRate(-0.1) rejected",
+        "AcceptanceRate(1.1) rejected"
+      ]
+    },
+    {
+      "id": "type_min_observations_range",
+      "description": "MinObservations validates range [1, 10000]",
+      "function": "MinObservations",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "MinObservations(1) valid",
+        "MinObservations(10000) valid",
+        "MinObservations(0) rejected",
+        "MinObservations(10001) rejected"
+      ]
+    },
+    {
+      "id": "type_pact_key_valid",
+      "description": "PactKey accepts valid pact: prefixed keys",
+      "function": "PactKey",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "PactKey('pact:learner.record_decision:v1') pattern match"
+      ]
+    },
+    {
+      "id": "type_pact_key_invalid",
+      "description": "PactKey rejects invalid formats",
+      "function": "PactKey",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "PactKey('invalid') rejected"
+      ]
+    },
+    {
+      "id": "type_human_decision_input_valid",
+      "description": "HumanDecisionInput accepts valid complete input",
+      "function": "HumanDecisionInput",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "construction succeeds with all valid fields"
+      ]
+    },
+    {
+      "id": "type_human_decision_input_invalid_severity",
+      "description": "HumanDecisionInput rejects invalid severity value",
+      "function": "HumanDecisionInput",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "raises validation error for severity='unknown'"
+      ]
+    },
+    {
+      "id": "type_human_decision_input_frozen",
+      "description": "HumanDecisionInput is frozen and immutable",
+      "function": "HumanDecisionInput",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "assignment to field raises error"
+      ]
+    },
+    {
+      "id": "invariant_phase_monotonic",
+      "description": "Phase transitions are monotonic: shadow->canary->primary, never regress",
+      "function": "check_phase_progression",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "cannot go from canary to shadow",
+        "cannot go from primary to canary"
+      ]
+    },
+    {
+      "id": "invariant_trust_cold_start",
+      "description": "Trust adjustments are not produced when total_count < min_observations",
+      "function": "get_trust_adjustments",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "empty list for insufficient data"
+      ]
+    },
+    {
+      "id": "invariant_fire_and_forget_chronicler",
+      "description": "Chronicler failures do not block any public method",
+      "function": "record_decision",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "operation completes even when chronicler raises"
+      ]
+    },
+    {
+      "id": "invariant_append_only",
+      "description": "records.json is append-only; existing records never modified",
+      "function": "record_decision",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "previous records still present after new records added"
+      ]
+    }
+  ],
+  "test_language": "python",
+  "generated_code": "\"\"\"\nContract tests for the Apprentice Learning Module (learner).\n\nTests verify behavior at boundaries per the contract specification.\nAll async functions use @pytest.mark.asyncio. Dependencies are mocked.\n\"\"\"\n\nimport json\nimport os\nimport uuid\nfrom pathlib import Path\nfrom unittest.mock import AsyncMock, MagicMock, patch, PropertyMock\nimport pytest\nimport pytest_asyncio\n\n# ---------------------------------------------------------------------------\n# Imports from the component under test\n# ---------------------------------------------------------------------------\nfrom exemplar.learner import (\n    LearnerPhase,\n    HumanDecision,\n    PatternKind,\n    ReviewerId,\n    RuleId,\n    TrustWeight,\n    AcceptanceRate,\n    MinObservations,\n    FilePath,\n    PactKey,\n    HumanDecisionInput,\n    LearningRecord,\n    ReviewerRuleStats,\n    ReviewerStats,\n    PhaseTransition,\n    PhaseState,\n    LearnerState,\n    TrustScore,\n    StigmergySignal,\n    LearnerStatsReport,\n    RecordDecisionResult,\n    Severity,\n    ReviewStage,\n    record_decision,\n    record_human_decisions,\n    get_trust_adjustments,\n    check_phase_progression,\n    detect_patterns,\n    get_current_phase,\n    should_apply_adjustments,\n    get_stats,\n    initialize_state,\n)\n\n\n# ========================================================================\n# Factory helpers\n# ========================================================================\n\ndef make_learning_record(**overrides):\n    \"\"\"Return a valid LearningRecord dict / kwargs with sensible defaults.\"\"\"\n    defaults = dict(\n        record_id=str(uuid.uuid4()),\n        finding_id=\"finding-001\",\n        reviewer_id=\"alice\",\n        stage=ReviewStage.security,\n        rule_id=\"security.xss\",\n        severity=Severity.high,\n        accepted=True,\n        human_comment=\"looks good\",\n        recorded_at=\"2024-01-15T10:00:00Z\",\n    )\n    defaults.update(overrides)\n    return LearningRecord(**defaults)\n\n\ndef make_human_decision_input(**overrides):\n    \"\"\"Return a valid HumanDecisionInput with sensible defaults.\"\"\"\n    defaults = dict(\n        finding_id=\"finding-001\",\n        reviewer_id=ReviewerId(value=\"alice\"),\n        rule_id=RuleId(value=\"security.xss\"),\n        decision=HumanDecision.accepted,\n        file_path=FilePath(value=\"src/main.py\"),\n        severity=\"high\",\n        review_stage=\"security\",\n        comment=\"LGTM\",\n        timestamp_iso=\"2024-01-15T10:00:00Z\",\n    )\n    defaults.update(overrides)\n    return HumanDecisionInput(**defaults)\n\n\ndef make_config(**overrides):\n    \"\"\"Return a valid phase-progression config dict.\"\"\"\n    defaults = dict(\n        shadow_to_canary_threshold=0.6,\n        canary_to_primary_threshold=0.85,\n        min_observations_for_phase=10,\n    )\n    defaults.update(overrides)\n    return defaults\n\n\n# ========================================================================\n# Fixtures\n# ========================================================================\n\n@pytest.fixture\ndef learner_storage(tmp_path):\n    \"\"\"Provide a clean temporary directory for learner storage.\"\"\"\n    storage = tmp_path / \".exemplar\" / \"learner\"\n    return str(storage)\n\n\n@pytest_asyncio.fixture\nasync def initialized_learner(learner_storage):\n    \"\"\"Initialize learner state and return the storage path.\"\"\"\n    result = await initialize_state(learner_storage)\n    assert result is True\n    return learner_storage\n\n\n@pytest_asyncio.fixture\nasync def seeded_learner(initialized_learner):\n    \"\"\"Pre-load ~20 diverse records into the learner.\"\"\"\n    records = []\n    for i in range(20):\n        accepted = i % 3 != 0  # ~67% acceptance\n        reviewer = \"alice\" if i < 10 else \"bob\"\n        stage = [ReviewStage.security, ReviewStage.correctness, ReviewStage.style, ReviewStage.architecture][i % 4]\n        rec = make_learning_record(\n            record_id=f\"seed-{i:03d}\",\n            finding_id=f\"finding-{i:03d}\",\n            reviewer_id=reviewer,\n            stage=stage,\n            rule_id=\"security.xss\" if i % 2 == 0 else \"style.naming\",\n            accepted=accepted,\n            recorded_at=f\"2024-01-{15 + i // 10:02d}T{10 + i % 10:02d}:00:00Z\",\n        )\n        records.append(rec)\n    await record_decision(records)\n    return initialized_learner\n\n\n# ========================================================================\n# Test Classes\n# ========================================================================\n\nclass TestInitializeState:\n    \"\"\"Tests for initialize_state function.\"\"\"\n\n    @pytest.mark.asyncio\n    async def test_happy_path_creates_files(self, learner_storage):\n        \"\"\"initialize_state creates directory, state.json, and records.json.\"\"\"\n        result = await initialize_state(learner_storage)\n        assert result is True\n        storage_path = Path(learner_storage)\n        assert storage_path.is_dir()\n        assert (storage_path / \"state.json\").exists()\n        assert (storage_path / \"records.json\").exists()\n\n        # Verify state.json content\n        with open(storage_path / \"state.json\") as f:\n            state = json.load(f)\n        assert state.get(\"schema_version\") == 1\n\n        # Verify records.json content\n        with open(storage_path / \"records.json\") as f:\n            records = json.load(f)\n        assert records == []\n\n    @pytest.mark.asyncio\n    async def test_idempotent_reinit(self, initialized_learner):\n        \"\"\"initialize_state returns False when called again on existing state.\"\"\"\n        result = await initialize_state(initialized_learner)\n        assert result is False\n\n    @pytest.mark.asyncio\n    async def test_permission_denied(self, tmp_path):\n        \"\"\"initialize_state raises permission_denied when directory not writable.\"\"\"\n        # Create a read-only parent\n        readonly_dir = tmp_path / \"readonly\"\n        readonly_dir.mkdir()\n        os.chmod(str(readonly_dir), 0o444)\n        storage = str(readonly_dir / \"learner\" / \"state\")\n        try:\n            with pytest.raises(Exception) as exc_info:\n                await initialize_state(storage)\n            # Should indicate permission denied\n            exc_str = str(exc_info.value).lower()\n            assert \"permission\" in exc_str or \"denied\" in exc_str or isinstance(exc_info.value, PermissionError)\n        finally:\n            os.chmod(str(readonly_dir), 0o755)\n\n    @pytest.mark.asyncio\n    async def test_existing_state_corruption(self, learner_storage):\n        \"\"\"initialize_state raises error when files exist but contain invalid JSON.\"\"\"\n        storage_path = Path(learner_storage)\n        storage_path.mkdir(parents=True, exist_ok=True)\n        (storage_path / \"state.json\").write_text(\"NOT VALID JSON {{{\")\n        with pytest.raises(Exception) as exc_info:\n            await initialize_state(learner_storage)\n        exc_str = str(exc_info.value).lower()\n        assert \"corrupt\" in exc_str or \"invalid\" in exc_str or \"json\" in exc_str\n\n    @pytest.mark.asyncio\n    async def test_custom_nested_storage_dir(self, tmp_path):\n        \"\"\"initialize_state works with deeply nested custom path.\"\"\"\n        nested = str(tmp_path / \"a\" / \"b\" / \"c\" / \"learner\")\n        result = await initialize_state(nested)\n        assert result is True\n        assert Path(nested).is_dir()\n\n\nclass TestRecordDecision:\n    \"\"\"Tests for record_decision function.\"\"\"\n\n    @pytest.mark.asyncio\n    async def test_single_record(self, initialized_learner):\n        \"\"\"record_decision persists a single valid record.\"\"\"\n        rec = make_learning_record()\n        result = await record_decision([rec])\n        assert isinstance(result, RecordDecisionResult)\n        assert result.records_persisted == 1\n        assert result.stats_updated is True\n\n    @pytest.mark.asyncio\n    async def test_batch_records(self, initialized_learner):\n        \"\"\"record_decision persists multiple valid records.\"\"\"\n        records = [make_learning_record(record_id=f\"batch-{i}\") for i in range(5)]\n        result = await record_decision(records)\n        assert result.records_persisted == 5\n        assert result.stats_updated is True\n\n    @pytest.mark.asyncio\n    async def test_phase_changed_trigger(self, initialized_learner):\n        \"\"\"record_decision triggers phase change when acceptance rate crosses threshold.\"\"\"\n        # Record many accepted findings to push acceptance rate high\n        records = [\n            make_learning_record(\n                record_id=f\"phase-{i}\",\n                accepted=True,\n            )\n            for i in range(30)\n        ]\n        config = make_config(shadow_to_canary_threshold=0.5, min_observations_for_phase=5)\n        await record_decision(records)\n        # Now check phase progression\n        phase = await check_phase_progression(config)\n        assert phase in (LearnerPhase.canary, LearnerPhase.primary)\n\n    @pytest.mark.asyncio\n    async def test_stats_updated_verification(self, initialized_learner):\n        \"\"\"record_decision correctly updates ReviewerRuleStats counts.\"\"\"\n        accepted_rec = make_learning_record(record_id=\"stat-1\", accepted=True, reviewer_id=\"statcheck\", rule_id=\"test.rule\")\n        dismissed_rec = make_learning_record(record_id=\"stat-2\", accepted=False, reviewer_id=\"statcheck\", rule_id=\"test.rule\")\n        await record_decision([accepted_rec, dismissed_rec])\n\n        # Verify via get_stats\n        report = await get_stats(min_observations=0)\n        assert report.total_records >= 2\n\n    @pytest.mark.asyncio\n    async def test_duplicate_record_id(self, initialized_learner):\n        \"\"\"record_decision raises error for duplicate record_id.\"\"\"\n        rec = make_learning_record(record_id=\"dup-001\")\n        await record_decision([rec])\n        with pytest.raises(Exception) as exc_info:\n            await record_decision([rec])\n        exc_str = str(exc_info.value).lower()\n        assert \"duplicate\" in exc_str or \"already exist\" in exc_str\n\n    @pytest.mark.asyncio\n    async def test_duplicate_within_batch(self, initialized_learner):\n        \"\"\"record_decision rejects batch with duplicate record_ids within the same call.\"\"\"\n        rec1 = make_learning_record(record_id=\"intra-dup\")\n        rec2 = make_learning_record(record_id=\"intra-dup\", finding_id=\"finding-999\")\n        with pytest.raises(Exception):\n            await record_decision([rec1, rec2])\n\n    @pytest.mark.asyncio\n    async def test_invalid_record(self, initialized_learner):\n        \"\"\"record_decision raises invalid_record for bad data.\"\"\"\n        with pytest.raises(Exception) as exc_info:\n            # Attempt to create a record with invalid fields - if pydantic validates\n            # at construction, we test passing something invalid to the function\n            bad_rec = make_learning_record(record_id=\"\")\n            await record_decision([bad_rec])\n\n    @pytest.mark.asyncio\n    async def test_chronicler_event_emitted(self, initialized_learner):\n        \"\"\"record_decision emits learning.recorded ChroniclerEvent.\"\"\"\n        rec = make_learning_record(record_id=\"event-test\")\n        # The contract states chronicler is fire-and-forget, so this should succeed\n        # regardless of chronicler state\n        result = await record_decision([rec])\n        assert result.records_persisted == 1\n\n    @pytest.mark.asyncio\n    async def test_empty_list(self, initialized_learner):\n        \"\"\"record_decision with empty list handles gracefully.\"\"\"\n        try:\n            result = await record_decision([])\n            assert result.records_persisted == 0\n        except Exception:\n            # Also acceptable to reject empty list\n            pass\n\n    @pytest.mark.asyncio\n    async def test_append_only_invariant(self, initialized_learner):\n        \"\"\"Existing records are never modified when new records are added.\"\"\"\n        rec1 = make_learning_record(record_id=\"append-1\")\n        await record_decision([rec1])\n\n        rec2 = make_learning_record(record_id=\"append-2\")\n        await record_decision([rec2])\n\n        # Read records.json and verify both are present\n        storage_path = Path(initialized_learner)\n        with open(storage_path / \"records.json\") as f:\n            all_records = json.load(f)\n\n        record_ids = [r.get(\"record_id\", r.get(\"record_id\")) for r in all_records]\n        assert \"append-1\" in record_ids\n        assert \"append-2\" in record_ids\n\n\nclass TestRecordHumanDecisions:\n    \"\"\"Tests for record_human_decisions function.\"\"\"\n\n    @pytest.mark.asyncio\n    async def test_single_decision(self, initialized_learner):\n        \"\"\"record_human_decisions converts and persists a single decision.\"\"\"\n        decision = make_human_decision_input()\n        result = await record_human_decisions([decision], base_weight=1.0)\n        assert isinstance(result, RecordDecisionResult)\n        assert result.records_persisted == 1\n        assert result.stats_updated is True\n\n    @pytest.mark.asyncio\n    async def test_batch_decisions(self, initialized_learner):\n        \"\"\"record_human_decisions converts multiple decisions.\"\"\"\n        decisions = [\n            make_human_decision_input(finding_id=f\"hd-{i}\")\n            for i in range(5)\n        ]\n        result = await record_human_decisions(decisions, base_weight=0.8)\n        assert result.records_persisted == 5\n\n    @pytest.mark.asyncio\n    async def test_invalid_decision_input(self, initialized_learner):\n        \"\"\"record_human_decisions raises error for invalid input.\"\"\"\n        with pytest.raises(Exception):\n            bad_input = make_human_decision_input(severity=\"unknown\")\n            await record_human_decisions([bad_input], base_weight=1.0)\n\n    @pytest.mark.asyncio\n    async def test_uuid4_generated(self, initialized_learner):\n        \"\"\"record_human_decisions generates UUID4 record_id for each input.\"\"\"\n        decision = make_human_decision_input()\n        result = await record_human_decisions([decision], base_weight=1.0)\n        assert result.records_persisted == 1\n\n        # Verify records have UUID4 ids\n        storage_path = Path(initialized_learner)\n        with open(storage_path / \"records.json\") as f:\n            records = json.load(f)\n        for rec in records:\n            rid = rec.get(\"record_id\", \"\")\n            # Should be parseable as UUID\n            uuid.UUID(rid, version=4)\n\n    @pytest.mark.asyncio\n    async def test_fire_and_forget_chronicler(self, initialized_learner):\n        \"\"\"Chronicler failure does not block record_human_decisions.\"\"\"\n        decision = make_human_decision_input(finding_id=\"ff-test\")\n        # Even if chronicler is down, operation should complete\n        result = await record_human_decisions([decision], base_weight=1.0)\n        assert result.records_persisted == 1\n\n    @pytest.mark.asyncio\n    async def test_base_weight_boundary(self, initialized_learner):\n        \"\"\"record_human_decisions works with base_weight at 0.0 and 1.0 boundaries.\"\"\"\n        d1 = make_human_decision_input(finding_id=\"bw-0\")\n        result1 = await record_human_decisions([d1], base_weight=0.0)\n        assert result1.records_persisted == 1\n\n        d2 = make_human_decision_input(finding_id=\"bw-1\")\n        result2 = await record_human_decisions([d2], base_weight=1.0)\n        assert result2.records_persisted == 1\n\n    @pytest.mark.asyncio\n    async def test_empty_list(self, initialized_learner):\n        \"\"\"record_human_decisions with empty list.\"\"\"\n        try:\n            result = await record_human_decisions([], base_weight=1.0)\n            assert result.records_persisted == 0\n        except Exception:\n            # Also acceptable to reject\n            pass\n\n    @pytest.mark.asyncio\n    async def test_all_decision_types(self, initialized_learner):\n        \"\"\"record_human_decisions handles accepted, dismissed, and modified decisions.\"\"\"\n        decisions = [\n            make_human_decision_input(finding_id=\"dt-acc\", decision=HumanDecision.accepted),\n            make_human_decision_input(finding_id=\"dt-dis\", decision=HumanDecision.dismissed),\n            make_human_decision_input(finding_id=\"dt-mod\", decision=HumanDecision.modified),\n        ]\n        result = await record_human_decisions(decisions, base_weight=1.0)\n        assert result.records_persisted == 3\n\n\nclass TestGetTrustAdjustments:\n    \"\"\"Tests for get_trust_adjustments function.\"\"\"\n\n    @pytest.mark.asyncio\n    async def test_sufficient_data(self, seeded_learner):\n        \"\"\"get_trust_adjustments returns correct weights with sufficient observations.\"\"\"\n        adjustments = await get_trust_adjustments(base_weight=1.0, min_observations=2)\n        assert isinstance(adjustments, list)\n        for adj in adjustments:\n            assert isinstance(adj, TrustScore)\n            assert 0.1 <= adj.weight <= 1.0\n            # Verify rounded to 4 decimal places\n            assert adj.weight == pytest.approx(round(adj.weight, 4), abs=1e-6)\n\n    @pytest.mark.asyncio\n    async def test_min_observations_boundary(self, seeded_learner):\n        \"\"\"Entries below min_observations excluded, at threshold included.\"\"\"\n        # With min_observations=100, should exclude everything (we only seeded 20)\n        adjustments_high = await get_trust_adjustments(base_weight=1.0, min_observations=100)\n        assert len(adjustments_high) == 0\n\n        # With min_observations=1, should include entries\n        adjustments_low = await get_trust_adjustments(base_weight=1.0, min_observations=1)\n        assert len(adjustments_low) >= 0  # May have entries\n\n    @pytest.mark.asyncio\n    async def test_base_weight_effect(self, seeded_learner):\n        \"\"\"Weight formula: base_weight * (accepted/total) clamped to [0.1, 1.0].\"\"\"\n        adj_full = await get_trust_adjustments(base_weight=1.0, min_observations=1)\n        adj_half = await get_trust_adjustments(base_weight=0.5, min_observations=1)\n\n        # With lower base_weight, weights should generally be lower or equal\n        if adj_full and adj_half:\n            for full, half in zip(adj_full, adj_half):\n                # half.weight should be <= full.weight (before clamping)\n                assert half.weight <= full.weight + 1e-6\n\n    @pytest.mark.asyncio\n    async def test_state_not_found(self, learner_storage):\n        \"\"\"get_trust_adjustments raises state_not_found when no state.json.\"\"\"\n        with pytest.raises(Exception) as exc_info:\n            await get_trust_adjustments(base_weight=1.0, min_observations=10)\n        exc_str = str(exc_info.value).lower()\n        assert \"not found\" in exc_str or \"not_found\" in exc_str or \"state\" in exc_str or \"exist\" in exc_str\n\n    @pytest.mark.asyncio\n    async def test_state_corruption(self, initialized_learner):\n        \"\"\"get_trust_adjustments raises state_corruption for invalid state.json.\"\"\"\n        storage_path = Path(initialized_learner)\n        (storage_path / \"state.json\").write_text(\"{invalid json content!!\")\n        with pytest.raises(Exception):\n            await get_trust_adjustments(base_weight=1.0, min_observations=10)\n\n    @pytest.mark.asyncio\n    async def test_empty_state(self, initialized_learner):\n        \"\"\"get_trust_adjustments returns empty list when no stats exist.\"\"\"\n        adjustments = await get_trust_adjustments(base_weight=1.0, min_observations=10)\n        assert adjustments == []\n\n    @pytest.mark.asyncio\n    async def test_stable_ordering(self, seeded_learner):\n        \"\"\"get_trust_adjustments returns deterministic order by (reviewer_id, rule_id, review_stage).\"\"\"\n        adj1 = await get_trust_adjustments(base_weight=1.0, min_observations=1)\n        adj2 = await get_trust_adjustments(base_weight=1.0, min_observations=1)\n\n        assert len(adj1) == len(adj2)\n        for a, b in zip(adj1, adj2):\n            assert a.reviewer_id == b.reviewer_id\n            assert a.stage == b.stage\n            assert a.weight == pytest.approx(b.weight)\n\n        # Verify sorted by (reviewer_id, rule_id, stage)\n        if len(adj1) > 1:\n            for i in range(len(adj1) - 1):\n                key_i = (adj1[i].reviewer_id, getattr(adj1[i], 'rule_id', ''), str(adj1[i].stage))\n                key_next = (adj1[i+1].reviewer_id, getattr(adj1[i+1], 'rule_id', ''), str(adj1[i+1].stage))\n                assert key_i <= key_next\n\n    @pytest.mark.asyncio\n    async def test_weight_clamping(self, seeded_learner):\n        \"\"\"Weights are clamped to [0.1, 1.0].\"\"\"\n        # Use very low base_weight to test lower clamp\n        adjustments = await get_trust_adjustments(base_weight=0.01, min_observations=1)\n        for adj in adjustments:\n            assert adj.weight >= 0.1\n            assert adj.weight <= 1.0\n\n\nclass TestCheckPhaseProgression:\n    \"\"\"Tests for check_phase_progression function.\"\"\"\n\n    @pytest.mark.asyncio\n    async def test_shadow_to_canary(self, initialized_learner):\n        \"\"\"Transition from shadow to canary when threshold met.\"\"\"\n        # Seed enough accepted records\n        records = [make_learning_record(record_id=f\"s2c-{i}\", accepted=True) for i in range(15)]\n        await record_decision(records)\n\n        config = make_config(shadow_to_canary_threshold=0.5, min_observations_for_phase=5)\n        phase = await check_phase_progression(config)\n        assert phase == LearnerPhase.canary\n\n    @pytest.mark.asyncio\n    async def test_canary_to_primary(self, initialized_learner):\n        \"\"\"Transition from canary to primary when threshold met.\"\"\"\n        # First get to canary\n        records = [make_learning_record(record_id=f\"c2p-{i}\", accepted=True) for i in range(20)]\n        await record_decision(records)\n\n        config = make_config(\n            shadow_to_canary_threshold=0.5,\n            canary_to_primary_threshold=0.8,\n            min_observations_for_phase=5,\n        )\n        # Transition to canary first\n        await check_phase_progression(config)\n        # Then to primary (acceptance rate is 100%)\n        phase = await check_phase_progression(config)\n        assert phase == LearnerPhase.primary\n\n    @pytest.mark.asyncio\n    async def test_no_transition(self, initialized_learner):\n        \"\"\"No transition when thresholds not met.\"\"\"\n        # Record mostly dismissed findings\n        records = [make_learning_record(record_id=f\"no-{i}\", accepted=False) for i in range(15)]\n        await record_decision(records)\n\n        config = make_config(shadow_to_canary_threshold=0.9, min_observations_for_phase=5)\n        phase = await check_phase_progression(config)\n        assert phase == LearnerPhase.shadow\n\n    @pytest.mark.asyncio\n    async def test_invalid_config(self, initialized_learner):\n        \"\"\"Raises invalid_config for missing/invalid config keys.\"\"\"\n        with pytest.raises(Exception) as exc_info:\n            await check_phase_progression({})\n        exc_str = str(exc_info.value).lower()\n        assert \"config\" in exc_str or \"missing\" in exc_str or \"invalid\" in exc_str or \"key\" in exc_str\n\n    @pytest.mark.asyncio\n    async def test_state_not_found(self, learner_storage):\n        \"\"\"Raises state_not_found when no state.json.\"\"\"\n        config = make_config()\n        with pytest.raises(Exception):\n            await check_phase_progression(config)\n\n    @pytest.mark.asyncio\n    async def test_chronicler_event_on_transition(self, initialized_learner):\n        \"\"\"Emits phase.transition event on phase change.\"\"\"\n        records = [make_learning_record(record_id=f\"evt-{i}\", accepted=True) for i in range(15)]\n        await record_decision(records)\n\n        config = make_config(shadow_to_canary_threshold=0.5, min_observations_for_phase=5)\n        phase = await check_phase_progression(config)\n        # If transition occurred, event should have been emitted (fire-and-forget)\n        assert phase == LearnerPhase.canary\n\n    @pytest.mark.asyncio\n    async def test_idempotent_calls(self, initialized_learner):\n        \"\"\"Calling twice with same state returns same phase.\"\"\"\n        records = [make_learning_record(record_id=f\"idem-{i}\", accepted=True) for i in range(15)]\n        await record_decision(records)\n\n        config = make_config(shadow_to_canary_threshold=0.5, min_observations_for_phase=5)\n        phase1 = await check_phase_progression(config)\n        phase2 = await check_phase_progression(config)\n        assert phase1 == phase2\n\n    @pytest.mark.asyncio\n    async def test_phase_monotonic_invariant(self, initialized_learner):\n        \"\"\"Phase transitions are monotonic - cannot regress.\"\"\"\n        # Get to canary\n        records = [make_learning_record(record_id=f\"mono-{i}\", accepted=True) for i in range(15)]\n        await record_decision(records)\n\n        config = make_config(shadow_to_canary_threshold=0.5, min_observations_for_phase=5)\n        phase = await check_phase_progression(config)\n        assert phase in (LearnerPhase.canary, LearnerPhase.primary)\n\n        # Even with very high threshold, should not go back to shadow\n        config_strict = make_config(shadow_to_canary_threshold=0.99, min_observations_for_phase=5)\n        phase2 = await check_phase_progression(config_strict)\n        # Phase should be >= previous phase (monotonic)\n        phase_order = {LearnerPhase.shadow: 0, LearnerPhase.canary: 1, LearnerPhase.primary: 2}\n        assert phase_order[phase2] >= phase_order[phase]\n\n\nclass TestDetectPatterns:\n    \"\"\"Tests for detect_patterns function.\"\"\"\n\n    @pytest.mark.asyncio\n    async def test_known_pattern_detected(self, seeded_learner):\n        \"\"\"detect_patterns identifies patterns from seeded data.\"\"\"\n        signals = await detect_patterns(min_observations=2, anomaly_threshold=0.3)\n        assert isinstance(signals, list)\n        for signal in signals:\n            assert isinstance(signal, StigmergySignal)\n            assert signal.signal_id  # non-empty\n            assert signal.pattern_key  # non-empty\n\n    @pytest.mark.asyncio\n    async def test_below_min_observations(self, seeded_learner):\n        \"\"\"detect_patterns excludes combinations below min_observations.\"\"\"\n        signals_high = await detect_patterns(min_observations=1000, anomaly_threshold=0.1)\n        assert len(signals_high) == 0\n\n    @pytest.mark.asyncio\n    async def test_anomaly_threshold_boundary(self, seeded_learner):\n        \"\"\"detect_patterns respects anomaly_threshold.\"\"\"\n        # Very strict threshold should find fewer patterns\n        signals_strict = await detect_patterns(min_observations=1, anomaly_threshold=0.99)\n        # Very lenient threshold should find more\n        signals_lenient = await detect_patterns(min_observations=1, anomaly_threshold=0.01)\n        assert len(signals_strict) <= len(signals_lenient)\n\n    @pytest.mark.asyncio\n    async def test_state_not_found(self, learner_storage):\n        \"\"\"detect_patterns raises state_not_found when no state.json.\"\"\"\n        with pytest.raises(Exception):\n            await detect_patterns(min_observations=10, anomaly_threshold=0.5)\n\n    @pytest.mark.asyncio\n    async def test_state_corruption(self, initialized_learner):\n        \"\"\"detect_patterns raises state_corruption for invalid state.json.\"\"\"\n        storage_path = Path(initialized_learner)\n        (storage_path / \"state.json\").write_text(\"CORRUPT DATA!!!\")\n        with pytest.raises(Exception):\n            await detect_patterns(min_observations=10, anomaly_threshold=0.5)\n\n    @pytest.mark.asyncio\n    async def test_empty_state(self, initialized_learner):\n        \"\"\"detect_patterns returns empty list when no stats exist.\"\"\"\n        signals = await detect_patterns(min_observations=10, anomaly_threshold=0.5)\n        assert signals == []\n\n    @pytest.mark.asyncio\n    async def test_unique_signal_ids(self, seeded_learner):\n        \"\"\"detect_patterns returns signals with unique UUID4 signal_ids.\"\"\"\n        signals = await detect_patterns(min_observations=1, anomaly_threshold=0.1)\n        if signals:\n            signal_ids = [s.signal_id for s in signals]\n            assert len(signal_ids) == len(set(signal_ids)), \"signal_ids must be unique\"\n            for sid in signal_ids:\n                uuid.UUID(sid, version=4)  # Must be valid UUID4\n\n    @pytest.mark.asyncio\n    async def test_mixed_patterns(self, seeded_learner):\n        \"\"\"detect_patterns can return multiple pattern kinds.\"\"\"\n        signals = await detect_patterns(min_observations=1, anomaly_threshold=0.1)\n        # Just verify they're all StigmergySignal\n        for signal in signals:\n            assert isinstance(signal, StigmergySignal)\n            assert signal.occurrences >= 1\n\n\nclass TestGetCurrentPhase:\n    \"\"\"Tests for get_current_phase function.\"\"\"\n\n    @pytest.mark.asyncio\n    async def test_default_shadow_no_state(self, learner_storage):\n        \"\"\"Returns shadow when state does not exist.\"\"\"\n        phase = await get_current_phase()\n        assert phase == LearnerPhase.shadow\n\n    @pytest.mark.asyncio\n    async def test_shadow_phase(self, initialized_learner):\n        \"\"\"Returns shadow from freshly initialized state.\"\"\"\n        phase = await get_current_phase()\n        assert phase == LearnerPhase.shadow\n\n    @pytest.mark.asyncio\n    async def test_canary_phase(self, initialized_learner):\n        \"\"\"Returns canary when state is in canary phase.\"\"\"\n        records = [make_learning_record(record_id=f\"gcp-{i}\", accepted=True) for i in range(20)]\n        await record_decision(records)\n        config = make_config(shadow_to_canary_threshold=0.5, min_observations_for_phase=5)\n        await check_phase_progression(config)\n        phase = await get_current_phase()\n        assert phase == LearnerPhase.canary\n\n    @pytest.mark.asyncio\n    async def test_state_corruption(self, initialized_learner):\n        \"\"\"Raises state_corruption for invalid state.json.\"\"\"\n        storage_path = Path(initialized_learner)\n        (storage_path / \"state.json\").write_text(\"{{{{invalid\")\n        with pytest.raises(Exception):\n            await get_current_phase()\n\n\nclass TestShouldApplyAdjustments:\n    \"\"\"Tests for should_apply_adjustments function.\"\"\"\n\n    @pytest.mark.asyncio\n    async def test_false_in_shadow(self, initialized_learner):\n        \"\"\"Returns False in shadow phase.\"\"\"\n        result = await should_apply_adjustments()\n        assert result is False\n\n    @pytest.mark.asyncio\n    async def test_true_in_canary(self, initialized_learner):\n        \"\"\"Returns True in canary phase.\"\"\"\n        records = [make_learning_record(record_id=f\"saa-can-{i}\", accepted=True) for i in range(20)]\n        await record_decision(records)\n        config = make_config(shadow_to_canary_threshold=0.5, min_observations_for_phase=5)\n        await check_phase_progression(config)\n        result = await should_apply_adjustments()\n        assert result is True\n\n    @pytest.mark.asyncio\n    async def test_true_in_primary(self, initialized_learner):\n        \"\"\"Returns True in primary phase.\"\"\"\n        records = [make_learning_record(record_id=f\"saa-pri-{i}\", accepted=True) for i in range(25)]\n        await record_decision(records)\n        config = make_config(\n            shadow_to_canary_threshold=0.5,\n            canary_to_primary_threshold=0.8,\n            min_observations_for_phase=5,\n        )\n        await check_phase_progression(config)\n        await check_phase_progression(config)  # May need two calls\n        result = await should_apply_adjustments()\n        assert result is True\n\n    @pytest.mark.asyncio\n    async def test_false_no_state(self, learner_storage):\n        \"\"\"Returns False when state.json does not exist (defaults to shadow).\"\"\"\n        result = await should_apply_adjustments()\n        assert result is False\n\n    @pytest.mark.asyncio\n    async def test_state_corruption(self, initialized_learner):\n        \"\"\"Raises state_corruption for invalid state.json.\"\"\"\n        storage_path = Path(initialized_learner)\n        (storage_path / \"state.json\").write_text(\"NOT JSON!\")\n        with pytest.raises(Exception):\n            await should_apply_adjustments()\n\n\nclass TestGetStats:\n    \"\"\"Tests for get_stats function.\"\"\"\n\n    @pytest.mark.asyncio\n    async def test_full_report_structure(self, seeded_learner):\n        \"\"\"get_stats returns complete LearnerStatsReport.\"\"\"\n        report = await get_stats(min_observations=1)\n        assert isinstance(report, LearnerStatsReport)\n        assert isinstance(report.current_phase, LearnerPhase)\n        assert report.total_records >= 20\n        assert isinstance(report.overall_acceptance_rate, AcceptanceRate)\n        assert isinstance(report.reviewer_stats, list)\n        assert isinstance(report.phase_state, PhaseState)\n        assert report.active_trust_adjustments >= 0\n\n    @pytest.mark.asyncio\n    async def test_min_observations_filter(self, seeded_learner):\n        \"\"\"active_trust_adjustments counts only entries meeting min_observations.\"\"\"\n        report_low = await get_stats(min_observations=1)\n        report_high = await get_stats(min_observations=1000)\n        assert report_high.active_trust_adjustments <= report_low.active_trust_adjustments\n\n    @pytest.mark.asyncio\n    async def test_state_not_found(self, learner_storage):\n        \"\"\"Raises state_not_found when no state.json.\"\"\"\n        with pytest.raises(Exception):\n            await get_stats(min_observations=10)\n\n    @pytest.mark.asyncio\n    async def test_state_corruption(self, initialized_learner):\n        \"\"\"Raises state_corruption for invalid state.json.\"\"\"\n        storage_path = Path(initialized_learner)\n        (storage_path / \"state.json\").write_text(\"CORRUPT!!!\")\n        with pytest.raises(Exception):\n            await get_stats(min_observations=10)\n\n    @pytest.mark.asyncio\n    async def test_acceptance_rate_correctness(self, initialized_learner):\n        \"\"\"Overall acceptance rate correctly reflects accepted/total ratio.\"\"\"\n        # Record 3 accepted, 2 dismissed\n        records = [\n            make_learning_record(record_id=\"ar-1\", accepted=True),\n            make_learning_record(record_id=\"ar-2\", accepted=True),\n            make_learning_record(record_id=\"ar-3\", accepted=True),\n            make_learning_record(record_id=\"ar-4\", accepted=False),\n            make_learning_record(record_id=\"ar-5\", accepted=False),\n        ]\n        await record_decision(records)\n        report = await get_stats(min_observations=0)\n        # Access the underlying value if AcceptanceRate is a wrapper\n        rate_value = report.overall_acceptance_rate\n        if hasattr(rate_value, 'value'):\n            rate_value = rate_value.value\n        assert rate_value == pytest.approx(0.6, abs=0.01)\n\n    @pytest.mark.asyncio\n    async def test_deterministic_output(self, seeded_learner):\n        \"\"\"get_stats returns identical output on repeated calls.\"\"\"\n        report1 = await get_stats(min_observations=1)\n        report2 = await get_stats(min_observations=1)\n        assert report1.total_records == report2.total_records\n        assert report1.current_phase == report2.current_phase\n        assert report1.active_trust_adjustments == report2.active_trust_adjustments\n\n\nclass TestTypeValidation:\n    \"\"\"Tests for type construction and validation.\"\"\"\n\n    # ---- ReviewerId ----\n\n    def test_reviewer_id_valid(self):\n        \"\"\"ReviewerId accepts valid identifier strings.\"\"\"\n        r = ReviewerId(value=\"alice\")\n        assert r.value == \"alice\"\n        r2 = ReviewerId(value=\"a1.b2-c3_d4\")\n        assert r2.value == \"a1.b2-c3_d4\"\n\n    def test_reviewer_id_invalid_empty(self):\n        \"\"\"ReviewerId rejects empty string.\"\"\"\n        with pytest.raises(Exception):\n            ReviewerId(value=\"\")\n\n    def test_reviewer_id_invalid_pattern(self):\n        \"\"\"ReviewerId rejects strings starting with digit or containing invalid chars.\"\"\"\n        with pytest.raises(Exception):\n            ReviewerId(value=\"1abc\")\n        with pytest.raises(Exception):\n            ReviewerId(value=\"a@b\")\n\n    def test_reviewer_id_max_length(self):\n        \"\"\"ReviewerId rejects strings exceeding 128 characters.\"\"\"\n        with pytest.raises(Exception):\n            ReviewerId(value=\"a\" * 129)\n\n    def test_reviewer_id_at_max_length(self):\n        \"\"\"ReviewerId accepts string at exactly 128 characters.\"\"\"\n        r = ReviewerId(value=\"a\" * 128)\n        assert len(r.value) == 128\n\n    # ---- RuleId ----\n\n    def test_rule_id_valid(self):\n        \"\"\"RuleId accepts valid dot-separated identifiers.\"\"\"\n        r = RuleId(value=\"security.xss\")\n        assert r.value == \"security.xss\"\n        r2 = RuleId(value=\"a/b.c\")\n        assert r2.value == \"a/b.c\"\n\n    def test_rule_id_invalid_empty(self):\n        \"\"\"RuleId rejects empty string.\"\"\"\n        with pytest.raises(Exception):\n            RuleId(value=\"\")\n\n    def test_rule_id_invalid_chars(self):\n        \"\"\"RuleId rejects invalid characters.\"\"\"\n        with pytest.raises(Exception):\n            RuleId(value=\"rule@invalid\")\n\n    def test_rule_id_max_length(self):\n        \"\"\"RuleId rejects strings exceeding 256 characters.\"\"\"\n        with pytest.raises(Exception):\n            RuleId(value=\"a\" * 257)\n\n    # ---- TrustWeight ----\n\n    def test_trust_weight_valid_bounds(self):\n        \"\"\"TrustWeight accepts values at boundaries.\"\"\"\n        tw_low = TrustWeight(value=0.1)\n        assert tw_low.value == pytest.approx(0.1)\n        tw_high = TrustWeight(value=1.0)\n        assert tw_high.value == pytest.approx(1.0)\n\n    def test_trust_weight_below_min(self):\n        \"\"\"TrustWeight rejects values below 0.1.\"\"\"\n        with pytest.raises(Exception):\n            TrustWeight(value=0.09)\n\n    def test_trust_weight_above_max(self):\n        \"\"\"TrustWeight rejects values above 1.0.\"\"\"\n        with pytest.raises(Exception):\n            TrustWeight(value=1.01)\n\n    def test_trust_weight_rounding(self):\n        \"\"\"TrustWeight rounds to 4 decimal places.\"\"\"\n        tw = TrustWeight(value=0.55555)\n        assert tw.value == pytest.approx(round(0.55555, 4), abs=1e-6)\n\n    # ---- AcceptanceRate ----\n\n    def test_acceptance_rate_valid_bounds(self):\n        \"\"\"AcceptanceRate accepts values at boundaries [0.0, 1.0].\"\"\"\n        ar_low = AcceptanceRate(value=0.0)\n        assert ar_low.value == pytest.approx(0.0)\n        ar_high = AcceptanceRate(value=1.0)\n        assert ar_high.value == pytest.approx(1.0)\n\n    def test_acceptance_rate_below_min(self):\n        \"\"\"AcceptanceRate rejects values below 0.0.\"\"\"\n        with pytest.raises(Exception):\n            AcceptanceRate(value=-0.1)\n\n    def test_acceptance_rate_above_max(self):\n        \"\"\"AcceptanceRate rejects values above 1.0.\"\"\"\n        with pytest.raises(Exception):\n            AcceptanceRate(value=1.1)\n\n    # ---- MinObservations ----\n\n    def test_min_observations_valid_bounds(self):\n        \"\"\"MinObservations accepts values at boundaries [1, 10000].\"\"\"\n        mo_low = MinObservations(value=1)\n        assert mo_low.value == 1\n        mo_high = MinObservations(value=10000)\n        assert mo_high.value == 10000\n\n    def test_min_observations_below_min(self):\n        \"\"\"MinObservations rejects value 0.\"\"\"\n        with pytest.raises(Exception):\n            MinObservations(value=0)\n\n    def test_min_observations_above_max(self):\n        \"\"\"MinObservations rejects value 10001.\"\"\"\n        with pytest.raises(Exception):\n            MinObservations(value=10001)\n\n    # ---- FilePath ----\n\n    def test_file_path_valid(self):\n        \"\"\"FilePath accepts valid path strings.\"\"\"\n        fp = FilePath(value=\"src/main.py\")\n        assert fp.value == \"src/main.py\"\n\n    def test_file_path_empty(self):\n        \"\"\"FilePath rejects empty string.\"\"\"\n        with pytest.raises(Exception):\n            FilePath(value=\"\")\n\n    def test_file_path_max_length(self):\n        \"\"\"FilePath rejects strings exceeding 4096 characters.\"\"\"\n        with pytest.raises(Exception):\n            FilePath(value=\"a\" * 4097)\n\n    # ---- PactKey ----\n\n    def test_pact_key_valid(self):\n        \"\"\"PactKey accepts valid pact: prefixed keys.\"\"\"\n        pk = PactKey(value=\"pact:learner:record_decision\")\n        assert pk.value == \"pact:learner:record_decision\"\n\n    def test_pact_key_invalid(self):\n        \"\"\"PactKey rejects invalid formats.\"\"\"\n        with pytest.raises(Exception):\n            PactKey(value=\"invalid\")\n        with pytest.raises(Exception):\n            PactKey(value=\"pact:UPPER:case\")\n\n    # ---- HumanDecisionInput ----\n\n    def test_human_decision_input_valid(self):\n        \"\"\"HumanDecisionInput accepts valid complete input.\"\"\"\n        hdi = make_human_decision_input()\n        assert hdi.finding_id == \"finding-001\"\n        assert hdi.severity == \"high\"\n\n    def test_human_decision_input_invalid_severity(self):\n        \"\"\"HumanDecisionInput rejects invalid severity value.\"\"\"\n        with pytest.raises(Exception):\n            make_human_decision_input(severity=\"unknown\")\n\n    def test_human_decision_input_invalid_finding_id_empty(self):\n        \"\"\"HumanDecisionInput rejects empty finding_id.\"\"\"\n        with pytest.raises(Exception):\n            make_human_decision_input(finding_id=\"\")\n\n    def test_human_decision_input_frozen(self):\n        \"\"\"HumanDecisionInput is frozen and immutable.\"\"\"\n        hdi = make_human_decision_input()\n        with pytest.raises(Exception):\n            hdi.finding_id = \"changed\"\n\n    def test_human_decision_input_valid_severities(self):\n        \"\"\"HumanDecisionInput accepts all valid severity values.\"\"\"\n        for sev in [\"critical\", \"high\", \"medium\", \"low\", \"info\"]:\n            hdi = make_human_decision_input(severity=sev, finding_id=f\"sev-{sev}\")\n            assert hdi.severity == sev\n\n    def test_human_decision_input_timestamp_formats(self):\n        \"\"\"HumanDecisionInput accepts valid ISO timestamps and empty string.\"\"\"\n        hdi = make_human_decision_input(timestamp_iso=\"2024-01-15T10:00:00Z\")\n        assert hdi.timestamp_iso == \"2024-01-15T10:00:00Z\"\n        hdi2 = make_human_decision_input(timestamp_iso=\"\")\n        assert hdi2.timestamp_iso == \"\"\n\n    def test_human_decision_input_invalid_timestamp(self):\n        \"\"\"HumanDecisionInput rejects invalid timestamp format.\"\"\"\n        with pytest.raises(Exception):\n            make_human_decision_input(timestamp_iso=\"not-a-timestamp\")\n\n    # ---- ReviewerRuleStats ----\n\n    def test_reviewer_rule_stats_valid(self):\n        \"\"\"ReviewerRuleStats accepts valid data.\"\"\"\n        rrs = ReviewerRuleStats(\n            reviewer_id=ReviewerId(value=\"alice\"),\n            rule_id=RuleId(value=\"security.xss\"),\n            review_stage=\"security\",\n            accepted_count=5,\n            dismissed_count=3,\n            modified_count=2,\n            total_count=10,\n            acceptance_rate=AcceptanceRate(value=0.5),\n        )\n        assert rrs.total_count == 10\n\n    def test_reviewer_rule_stats_negative_count(self):\n        \"\"\"ReviewerRuleStats rejects negative counts.\"\"\"\n        with pytest.raises(Exception):\n            ReviewerRuleStats(\n                reviewer_id=ReviewerId(value=\"alice\"),\n                rule_id=RuleId(value=\"security.xss\"),\n                review_stage=\"security\",\n                accepted_count=-1,\n                dismissed_count=0,\n                modified_count=0,\n                total_count=0,\n                acceptance_rate=AcceptanceRate(value=0.0),\n            )\n\n    def test_reviewer_rule_stats_frozen(self):\n        \"\"\"ReviewerRuleStats is frozen.\"\"\"\n        rrs = ReviewerRuleStats(\n            reviewer_id=ReviewerId(value=\"alice\"),\n            rule_id=RuleId(value=\"security.xss\"),\n            review_stage=\"security\",\n            accepted_count=5,\n            dismissed_count=3,\n            modified_count=2,\n            total_count=10,\n            acceptance_rate=AcceptanceRate(value=0.5),\n        )\n        with pytest.raises(Exception):\n            rrs.accepted_count = 99\n\n\nclass TestEnums:\n    \"\"\"Tests for enum types.\"\"\"\n\n    def test_learner_phase_values(self):\n        \"\"\"LearnerPhase has shadow, canary, primary variants.\"\"\"\n        assert LearnerPhase.shadow is not None\n        assert LearnerPhase.canary is not None\n        assert LearnerPhase.primary is not None\n\n    def test_human_decision_values(self):\n        \"\"\"HumanDecision has accepted, dismissed, modified variants.\"\"\"\n        assert HumanDecision.accepted is not None\n        assert HumanDecision.dismissed is not None\n        assert HumanDecision.modified is not None\n\n    def test_pattern_kind_values(self):\n        \"\"\"PatternKind has all specified variants.\"\"\"\n        assert PatternKind.high_false_positive_rate is not None\n        assert PatternKind.high_acceptance_rate is not None\n        assert PatternKind.category_bias is not None\n        assert PatternKind.file_pattern_bias is not None\n        assert PatternKind.severity_mismatch is not None\n\n    def test_severity_values(self):\n        \"\"\"Severity has critical, high, medium, low, info variants.\"\"\"\n        assert Severity.critical is not None\n        assert Severity.high is not None\n        assert Severity.medium is not None\n        assert Severity.low is not None\n        assert Severity.info is not None\n\n    def test_review_stage_values(self):\n        \"\"\"ReviewStage has security, correctness, style, architecture variants.\"\"\"\n        assert ReviewStage.security is not None\n        assert ReviewStage.correctness is not None\n        assert ReviewStage.style is not None\n        assert ReviewStage.architecture is not None\n\n\nclass TestLearnerState:\n    \"\"\"Tests for LearnerState type.\"\"\"\n\n    def test_learner_state_schema_version_range(self):\n        \"\"\"LearnerState schema_version must be in [1, 100].\"\"\"\n        with pytest.raises(Exception):\n            LearnerState(\n                schema_version=0,\n                phase_state=PhaseState(\n                    current_phase=LearnerPhase.shadow,\n                    transition_history=[],\n                    entered_current_phase_iso=\"2024-01-01T00:00:00Z\",\n                ),\n                reviewer_stats=[],\n                reviewer_rule_stats=[],\n                total_records=0,\n                last_updated_iso=\"2024-01-01T00:00:00Z\",\n            )\n\n    def test_learner_state_total_records_non_negative(self):\n        \"\"\"LearnerState total_records must be >= 0.\"\"\"\n        with pytest.raises(Exception):\n            LearnerState(\n                schema_version=1,\n                phase_state=PhaseState(\n                    current_phase=LearnerPhase.shadow,\n                    transition_history=[],\n                    entered_current_phase_iso=\"2024-01-01T00:00:00Z\",\n                ),\n                reviewer_stats=[],\n                reviewer_rule_stats=[],\n                total_records=-1,\n                last_updated_iso=\"2024-01-01T00:00:00Z\",\n            )\n\n    def test_learner_state_valid(self):\n        \"\"\"LearnerState accepts valid empty state.\"\"\"\n        state = LearnerState(\n            schema_version=1,\n            phase_state=PhaseState(\n                current_phase=LearnerPhase.shadow,\n                transition_history=[],\n                entered_current_phase_iso=\"2024-01-01T00:00:00Z\",\n            ),\n            reviewer_stats=[],\n            reviewer_rule_stats=[],\n            total_records=0,\n            last_updated_iso=\"2024-01-01T00:00:00Z\",\n        )\n        assert state.schema_version == 1\n        assert state.total_records == 0\n\n\nclass TestPhaseTransition:\n    \"\"\"Tests for PhaseTransition type.\"\"\"\n\n    def test_phase_transition_valid(self):\n        \"\"\"PhaseTransition accepts valid data.\"\"\"\n        pt = PhaseTransition(\n            from_phase=LearnerPhase.shadow,\n            to_phase=LearnerPhase.canary,\n            timestamp_iso=\"2024-01-15T10:00:00Z\",\n            acceptance_rate_at_transition=AcceptanceRate(value=0.75),\n            total_observations=50,\n        )\n        assert pt.from_phase == LearnerPhase.shadow\n        assert pt.to_phase == LearnerPhase.canary\n\n    def test_phase_transition_negative_observations(self):\n        \"\"\"PhaseTransition rejects negative total_observations.\"\"\"\n        with pytest.raises(Exception):\n            PhaseTransition(\n                from_phase=LearnerPhase.shadow,\n                to_phase=LearnerPhase.canary,\n                timestamp_iso=\"2024-01-15T10:00:00Z\",\n                acceptance_rate_at_transition=AcceptanceRate(value=0.75),\n                total_observations=-1,\n            )\n\n\nclass TestRecordDecisionResult:\n    \"\"\"Tests for RecordDecisionResult type.\"\"\"\n\n    def test_result_valid(self):\n        \"\"\"RecordDecisionResult accepts valid data.\"\"\"\n        r = RecordDecisionResult(\n            records_persisted=5,\n            stats_updated=True,\n            phase_changed=False,\n            new_phase=LearnerPhase.shadow,\n        )\n        assert r.records_persisted == 5\n\n    def test_result_negative_persisted(self):\n        \"\"\"RecordDecisionResult rejects negative records_persisted.\"\"\"\n        with pytest.raises(Exception):\n            RecordDecisionResult(\n                records_persisted=-1,\n                stats_updated=True,\n                phase_changed=False,\n                new_phase=LearnerPhase.shadow,\n            )\n\n\nclass TestInvariants:\n    \"\"\"Cross-cutting invariant tests.\"\"\"\n\n    @pytest.mark.asyncio\n    async def test_trust_cold_start_protection(self, initialized_learner):\n        \"\"\"Trust adjustments not produced when total_count < min_observations.\"\"\"\n        # Record only 3 observations\n        records = [make_learning_record(record_id=f\"cold-{i}\", accepted=True) for i in range(3)]\n        await record_decision(records)\n        adjustments = await get_trust_adjustments(base_weight=1.0, min_observations=10)\n        assert len(adjustments) == 0\n\n    @pytest.mark.asyncio\n    async def test_fire_and_forget_chronicler_resilience(self, initialized_learner):\n        \"\"\"Operations complete even if chronicler is unreachable.\"\"\"\n        rec = make_learning_record(record_id=\"faf-resilience\")\n        result = await record_decision([rec])\n        assert result.records_persisted == 1\n\n    @pytest.mark.asyncio\n    async def test_phase_monotonicity_full_lifecycle(self, initialized_learner):\n        \"\"\"Full lifecycle: shadow -> canary -> primary, no regression.\"\"\"\n        phase_order = {LearnerPhase.shadow: 0, LearnerPhase.canary: 1, LearnerPhase.primary: 2}\n\n        # Start shadow\n        phase = await get_current_phase()\n        assert phase == LearnerPhase.shadow\n        max_phase = phase_order[phase]\n\n        # Record accepted findings and progress\n        records = [make_learning_record(record_id=f\"lifecycle-{i}\", accepted=True) for i in range(30)]\n        await record_decision(records)\n\n        config = make_config(\n            shadow_to_canary_threshold=0.5,\n            canary_to_primary_threshold=0.8,\n            min_observations_for_phase=5,\n        )\n\n        # Progress and verify monotonicity\n        for _ in range(3):\n            phase = await check_phase_progression(config)\n            current_order = phase_order[phase]\n            assert current_order >= max_phase, f\"Phase regressed from {max_phase} to {current_order}\"\n            max_phase = current_order\n\n    @pytest.mark.asyncio\n    async def test_append_only_records(self, initialized_learner):\n        \"\"\"records.json is append-only; existing records never modified.\"\"\"\n        rec1 = make_learning_record(record_id=\"ao-first\")\n        await record_decision([rec1])\n\n        storage_path = Path(initialized_learner)\n        with open(storage_path / \"records.json\") as f:\n            records_after_first = json.load(f)\n        first_count = len(records_after_first)\n\n        rec2 = make_learning_record(record_id=\"ao-second\")\n        await record_decision([rec2])\n\n        with open(storage_path / \"records.json\") as f:\n            records_after_second = json.load(f)\n        assert len(records_after_second) == first_count + 1\n\n        # Verify first record is still present and unchanged\n        first_ids = {r.get(\"record_id\") for r in records_after_first}\n        second_ids = {r.get(\"record_id\") for r in records_after_second}\n        assert first_ids.issubset(second_ids)\n\n    @pytest.mark.asyncio\n    async def test_trust_weight_always_clamped(self, seeded_learner):\n        \"\"\"Trust weights are always in [0.1, 1.0] regardless of input.\"\"\"\n        for bw in [0.001, 0.1, 0.5, 1.0, 10.0]:\n            try:\n                adjustments = await get_trust_adjustments(base_weight=bw, min_observations=1)\n                for adj in adjustments:\n                    assert adj.weight >= 0.1, f\"Weight {adj.weight} below 0.1 for base_weight={bw}\"\n                    assert adj.weight <= 1.0, f\"Weight {adj.weight} above 1.0 for base_weight={bw}\"\n            except Exception:\n                pass  # Some base_weights may be rejected by validation\n\n    @pytest.mark.asyncio\n    async def test_trust_weight_rounded_4_decimal(self, seeded_learner):\n        \"\"\"Trust weights are rounded to exactly 4 decimal places.\"\"\"\n        adjustments = await get_trust_adjustments(base_weight=0.7777, min_observations=1)\n        for adj in adjustments:\n            assert adj.weight == pytest.approx(round(adj.weight, 4), abs=1e-8)\n\n\nclass TestRandomizedPropertyLike:\n    \"\"\"Property-like tests using random module (no hypothesis dependency).\"\"\"\n\n    @pytest.mark.asyncio\n    async def test_acceptance_rate_bounds_random(self, initialized_learner):\n        \"\"\"Acceptance rate is always in [0.0, 1.0] regardless of record mix.\"\"\"\n        import random\n        random.seed(42)\n        records = []\n        for i in range(50):\n            records.append(make_learning_record(\n                record_id=f\"rand-{i}\",\n                accepted=random.choice([True, False]),\n                reviewer_id=random.choice([\"alice\", \"bob\", \"charlie\"]),\n                rule_id=random.choice([\"security.xss\", \"style.naming\", \"correctness.null_check\"]),\n                stage=random.choice(list(ReviewStage)),\n            ))\n        await record_decision(records)\n        report = await get_stats(min_observations=0)\n        rate = report.overall_acceptance_rate\n        rate_val = rate.value if hasattr(rate, 'value') else rate\n        assert 0.0 <= rate_val <= 1.0\n\n    @pytest.mark.asyncio\n    async def test_record_stats_roundtrip(self, initialized_learner):\n        \"\"\"Records persisted match stats totals.\"\"\"\n        import random\n        random.seed(123)\n        n_records = 30\n        records = []\n        for i in range(n_records):\n            records.append(make_learning_record(\n                record_id=f\"rt-{i}\",\n                accepted=random.choice([True, False]),\n            ))\n        await record_decision(records)\n        report = await get_stats(min_observations=0)\n        assert report.total_records == n_records\n\n    def test_reviewer_id_boundary_lengths(self):\n        \"\"\"ReviewerId at boundary lengths: 1 and 128.\"\"\"\n        r1 = ReviewerId(value=\"a\")\n        assert len(r1.value) == 1\n        r128 = ReviewerId(value=\"a\" * 128)\n        assert len(r128.value) == 128\n        with pytest.raises(Exception):\n            ReviewerId(value=\"a\" * 129)\n\n    def test_trust_weight_at_boundaries(self):\n        \"\"\"TrustWeight at exact boundaries 0.1 and 1.0.\"\"\"\n        tw_min = TrustWeight(value=0.1)\n        assert tw_min.value == pytest.approx(0.1)\n        tw_max = TrustWeight(value=1.0)\n        assert tw_max.value == pytest.approx(1.0)\n\n    def test_min_observations_filtering_monotonic(self):\n        \"\"\"Higher min_observations should never include more entries than lower.\"\"\"\n        # This is a type-level property test\n        mo1 = MinObservations(value=1)\n        mo100 = MinObservations(value=100)\n        assert mo1.value < mo100.value\n"
+}

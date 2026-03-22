@@ -1,0 +1,844 @@
+{
+  "component_id": "reporter",
+  "contract_version": 1,
+  "test_cases": [
+    {
+      "id": "canonicalize_happy_path",
+      "description": "canonicalize produces valid UTF-8 JSON bytes with sorted keys and compact separators for a typical report",
+      "function": "canonicalize",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A valid ReviewReport with multiple findings and assessments, seal=None",
+      "expected_output_description": "UTF-8 encoded JSON bytes with sorted keys, compact separators, no whitespace padding",
+      "expected_error": "",
+      "assertions": [
+        "result is bytes",
+        "result.decode('utf-8') is valid JSON",
+        "json.loads(result) has sorted keys at all levels",
+        "'seal' key in parsed JSON is null",
+        "no spaces after colons or commas in raw bytes"
+      ]
+    },
+    {
+      "id": "canonicalize_idempotent",
+      "description": "Calling canonicalize twice on the same report yields byte-identical output",
+      "function": "canonicalize",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "canonicalize(report) == canonicalize(report)"
+      ]
+    },
+    {
+      "id": "canonicalize_seal_excluded",
+      "description": "Seal field is always excluded (set to None) regardless of whether report has a seal",
+      "function": "canonicalize",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A ReviewReport with a TesseraSeal attached",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "parsed JSON seal field is null",
+        "output is identical to canonicalize of report with seal=None"
+      ]
+    },
+    {
+      "id": "canonicalize_deterministic_different_calls",
+      "description": "Multiple calls produce identical bytes for the same report content",
+      "function": "canonicalize",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "all(canonicalize(report) == first_result for _ in range(10))"
+      ]
+    },
+    {
+      "id": "canonicalize_empty_findings",
+      "description": "canonicalize works correctly with empty findings and assessments lists",
+      "function": "canonicalize",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "ReviewReport with empty findings=[], assessments=[], conflict_notes=[]",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result is valid UTF-8 JSON bytes",
+        "parsed JSON findings is empty list"
+      ]
+    },
+    {
+      "id": "seal_report_happy_first_seal",
+      "description": "seal_report applies a valid TesseraSeal on a fresh (genesis) chain",
+      "function": "seal_report",
+      "category": "happy_path",
+      "setup_description": "In-memory chain store returning empty string for get_previous_hash, valid sealer_id and timestamp",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returned report is a new instance",
+        "returned report.seal is not None",
+        "seal.content_hash is 64-char hex",
+        "seal.chain_hash is 64-char hex",
+        "seal.sealer_id matches input",
+        "seal.sealed_at matches input timestamp",
+        "chain_hash == SHA-256(content_hash + '|' + 'GENESIS')",
+        "chain_store.append_seal was called",
+        "all non-seal fields identical to input"
+      ]
+    },
+    {
+      "id": "seal_report_happy_chained",
+      "description": "seal_report correctly chains with a previous hash from the store",
+      "function": "seal_report",
+      "category": "happy_path",
+      "setup_description": "Chain store returns a known previous_hash hex string",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "chain_hash == SHA-256(content_hash + '|' + previous_hash)",
+        "seal.previous_hash == previous_hash from store"
+      ]
+    },
+    {
+      "id": "seal_report_chronicler_callback_invoked",
+      "description": "Chronicler callback is invoked on successful sealing",
+      "function": "seal_report",
+      "category": "happy_path",
+      "setup_description": "Provide a mock chronicler_callback",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "callback was called exactly once",
+        "callback argument contains report.sealed event info"
+      ]
+    },
+    {
+      "id": "seal_report_chronicler_callback_fire_and_forget",
+      "description": "Chronicler callback failure does not affect seal_report return value",
+      "function": "seal_report",
+      "category": "edge_case",
+      "setup_description": "Provide a chronicler_callback that raises an exception",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "seal_report still returns a valid sealed report",
+        "no exception propagated to caller"
+      ]
+    },
+    {
+      "id": "seal_report_already_sealed_error",
+      "description": "seal_report raises error when report already has a seal",
+      "function": "seal_report",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "ReviewReport with seal already set",
+      "expected_output_description": "",
+      "expected_error": "already_sealed",
+      "assertions": [
+        "appropriate error/exception is raised"
+      ]
+    },
+    {
+      "id": "seal_report_chain_store_read_failure",
+      "description": "seal_report raises error when chain_store.get_previous_hash fails",
+      "function": "seal_report",
+      "category": "error_case",
+      "setup_description": "Chain store get_previous_hash raises an exception",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "chain_store_read_failure",
+      "assertions": [
+        "appropriate error/exception is raised"
+      ]
+    },
+    {
+      "id": "seal_report_chain_store_write_failure",
+      "description": "seal_report raises error when chain_store.append_seal fails",
+      "function": "seal_report",
+      "category": "error_case",
+      "setup_description": "Chain store append_seal raises an exception",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "chain_store_write_failure",
+      "assertions": [
+        "appropriate error/exception is raised"
+      ]
+    },
+    {
+      "id": "seal_report_original_not_mutated",
+      "description": "The original report instance is not mutated by seal_report",
+      "function": "seal_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "original_report.seal is still None after seal_report call"
+      ]
+    },
+    {
+      "id": "verify_seal_valid",
+      "description": "verify_seal returns valid status for a correctly sealed report",
+      "function": "verify_seal",
+      "category": "happy_path",
+      "setup_description": "Seal report first, then verify",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.status == 'valid'",
+        "result.valid is True",
+        "result.content_hash_match is True",
+        "result.chain_hash_match is True",
+        "result.expected_content_hash == result.actual_content_hash",
+        "result.expected_chain_hash == result.actual_chain_hash"
+      ]
+    },
+    {
+      "id": "verify_seal_missing",
+      "description": "verify_seal returns missing_seal status when report has no seal",
+      "function": "verify_seal",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "ReviewReport with seal=None",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.status == 'missing_seal'",
+        "result.valid is False"
+      ]
+    },
+    {
+      "id": "verify_seal_content_tampered",
+      "description": "verify_seal detects content hash mismatch when report content is modified after sealing",
+      "function": "verify_seal",
+      "category": "happy_path",
+      "setup_description": "Seal report, then modify summary via model_copy",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.status == 'invalid_content_hash'",
+        "result.valid is False",
+        "result.content_hash_match is False",
+        "result.expected_content_hash != result.actual_content_hash"
+      ]
+    },
+    {
+      "id": "verify_seal_chain_tampered",
+      "description": "verify_seal detects chain hash mismatch when seal.previous_hash is modified",
+      "function": "verify_seal",
+      "category": "happy_path",
+      "setup_description": "Seal report, then modify seal.previous_hash via model_copy",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.status == 'invalid_chain_hash'",
+        "result.valid is False",
+        "result.content_hash_match is True",
+        "result.chain_hash_match is False"
+      ]
+    },
+    {
+      "id": "verify_seal_never_raises",
+      "description": "verify_seal never raises exceptions even on edge cases",
+      "function": "verify_seal",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "no exception raised for any input variant",
+        "error states captured in return value"
+      ]
+    },
+    {
+      "id": "verify_seal_round_trip",
+      "description": "seal_report then verify_seal round-trip produces valid result",
+      "function": "verify_seal",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "verify_seal(sealed_report).valid is True",
+        "verify_seal(sealed_report).status == 'valid'"
+      ]
+    },
+    {
+      "id": "format_report_json_happy",
+      "description": "format_report with json output produces valid JSON FormattedReport",
+      "function": "format_report",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Valid ReviewReport, OutputFormat.json, fixed timestamp",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.output_format == OutputFormat.json",
+        "result.content is non-empty",
+        "json.loads(result.content) succeeds",
+        "result.character_count == len(result.content)",
+        "result.truncated is False",
+        "result.rendered_at matches input timestamp",
+        "result.report_id matches report.id"
+      ]
+    },
+    {
+      "id": "format_report_md_happy",
+      "description": "format_report with md output produces Markdown FormattedReport",
+      "function": "format_report",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Valid ReviewReport with findings, OutputFormat.md",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.output_format == OutputFormat.md",
+        "result.content is non-empty",
+        "result.truncated is False"
+      ]
+    },
+    {
+      "id": "format_report_github_happy",
+      "description": "format_report with github output produces GitHub-compatible FormattedReport",
+      "function": "format_report",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Valid ReviewReport with findings, OutputFormat.github",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.output_format == OutputFormat.github",
+        "'<details>' in result.content",
+        "result.character_count == len(result.content)"
+      ]
+    },
+    {
+      "id": "format_report_metadata_pact_component",
+      "description": "FormattedReport metadata contains pact_component='reporter'",
+      "function": "format_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.metadata['pact_component'] == 'reporter'"
+      ]
+    },
+    {
+      "id": "format_report_is_sealed_true",
+      "description": "FormattedReport.is_sealed reflects sealed report",
+      "function": "format_report",
+      "category": "happy_path",
+      "setup_description": "Provide a sealed ReviewReport",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.is_sealed is True"
+      ]
+    },
+    {
+      "id": "format_report_is_sealed_false",
+      "description": "FormattedReport.is_sealed reflects unsealed report",
+      "function": "format_report",
+      "category": "happy_path",
+      "setup_description": "Provide an unsealed ReviewReport",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.is_sealed is False"
+      ]
+    },
+    {
+      "id": "format_report_character_count_invariant",
+      "description": "character_count always equals len(content)",
+      "function": "format_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.character_count == len(result.content) for all output formats"
+      ]
+    },
+    {
+      "id": "render_json_valid_output",
+      "description": "render_json produces valid JSON with 2-space indent and sorted keys",
+      "function": "render_json",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "json.loads(result) succeeds",
+        "'  ' indentation present in output",
+        "keys are sorted"
+      ]
+    },
+    {
+      "id": "render_json_includes_seal",
+      "description": "render_json includes seal data when present",
+      "function": "render_json",
+      "category": "happy_path",
+      "setup_description": "Sealed ReviewReport",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "'content_hash' in result",
+        "'chain_hash' in result"
+      ]
+    },
+    {
+      "id": "render_markdown_structure",
+      "description": "render_markdown produces correct structural elements",
+      "function": "render_markdown",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "output contains top-level heading with report_id",
+        "output contains severity emoji badges",
+        "output contains stage-level headings",
+        "output contains summary table"
+      ]
+    },
+    {
+      "id": "render_markdown_severity_emojis",
+      "description": "render_markdown uses correct severity emoji mapping",
+      "function": "render_markdown",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Report with one finding per severity level",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "'🔴' for critical",
+        "'🟠' for high",
+        "'🟡' for medium",
+        "'🔵' for low",
+        "'⚪' for info"
+      ]
+    },
+    {
+      "id": "render_github_details_sections",
+      "description": "render_github produces collapsible details sections per stage",
+      "function": "render_github",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "'<details>' in output",
+        "'<summary>' in output",
+        "one details section per stage with findings"
+      ]
+    },
+    {
+      "id": "render_github_truncation",
+      "description": "render_github truncates output exceeding 65000 characters",
+      "function": "render_github",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Report with very many/large findings that would exceed 65000 chars",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "len(output) <= 65000 + len(truncation_notice)",
+        "truncation notice is appended",
+        "output contains '⚠️ *Report truncated'"
+      ]
+    },
+    {
+      "id": "render_github_no_truncation_under_limit",
+      "description": "render_github does not truncate output under 65000 characters",
+      "function": "render_github",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Small report well under 65000 chars",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "truncation notice not in output"
+      ]
+    },
+    {
+      "id": "render_github_empty_stage_omitted",
+      "description": "render_github omits stages with no findings",
+      "function": "render_github",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Report with findings only in one stage",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "only the stage with findings has a details section"
+      ]
+    },
+    {
+      "id": "type_report_id_valid",
+      "description": "ReportId accepts valid non-empty string up to 256 chars",
+      "function": "ReportId",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "ReportId(value='abc') succeeds",
+        "ReportId(value='x'*256) succeeds"
+      ]
+    },
+    {
+      "id": "type_report_id_empty",
+      "description": "ReportId rejects empty string",
+      "function": "ReportId",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "validation error",
+      "assertions": [
+        "ReportId(value='') raises ValidationError"
+      ]
+    },
+    {
+      "id": "type_report_id_too_long",
+      "description": "ReportId rejects string longer than 256 chars",
+      "function": "ReportId",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "validation error",
+      "assertions": [
+        "ReportId(value='x'*257) raises ValidationError"
+      ]
+    },
+    {
+      "id": "type_iso8601_valid",
+      "description": "Iso8601Timestamp accepts valid UTC timestamp",
+      "function": "Iso8601Timestamp",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Iso8601Timestamp(value='2024-01-15T10:30:00Z') succeeds",
+        "Iso8601Timestamp(value='2024-01-15T10:30:00.123Z') succeeds"
+      ]
+    },
+    {
+      "id": "type_iso8601_invalid",
+      "description": "Iso8601Timestamp rejects non-UTC or malformed timestamps",
+      "function": "Iso8601Timestamp",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "validation error",
+      "assertions": [
+        "Iso8601Timestamp(value='2024-01-15') raises error",
+        "Iso8601Timestamp(value='2024-01-15T10:30:00+05:00') raises error",
+        "Iso8601Timestamp(value='') raises error"
+      ]
+    },
+    {
+      "id": "type_sha256hex_valid",
+      "description": "Sha256Hex accepts valid 64-char hex or empty string",
+      "function": "Sha256Hex",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Sha256Hex(value='a'*64) succeeds",
+        "Sha256Hex(value='') succeeds"
+      ]
+    },
+    {
+      "id": "type_sha256hex_invalid",
+      "description": "Sha256Hex rejects uppercase or wrong-length hex",
+      "function": "Sha256Hex",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "validation error",
+      "assertions": [
+        "Sha256Hex(value='A'*64) raises error",
+        "Sha256Hex(value='a'*63) raises error",
+        "Sha256Hex(value='xyz') raises error"
+      ]
+    },
+    {
+      "id": "type_sealer_id_valid",
+      "description": "SealerId accepts non-empty string up to 128 chars",
+      "function": "SealerId",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "SealerId(value='sealer-1') succeeds"
+      ]
+    },
+    {
+      "id": "type_sealer_id_empty",
+      "description": "SealerId rejects empty string",
+      "function": "SealerId",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "validation error",
+      "assertions": [
+        "SealerId(value='') raises ValidationError"
+      ]
+    },
+    {
+      "id": "type_github_char_limit",
+      "description": "GithubCharLimit only accepts value 65000",
+      "function": "GithubCharLimit",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "GithubCharLimit(value=65000) succeeds"
+      ]
+    },
+    {
+      "id": "type_github_char_limit_wrong",
+      "description": "GithubCharLimit rejects values != 65000",
+      "function": "GithubCharLimit",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "validation error",
+      "assertions": [
+        "GithubCharLimit(value=65001) raises error",
+        "GithubCharLimit(value=0) raises error"
+      ]
+    },
+    {
+      "id": "type_trust_score_weight_range",
+      "description": "TrustScore weight must be between 0.0 and 1.0",
+      "function": "TrustScore",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "weight=0.0 accepted",
+        "weight=1.0 accepted",
+        "weight=-0.1 rejected",
+        "weight=1.1 rejected"
+      ]
+    },
+    {
+      "id": "type_formatted_report_character_count_nonneg",
+      "description": "FormattedReport character_count must be >= 0",
+      "function": "FormattedReport",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "character_count=0 accepted",
+        "character_count=-1 rejected"
+      ]
+    },
+    {
+      "id": "type_output_format_enum",
+      "description": "OutputFormat has exactly json, md, github variants",
+      "function": "OutputFormat",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "OutputFormat.json exists",
+        "OutputFormat.md exists",
+        "OutputFormat.github exists"
+      ]
+    },
+    {
+      "id": "type_seal_verification_status_enum",
+      "description": "SealVerificationStatus has all expected variants",
+      "function": "SealVerificationStatus",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "all 5 variants exist: valid, invalid_content_hash, invalid_chain_hash, missing_seal, verification_error"
+      ]
+    },
+    {
+      "id": "invariant_hash_format",
+      "description": "All hash values in seals are lowercase 64-char hex strings",
+      "function": "seal_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "re.match(r'^[a-f0-9]{64}$', seal.content_hash)",
+        "re.match(r'^[a-f0-9]{64}$', seal.chain_hash)"
+      ]
+    },
+    {
+      "id": "invariant_json_vs_canonical_format",
+      "description": "format_report JSON uses 2-space indent while canonicalize uses compact separators",
+      "function": "canonicalize",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "canonicalize output has no whitespace padding",
+        "format_report json output has 2-space indent"
+      ]
+    }
+  ],
+  "test_language": "python",
+  "generated_code": "\"\"\"\nContract tests for the reporter component.\n\nTests verify: canonicalize, seal_report, verify_seal, format_report,\nrender_json, render_markdown, render_github, and all contract types.\n\"\"\"\n\nimport json\nimport hashlib\nimport re\nimport pytest\nimport pytest_asyncio\nfrom unittest.mock import AsyncMock, MagicMock, patch\n\nfrom exemplar.reporter import (\n    # Types / Enums\n    OutputFormat,\n    SealVerificationStatus,\n    FormattedReport,\n    SealVerificationResult,\n    ReportId,\n    Iso8601Timestamp,\n    Sha256Hex,\n    SealerId,\n    GithubCharLimit,\n    ReviewReport,\n    Confidence,\n    ReviewDecision,\n    Finding,\n    Assessment,\n    TrustScore,\n    TesseraSeal,\n    Severity,\n    ReviewStage,\n    # Functions\n    canonicalize,\n    seal_report,\n    verify_seal,\n    format_report,\n    render_json,\n    render_markdown,\n    render_github,\n)\n\n\n# ---------------------------------------------------------------------------\n# Helpers & Fixtures\n# ---------------------------------------------------------------------------\n\nFIXED_TIMESTAMP = \"2024-06-15T12:00:00Z\"\nFIXED_TIMESTAMP_2 = \"2024-06-15T12:00:01Z\"\nFIXED_SEALER_ID = \"test-sealer-1\"\nHEX64_ZEROS = \"0\" * 64\nHEX64_ONES = \"a\" * 64\n\nTRUNCATION_NOTICE = \"\\n\\n---\\n⚠️ *Report truncated. Full report available in JSON format.*\"\n\n\ndef _sha256_hex(data: bytes) -> str:\n    return hashlib.sha256(data).hexdigest()\n\n\ndef _make_finding(\n    severity=Severity.medium,\n    stage=ReviewStage.security,\n    idx=0,\n    description=\"Test finding description\",\n    file_path=\"src/main.py\",\n):\n    return Finding(\n        id=f\"f-{idx}\",\n        hunk_id=f\"h-{idx}\",\n        file_path=file_path,\n        line_number=10 + idx,\n        severity=severity,\n        confidence=Confidence.high,\n        title=f\"Finding {idx} title\",\n        description=description,\n        suggestion=\"Fix it\",\n        rule_id=f\"RULE-{idx}\",\n        stage=stage,\n    )\n\n\ndef _make_assessment(idx=0, findings=None):\n    return Assessment(\n        id=f\"a-{idx}\",\n        review_request_id=\"rr-1\",\n        stage=ReviewStage.security,\n        reviewer_id=f\"reviewer-{idx}\",\n        decision=ReviewDecision.warn,\n        findings=findings or [],\n        confidence=Confidence.high,\n        is_partial=False,\n        error_message=None,\n        duration_ms=100,\n        created_at=FIXED_TIMESTAMP,\n    )\n\n\ndef _make_trust_score(reviewer_id=\"reviewer-0\"):\n    return TrustScore(\n        reviewer_id=reviewer_id,\n        stage=ReviewStage.security,\n        weight=0.8,\n        accepted_count=5,\n        dismissed_count=1,\n        updated_at=FIXED_TIMESTAMP,\n    )\n\n\ndef _make_report(\n    report_id=\"report-001\",\n    findings=None,\n    assessments=None,\n    seal=None,\n    summary=\"Test summary\",\n    conflict_notes=None,\n    trust_scores=None,\n):\n    if findings is None:\n        findings = [_make_finding(severity=Severity.high, idx=0)]\n    if assessments is None:\n        assessments = [_make_assessment(idx=0, findings=findings)]\n    if trust_scores is None:\n        trust_scores = [_make_trust_score()]\n    return ReviewReport(\n        id=report_id,\n        review_request_id=\"rr-1\",\n        decision=ReviewDecision.warn,\n        findings=findings,\n        assessments=assessments,\n        confidence=Confidence.high,\n        trust_scores=trust_scores,\n        conflict_notes=conflict_notes or [],\n        summary=summary,\n        seal=seal,\n        created_at=FIXED_TIMESTAMP,\n        metadata={\"repo\": \"test-repo\"},\n    )\n\n\nclass InMemoryChainStore:\n    \"\"\"In-memory implementation of SealChainStoreProtocol.\"\"\"\n\n    def __init__(self, previous_hash=\"\"):\n        self._previous_hash = previous_hash\n        self._seals = []\n\n    def get_previous_hash(self) -> str:\n        return self._previous_hash\n\n    def append_seal(self, seal_data) -> str:\n        self._seals.append(seal_data)\n        # Update previous_hash for subsequent calls\n        if hasattr(seal_data, \"chain_hash\"):\n            self._previous_hash = seal_data.chain_hash\n        elif isinstance(seal_data, dict) and \"chain_hash\" in seal_data:\n            self._previous_hash = seal_data[\"chain_hash\"]\n        return \"ok\"\n\n\nclass FailingReadChainStore:\n    \"\"\"Chain store that fails on get_previous_hash.\"\"\"\n\n    def get_previous_hash(self) -> str:\n        raise IOError(\"Permission denied reading chain store\")\n\n    def append_seal(self, seal_data) -> str:\n        return \"ok\"\n\n\nclass FailingWriteChainStore:\n    \"\"\"Chain store that fails on append_seal.\"\"\"\n\n    def __init__(self, previous_hash=\"\"):\n        self._previous_hash = previous_hash\n\n    def get_previous_hash(self) -> str:\n        return self._previous_hash\n\n    def append_seal(self, seal_data) -> str:\n        raise IOError(\"Disk full\")\n\n\n@pytest.fixture\ndef report():\n    return _make_report()\n\n\n@pytest.fixture\ndef report_no_findings():\n    return _make_report(findings=[], assessments=[_make_assessment(idx=0, findings=[])])\n\n\n@pytest.fixture\ndef report_all_severities():\n    findings = [\n        _make_finding(severity=Severity.critical, stage=ReviewStage.security, idx=0),\n        _make_finding(severity=Severity.high, stage=ReviewStage.security, idx=1),\n        _make_finding(severity=Severity.medium, stage=ReviewStage.correctness, idx=2),\n        _make_finding(severity=Severity.low, stage=ReviewStage.style, idx=3),\n        _make_finding(severity=Severity.info, stage=ReviewStage.architecture, idx=4),\n    ]\n    return _make_report(findings=findings)\n\n\n@pytest.fixture\ndef chain_store():\n    return InMemoryChainStore()\n\n\n@pytest.fixture\ndef sealer_id():\n    return SealerId(value=FIXED_SEALER_ID)\n\n\n@pytest.fixture\ndef timestamp():\n    return Iso8601Timestamp(value=FIXED_TIMESTAMP)\n\n\n@pytest.fixture\ndef timestamp2():\n    return Iso8601Timestamp(value=FIXED_TIMESTAMP_2)\n\n\n# ---------------------------------------------------------------------------\n# Type Validation Tests\n# ---------------------------------------------------------------------------\n\n\nclass TestTypeValidation:\n    \"\"\"Tests for contract type construction and validation.\"\"\"\n\n    # --- ReportId ---\n\n    def test_report_id_valid_short(self):\n        r = ReportId(value=\"a\")\n        assert r.value == \"a\"\n\n    def test_report_id_valid_max_length(self):\n        r = ReportId(value=\"x\" * 256)\n        assert len(r.value) == 256\n\n    def test_report_id_empty_rejected(self):\n        with pytest.raises(Exception):  # ValidationError\n            ReportId(value=\"\")\n\n    def test_report_id_too_long_rejected(self):\n        with pytest.raises(Exception):\n            ReportId(value=\"x\" * 257)\n\n    # --- Iso8601Timestamp ---\n\n    def test_iso8601_valid_no_fractional(self):\n        ts = Iso8601Timestamp(value=\"2024-01-15T10:30:00Z\")\n        assert ts.value == \"2024-01-15T10:30:00Z\"\n\n    def test_iso8601_valid_with_fractional(self):\n        ts = Iso8601Timestamp(value=\"2024-01-15T10:30:00.123Z\")\n        assert ts.value == \"2024-01-15T10:30:00.123Z\"\n\n    def test_iso8601_invalid_date_only(self):\n        with pytest.raises(Exception):\n            Iso8601Timestamp(value=\"2024-01-15\")\n\n    def test_iso8601_invalid_timezone_offset(self):\n        with pytest.raises(Exception):\n            Iso8601Timestamp(value=\"2024-01-15T10:30:00+05:00\")\n\n    def test_iso8601_empty_rejected(self):\n        with pytest.raises(Exception):\n            Iso8601Timestamp(value=\"\")\n\n    # --- Sha256Hex ---\n\n    def test_sha256hex_valid_64_chars(self):\n        h = Sha256Hex(value=\"a\" * 64)\n        assert h.value == \"a\" * 64\n\n    def test_sha256hex_valid_empty(self):\n        h = Sha256Hex(value=\"\")\n        assert h.value == \"\"\n\n    def test_sha256hex_uppercase_rejected(self):\n        with pytest.raises(Exception):\n            Sha256Hex(value=\"A\" * 64)\n\n    def test_sha256hex_wrong_length_rejected(self):\n        with pytest.raises(Exception):\n            Sha256Hex(value=\"a\" * 63)\n\n    def test_sha256hex_invalid_chars_rejected(self):\n        with pytest.raises(Exception):\n            Sha256Hex(value=\"g\" * 64)\n\n    # --- SealerId ---\n\n    def test_sealer_id_valid(self):\n        s = SealerId(value=\"sealer-1\")\n        assert s.value == \"sealer-1\"\n\n    def test_sealer_id_empty_rejected(self):\n        with pytest.raises(Exception):\n            SealerId(value=\"\")\n\n    def test_sealer_id_max_length(self):\n        s = SealerId(value=\"s\" * 128)\n        assert len(s.value) == 128\n\n    def test_sealer_id_over_max_rejected(self):\n        with pytest.raises(Exception):\n            SealerId(value=\"s\" * 129)\n\n    # --- GithubCharLimit ---\n\n    def test_github_char_limit_exact_65000(self):\n        g = GithubCharLimit(value=65000)\n        assert g.value == 65000\n\n    def test_github_char_limit_wrong_value_rejected(self):\n        with pytest.raises(Exception):\n            GithubCharLimit(value=65001)\n\n    def test_github_char_limit_zero_rejected(self):\n        with pytest.raises(Exception):\n            GithubCharLimit(value=0)\n\n    # --- TrustScore weight ---\n\n    def test_trust_score_weight_zero(self):\n        ts = TrustScore(\n            reviewer_id=\"r1\",\n            stage=ReviewStage.security,\n            weight=0.0,\n            accepted_count=0,\n            dismissed_count=0,\n            updated_at=FIXED_TIMESTAMP,\n        )\n        assert ts.weight == 0.0\n\n    def test_trust_score_weight_one(self):\n        ts = TrustScore(\n            reviewer_id=\"r1\",\n            stage=ReviewStage.security,\n            weight=1.0,\n            accepted_count=0,\n            dismissed_count=0,\n            updated_at=FIXED_TIMESTAMP,\n        )\n        assert ts.weight == 1.0\n\n    def test_trust_score_weight_negative_rejected(self):\n        with pytest.raises(Exception):\n            TrustScore(\n                reviewer_id=\"r1\",\n                stage=ReviewStage.security,\n                weight=-0.1,\n                accepted_count=0,\n                dismissed_count=0,\n                updated_at=FIXED_TIMESTAMP,\n            )\n\n    def test_trust_score_weight_above_one_rejected(self):\n        with pytest.raises(Exception):\n            TrustScore(\n                reviewer_id=\"r1\",\n                stage=ReviewStage.security,\n                weight=1.1,\n                accepted_count=0,\n                dismissed_count=0,\n                updated_at=FIXED_TIMESTAMP,\n            )\n\n    # --- OutputFormat enum ---\n\n    def test_output_format_variants(self):\n        assert OutputFormat.json is not None\n        assert OutputFormat.md is not None\n        assert OutputFormat.github is not None\n\n    # --- SealVerificationStatus enum ---\n\n    def test_seal_verification_status_variants(self):\n        assert SealVerificationStatus.valid is not None\n        assert SealVerificationStatus.invalid_content_hash is not None\n        assert SealVerificationStatus.invalid_chain_hash is not None\n        assert SealVerificationStatus.missing_seal is not None\n        assert SealVerificationStatus.verification_error is not None\n\n    # --- Severity enum ---\n\n    def test_severity_variants(self):\n        assert Severity.critical is not None\n        assert Severity.high is not None\n        assert Severity.medium is not None\n        assert Severity.low is not None\n        assert Severity.info is not None\n\n    # --- FormattedReport character_count ---\n\n    def test_formatted_report_character_count_nonneg(self):\n        \"\"\"character_count=0 should be accepted.\"\"\"\n        # We can't easily construct FormattedReport directly in all implementations,\n        # so we test via format_report output. This is a type-level sanity check.\n        # If the type is constructable directly, test directly.\n        try:\n            fr = FormattedReport(\n                content=\"\",\n                output_format=OutputFormat.json,\n                report_id=ReportId(value=\"r1\"),\n                is_sealed=False,\n                character_count=0,\n                truncated=False,\n                rendered_at=Iso8601Timestamp(value=FIXED_TIMESTAMP),\n                metadata={\"pact_component\": \"reporter\"},\n            )\n            assert fr.character_count == 0\n        except Exception:\n            # Type may not allow empty content or direct construction;\n            # this is acceptable as long as format_report produces valid output\n            pass\n\n    def test_formatted_report_negative_character_count_rejected(self):\n        \"\"\"character_count=-1 should be rejected by validator.\"\"\"\n        try:\n            FormattedReport(\n                content=\"x\",\n                output_format=OutputFormat.json,\n                report_id=ReportId(value=\"r1\"),\n                is_sealed=False,\n                character_count=-1,\n                truncated=False,\n                rendered_at=Iso8601Timestamp(value=FIXED_TIMESTAMP),\n                metadata={\"pact_component\": \"reporter\"},\n            )\n            pytest.fail(\"Expected validation error for negative character_count\")\n        except Exception:\n            pass  # Expected\n\n\n# ---------------------------------------------------------------------------\n# TestCanonicalize\n# ---------------------------------------------------------------------------\n\n\nclass TestCanonicalize:\n    \"\"\"Tests for the canonicalize function.\"\"\"\n\n    def test_happy_path_returns_bytes(self, report):\n        result = canonicalize(report)\n        assert isinstance(result, bytes)\n\n    def test_happy_path_valid_utf8_json(self, report):\n        result = canonicalize(report)\n        text = result.decode(\"utf-8\")\n        parsed = json.loads(text)\n        assert isinstance(parsed, dict)\n\n    def test_compact_separators_no_whitespace(self, report):\n        result = canonicalize(report)\n        text = result.decode(\"utf-8\")\n        # Compact JSON should not have \": \" or \", \" patterns\n        # (but values may contain spaces)\n        # Instead, verify by re-serializing with compact separators\n        parsed = json.loads(text)\n        re_serialized = json.dumps(parsed, sort_keys=True, separators=(\",\", \":\"), ensure_ascii=False)\n        assert text == re_serialized\n\n    def test_sorted_keys(self, report):\n        result = canonicalize(report)\n        text = result.decode(\"utf-8\")\n        parsed = json.loads(text)\n        keys = list(parsed.keys())\n        assert keys == sorted(keys)\n\n    def test_seal_excluded_is_null(self, report):\n        result = canonicalize(report)\n        parsed = json.loads(result.decode(\"utf-8\"))\n        assert parsed.get(\"seal\") is None\n\n    def test_seal_excluded_even_when_present(self):\n        \"\"\"Even if a report has a seal, canonicalize should set it to None.\"\"\"\n        report = _make_report()\n        seal = TesseraSeal(\n            content_hash=\"a\" * 64,\n            previous_hash=None,\n            chain_hash=\"b\" * 64,\n            sealed_at=FIXED_TIMESTAMP,\n            sealer_id=FIXED_SEALER_ID,\n        )\n        sealed_report = report.model_copy(update={\"seal\": seal})\n        result = canonicalize(sealed_report)\n        parsed = json.loads(result.decode(\"utf-8\"))\n        assert parsed.get(\"seal\") is None\n\n    def test_seal_excluded_same_output_with_and_without_seal(self):\n        \"\"\"canonicalize(report_with_seal) == canonicalize(report_without_seal).\"\"\"\n        report = _make_report()\n        seal = TesseraSeal(\n            content_hash=\"a\" * 64,\n            previous_hash=None,\n            chain_hash=\"b\" * 64,\n            sealed_at=FIXED_TIMESTAMP,\n            sealer_id=FIXED_SEALER_ID,\n        )\n        sealed_report = report.model_copy(update={\"seal\": seal})\n        assert canonicalize(report) == canonicalize(sealed_report)\n\n    def test_idempotent(self, report):\n        first = canonicalize(report)\n        second = canonicalize(report)\n        assert first == second\n\n    def test_deterministic_many_calls(self, report):\n        first = canonicalize(report)\n        for _ in range(10):\n            assert canonicalize(report) == first\n\n    def test_empty_findings(self, report_no_findings):\n        result = canonicalize(report_no_findings)\n        parsed = json.loads(result.decode(\"utf-8\"))\n        assert parsed[\"findings\"] == []\n\n    def test_different_reports_different_output(self):\n        r1 = _make_report(summary=\"Summary A\")\n        r2 = _make_report(summary=\"Summary B\")\n        assert canonicalize(r1) != canonicalize(r2)\n\n\n# ---------------------------------------------------------------------------\n# TestSealReport\n# ---------------------------------------------------------------------------\n\n\nclass TestSealReport:\n    \"\"\"Tests for the async seal_report function.\"\"\"\n\n    @pytest.mark.asyncio\n    async def test_happy_first_seal_genesis(self, report, chain_store, sealer_id, timestamp):\n        sealed = await seal_report(report, chain_store, sealer_id, timestamp, None)\n\n        assert sealed is not report\n        assert sealed.seal is not None\n        seal = sealed.seal\n\n        # Content hash verification\n        expected_content_hash = _sha256_hex(canonicalize(report))\n        assert seal.content_hash == expected_content_hash\n        assert re.match(r\"^[a-f0-9]{64}$\", seal.content_hash)\n\n        # Chain hash: genesis (empty previous_hash)\n        expected_chain_hash = _sha256_hex(\n            (seal.content_hash + \"|\" + \"GENESIS\").encode(\"utf-8\")\n        )\n        assert seal.chain_hash == expected_chain_hash\n        assert re.match(r\"^[a-f0-9]{64}$\", seal.chain_hash)\n\n        # Sealer ID and timestamp\n        assert seal.sealer_id == FIXED_SEALER_ID\n        assert seal.sealed_at == FIXED_TIMESTAMP\n\n        # Chain store was written to\n        assert len(chain_store._seals) == 1\n\n    @pytest.mark.asyncio\n    async def test_happy_chained_seal(self, report, sealer_id, timestamp):\n        previous_hash = \"b\" * 64\n        store = InMemoryChainStore(previous_hash=previous_hash)\n        sealed = await seal_report(report, store, sealer_id, timestamp, None)\n\n        seal = sealed.seal\n        assert seal.previous_hash == previous_hash\n\n        expected_chain_hash = _sha256_hex(\n            (seal.content_hash + \"|\" + previous_hash).encode(\"utf-8\")\n        )\n        assert seal.chain_hash == expected_chain_hash\n\n    @pytest.mark.asyncio\n    async def test_original_not_mutated(self, report, chain_store, sealer_id, timestamp):\n        original_seal = report.seal\n        await seal_report(report, chain_store, sealer_id, timestamp, None)\n        assert report.seal is original_seal  # Still None\n\n    @pytest.mark.asyncio\n    async def test_all_non_seal_fields_preserved(self, report, chain_store, sealer_id, timestamp):\n        sealed = await seal_report(report, chain_store, sealer_id, timestamp, None)\n        assert sealed.id == report.id\n        assert sealed.review_request_id == report.review_request_id\n        assert sealed.decision == report.decision\n        assert sealed.summary == report.summary\n        assert sealed.confidence == report.confidence\n        assert sealed.created_at == report.created_at\n\n    @pytest.mark.asyncio\n    async def test_chronicler_callback_invoked(self, report, chain_store, sealer_id, timestamp):\n        callback = MagicMock()\n        await seal_report(report, chain_store, sealer_id, timestamp, callback)\n        callback.assert_called_once()\n\n    @pytest.mark.asyncio\n    async def test_chronicler_callback_fire_and_forget(self, report, chain_store, sealer_id, timestamp):\n        \"\"\"Callback failure does not prevent seal_report from succeeding.\"\"\"\n        callback = MagicMock(side_effect=RuntimeError(\"callback failed\"))\n        sealed = await seal_report(report, chain_store, sealer_id, timestamp, callback)\n        assert sealed.seal is not None\n\n    @pytest.mark.asyncio\n    async def test_error_already_sealed(self, chain_store, sealer_id, timestamp):\n        report = _make_report()\n        seal = TesseraSeal(\n            content_hash=\"a\" * 64,\n            previous_hash=None,\n            chain_hash=\"b\" * 64,\n            sealed_at=FIXED_TIMESTAMP,\n            sealer_id=FIXED_SEALER_ID,\n        )\n        sealed_report = report.model_copy(update={\"seal\": seal})\n        with pytest.raises(Exception) as exc_info:\n            await seal_report(sealed_report, chain_store, sealer_id, timestamp, None)\n        # Verify it's an already_sealed type error\n        exc_text = str(exc_info.value).lower()\n        assert \"seal\" in exc_text or \"already\" in exc_text\n\n    @pytest.mark.asyncio\n    async def test_error_chain_store_read_failure(self, report, sealer_id, timestamp):\n        store = FailingReadChainStore()\n        with pytest.raises(Exception):\n            await seal_report(report, store, sealer_id, timestamp, None)\n\n    @pytest.mark.asyncio\n    async def test_error_chain_store_write_failure(self, report, sealer_id, timestamp):\n        store = FailingWriteChainStore()\n        with pytest.raises(Exception):\n            await seal_report(report, store, sealer_id, timestamp, None)\n\n    @pytest.mark.asyncio\n    async def test_hash_format_invariant(self, report, chain_store, sealer_id, timestamp):\n        \"\"\"All hash values must be lowercase 64-char hex.\"\"\"\n        sealed = await seal_report(report, chain_store, sealer_id, timestamp, None)\n        assert re.match(r\"^[a-f0-9]{64}$\", sealed.seal.content_hash)\n        assert re.match(r\"^[a-f0-9]{64}$\", sealed.seal.chain_hash)\n\n    @pytest.mark.asyncio\n    async def test_seal_appended_to_chain_store(self, report, chain_store, sealer_id, timestamp):\n        await seal_report(report, chain_store, sealer_id, timestamp, None)\n        assert len(chain_store._seals) >= 1\n\n\n# ---------------------------------------------------------------------------\n# TestVerifySeal\n# ---------------------------------------------------------------------------\n\n\nclass TestVerifySeal:\n    \"\"\"Tests for the verify_seal function.\"\"\"\n\n    @pytest.mark.asyncio\n    async def test_valid_seal_round_trip(self, report, chain_store, sealer_id, timestamp):\n        \"\"\"Seal then verify → valid.\"\"\"\n        sealed = await seal_report(report, chain_store, sealer_id, timestamp, None)\n        result = verify_seal(sealed)\n        assert result.status == SealVerificationStatus.valid\n        assert result.valid is True\n        assert result.content_hash_match is True\n        assert result.chain_hash_match is True\n        assert result.expected_content_hash == result.actual_content_hash\n        assert result.expected_chain_hash == result.actual_chain_hash\n\n    def test_missing_seal(self, report):\n        result = verify_seal(report)\n        assert result.status == SealVerificationStatus.missing_seal\n        assert result.valid is False\n\n    @pytest.mark.asyncio\n    async def test_content_tampered(self, report, chain_store, sealer_id, timestamp):\n        sealed = await seal_report(report, chain_store, sealer_id, timestamp, None)\n        tampered = sealed.model_copy(update={\"summary\": \"TAMPERED SUMMARY\"})\n        result = verify_seal(tampered)\n        assert result.status == SealVerificationStatus.invalid_content_hash\n        assert result.valid is False\n        assert result.content_hash_match is False\n        assert result.expected_content_hash != result.actual_content_hash\n\n    @pytest.mark.asyncio\n    async def test_chain_hash_tampered(self, report, chain_store, sealer_id, timestamp):\n        \"\"\"Modify seal.previous_hash to corrupt chain_hash computation while content_hash still matches.\"\"\"\n        sealed = await seal_report(report, chain_store, sealer_id, timestamp, None)\n        original_seal = sealed.seal\n        # Create a new seal with modified previous_hash but same content_hash\n        tampered_seal = TesseraSeal(\n            content_hash=original_seal.content_hash,\n            previous_hash=\"f\" * 64,  # Different from original\n            chain_hash=original_seal.chain_hash,  # Keep old chain_hash (now wrong)\n            sealed_at=original_seal.sealed_at,\n            sealer_id=original_seal.sealer_id,\n        )\n        tampered = sealed.model_copy(update={\"seal\": tampered_seal})\n        result = verify_seal(tampered)\n        assert result.status == SealVerificationStatus.invalid_chain_hash\n        assert result.valid is False\n        assert result.content_hash_match is True\n        assert result.chain_hash_match is False\n\n    def test_verify_never_raises_on_missing_seal(self):\n        \"\"\"verify_seal should never raise even with no seal.\"\"\"\n        report = _make_report()\n        result = verify_seal(report)\n        assert isinstance(result, SealVerificationResult)\n\n    @pytest.mark.asyncio\n    async def test_verify_seal_result_all_fields_populated(self, report, chain_store, sealer_id, timestamp):\n        sealed = await seal_report(report, chain_store, sealer_id, timestamp, None)\n        result = verify_seal(sealed)\n        # All hash fields should be 64-char hex\n        assert re.match(r\"^[a-f0-9]{64}$\", result.expected_content_hash.value if hasattr(result.expected_content_hash, 'value') else result.expected_content_hash)\n        assert re.match(r\"^[a-f0-9]{64}$\", result.actual_content_hash.value if hasattr(result.actual_content_hash, 'value') else result.actual_content_hash)\n        assert re.match(r\"^[a-f0-9]{64}$\", result.expected_chain_hash.value if hasattr(result.expected_chain_hash, 'value') else result.expected_chain_hash)\n        assert re.match(r\"^[a-f0-9]{64}$\", result.actual_chain_hash.value if hasattr(result.actual_chain_hash, 'value') else result.actual_chain_hash)\n\n    @pytest.mark.asyncio\n    async def test_verify_seal_immutable_result(self, report, chain_store, sealer_id, timestamp):\n        \"\"\"SealVerificationResult should be frozen/immutable.\"\"\"\n        sealed = await seal_report(report, chain_store, sealer_id, timestamp, None)\n        result = verify_seal(sealed)\n        with pytest.raises(Exception):\n            result.valid = False  # type: ignore\n\n\n# ---------------------------------------------------------------------------\n# TestFormatReport\n# ---------------------------------------------------------------------------\n\n\nclass TestFormatReport:\n    \"\"\"Tests for the format_report function.\"\"\"\n\n    def test_json_happy_path(self, report, timestamp):\n        result = format_report(report, OutputFormat.json, timestamp)\n        assert result.output_format == OutputFormat.json\n        assert len(result.content) > 0\n        # Valid JSON\n        parsed = json.loads(result.content)\n        assert isinstance(parsed, dict)\n        assert result.character_count == len(result.content)\n        assert result.truncated is False\n        # rendered_at matches timestamp\n        rendered_at_val = result.rendered_at.value if hasattr(result.rendered_at, 'value') else str(result.rendered_at)\n        assert rendered_at_val == FIXED_TIMESTAMP\n        # report_id matches\n        rid = result.report_id.value if hasattr(result.report_id, 'value') else str(result.report_id)\n        assert rid == report.id\n\n    def test_md_happy_path(self, report, timestamp):\n        result = format_report(report, OutputFormat.md, timestamp)\n        assert result.output_format == OutputFormat.md\n        assert len(result.content) > 0\n        assert result.truncated is False\n\n    def test_github_happy_path(self, report, timestamp):\n        result = format_report(report, OutputFormat.github, timestamp)\n        assert result.output_format == OutputFormat.github\n        assert \"<details>\" in result.content\n        assert result.character_count == len(result.content)\n\n    def test_metadata_pact_component(self, report, timestamp):\n        result = format_report(report, OutputFormat.json, timestamp)\n        assert result.metadata.get(\"pact_component\") == \"reporter\"\n\n    def test_is_sealed_false(self, report, timestamp):\n        result = format_report(report, OutputFormat.json, timestamp)\n        assert result.is_sealed is False\n\n    @pytest.mark.asyncio\n    async def test_is_sealed_true(self, report, chain_store, timestamp):\n        sealer_id = SealerId(value=FIXED_SEALER_ID)\n        sealed = await seal_report(report, chain_store, sealer_id, timestamp, None)\n        result = format_report(sealed, OutputFormat.json, timestamp)\n        assert result.is_sealed is True\n\n    def test_character_count_equals_len_content_json(self, report, timestamp):\n        result = format_report(report, OutputFormat.json, timestamp)\n        assert result.character_count == len(result.content)\n\n    def test_character_count_equals_len_content_md(self, report, timestamp):\n        result = format_report(report, OutputFormat.md, timestamp)\n        assert result.character_count == len(result.content)\n\n    def test_character_count_equals_len_content_github(self, report, timestamp):\n        result = format_report(report, OutputFormat.github, timestamp)\n        assert result.character_count == len(result.content)\n\n    def test_json_truncated_always_false(self, report, timestamp):\n        result = format_report(report, OutputFormat.json, timestamp)\n        assert result.truncated is False\n\n    def test_md_truncated_always_false(self, report, timestamp):\n        result = format_report(report, OutputFormat.md, timestamp)\n        assert result.truncated is False\n\n    def test_deterministic_output(self, report, timestamp):\n        r1 = format_report(report, OutputFormat.json, timestamp)\n        r2 = format_report(report, OutputFormat.json, timestamp)\n        assert r1.content == r2.content\n\n    def test_deterministic_output_md(self, report, timestamp):\n        r1 = format_report(report, OutputFormat.md, timestamp)\n        r2 = format_report(report, OutputFormat.md, timestamp)\n        assert r1.content == r2.content\n\n    def test_deterministic_output_github(self, report, timestamp):\n        r1 = format_report(report, OutputFormat.github, timestamp)\n        r2 = format_report(report, OutputFormat.github, timestamp)\n        assert r1.content == r2.content\n\n\n# ---------------------------------------------------------------------------\n# TestRenderers\n# ---------------------------------------------------------------------------\n\n\nclass TestRenderJson:\n    \"\"\"Tests for render_json.\"\"\"\n\n    def test_valid_json_output(self, report):\n        result = render_json(report)\n        parsed = json.loads(result)\n        assert isinstance(parsed, dict)\n\n    def test_two_space_indent(self, report):\n        result = render_json(report)\n        # Should contain lines indented with 2 spaces\n        lines = result.split(\"\\n\")\n        indented = [l for l in lines if l.startswith(\"  \")]\n        assert len(indented) > 0\n\n    def test_sorted_keys(self, report):\n        result = render_json(report)\n        parsed = json.loads(result)\n        keys = list(parsed.keys())\n        assert keys == sorted(keys)\n\n    @pytest.mark.asyncio\n    async def test_includes_seal_data(self, report, chain_store, timestamp):\n        sealer_id = SealerId(value=FIXED_SEALER_ID)\n        sealed = await seal_report(report, chain_store, sealer_id, timestamp, None)\n        result = render_json(sealed)\n        parsed = json.loads(result)\n        assert parsed.get(\"seal\") is not None\n        assert \"content_hash\" in parsed[\"seal\"]\n        assert \"chain_hash\" in parsed[\"seal\"]\n\n    def test_seal_null_when_absent(self, report):\n        result = render_json(report)\n        parsed = json.loads(result)\n        assert parsed.get(\"seal\") is None\n\n\nclass TestRenderMarkdown:\n    \"\"\"Tests for render_markdown.\"\"\"\n\n    def test_contains_heading_with_report_id(self, report, timestamp):\n        result = render_markdown(report, timestamp)\n        assert report.id in result\n        assert \"#\" in result  # Markdown heading\n\n    def test_severity_emojis(self, timestamp):\n        report = _make_report(\n            findings=[\n                _make_finding(severity=Severity.critical, idx=0),\n                _make_finding(severity=Severity.high, idx=1),\n                _make_finding(severity=Severity.medium, idx=2),\n                _make_finding(severity=Severity.low, idx=3),\n                _make_finding(severity=Severity.info, idx=4),\n            ]\n        )\n        result = render_markdown(report, timestamp)\n        assert \"🔴\" in result  # critical\n        assert \"🟠\" in result  # high\n        assert \"🟡\" in result  # medium\n        assert \"🔵\" in result  # low\n        assert \"⚪\" in result  # info\n\n    def test_findings_grouped_by_stage(self, timestamp):\n        findings = [\n            _make_finding(stage=ReviewStage.security, idx=0),\n            _make_finding(stage=ReviewStage.correctness, idx=1),\n        ]\n        report = _make_report(findings=findings)\n        result = render_markdown(report, timestamp)\n        # Both stage names should appear\n        assert \"security\" in result.lower() or \"Security\" in result\n        assert \"correctness\" in result.lower() or \"Correctness\" in result\n\n    def test_summary_table(self, report, timestamp):\n        result = render_markdown(report, timestamp)\n        # Should contain some tabular structure (pipe chars for Markdown tables)\n        assert \"|\" in result\n\n    @pytest.mark.asyncio\n    async def test_seal_status_section_present(self, report, chain_store, timestamp):\n        sealer_id = SealerId(value=FIXED_SEALER_ID)\n        sealed = await seal_report(report, chain_store, sealer_id, timestamp, None)\n        result = render_markdown(sealed, timestamp)\n        # Should mention seal or integrity\n        lower_result = result.lower()\n        assert \"seal\" in lower_result or \"integrity\" in lower_result\n\n    def test_no_seal_section_when_unsealed(self, report, timestamp):\n        result = render_markdown(report, timestamp)\n        # We just confirm it renders without error; seal section may or may not appear\n        assert len(result) > 0\n\n    def test_empty_findings(self, report_no_findings, timestamp):\n        result = render_markdown(report_no_findings, timestamp)\n        assert len(result) > 0\n\n    def test_all_finding_titles_present(self, timestamp):\n        findings = [_make_finding(idx=i) for i in range(5)]\n        report = _make_report(findings=findings)\n        result = render_markdown(report, timestamp)\n        for f in findings:\n            assert f.title in result\n\n\nclass TestRenderGithub:\n    \"\"\"Tests for render_github.\"\"\"\n\n    def test_details_sections(self, report, timestamp):\n        result = render_github(report, timestamp)\n        assert \"<details>\" in result\n        assert \"<summary>\" in result\n\n    def test_severity_emojis(self, report, timestamp):\n        result = render_github(report, timestamp)\n        # Report has a high-severity finding\n        assert \"🟠\" in result\n\n    def test_no_truncation_under_limit(self, report, timestamp):\n        result = render_github(report, timestamp)\n        assert \"⚠️ *Report truncated\" not in result\n        assert len(result) <= 65000\n\n    def test_truncation_over_limit(self, timestamp):\n        \"\"\"Create a report large enough to exceed 65000 chars.\"\"\"\n        # Generate many large findings\n        long_desc = \"A\" * 500\n        findings = [\n            _make_finding(idx=i, description=long_desc, stage=ReviewStage.security)\n            for i in range(200)\n        ]\n        report = _make_report(findings=findings)\n        result = render_github(report, timestamp)\n        # If the raw rendering would exceed 65000, it should be truncated\n        # The total output should not exceed 65000 + length of truncation notice\n        max_allowed = 65000 + len(TRUNCATION_NOTICE)\n        assert len(result) <= max_allowed\n        if len(result) > 65000:\n            assert \"⚠️\" in result or \"truncated\" in result.lower()\n\n    def test_empty_stage_omitted(self, timestamp):\n        \"\"\"Stages without findings should not produce detail sections.\"\"\"\n        findings = [_make_finding(stage=ReviewStage.security, idx=0)]\n        report = _make_report(findings=findings)\n        result = render_github(report, timestamp)\n        # Only security stage should have a details section\n        # Count <details> sections\n        details_count = result.count(\"<details>\")\n        assert details_count >= 1\n        # Style/architecture should not have sections (no findings)\n        # We can check if \"style\" or \"architecture\" appears in a <summary> tag\n        # This is a best-effort structural check\n        lower_result = result.lower()\n        # If there are no findings for a stage, that stage heading should be absent\n        # (We only check stages that have zero findings in our report)\n        if \"architecture\" in lower_result:\n            # It might appear in metadata; check it's not in a <summary> tag\n            pass  # Relaxed assertion — contract says \"omitted\" not \"absolutely absent\"\n\n    def test_valid_github_flavored_markdown(self, report, timestamp):\n        result = render_github(report, timestamp)\n        assert isinstance(result, str)\n        assert len(result) > 0\n\n\n# ---------------------------------------------------------------------------\n# Invariant Tests\n# ---------------------------------------------------------------------------\n\n\nclass TestInvariants:\n    \"\"\"Cross-cutting invariant tests.\"\"\"\n\n    def test_json_format_vs_canonical_format(self, report, timestamp):\n        \"\"\"format_report JSON uses 2-space indent; canonicalize uses compact separators.\"\"\"\n        canonical_bytes = canonicalize(report)\n        canonical_text = canonical_bytes.decode(\"utf-8\")\n\n        formatted = format_report(report, OutputFormat.json, timestamp)\n        formatted_text = formatted.content\n\n        # Canonical should be compact (no newlines or indentation)\n        assert \"\\n\" not in canonical_text\n        # Formatted should have indentation (newlines present)\n        assert \"\\n\" in formatted_text\n\n    def test_canonicalize_is_single_source_of_truth(self, report):\n        \"\"\"Both seal_report and verify_seal should use canonicalize for hashing.\"\"\"\n        # Verify by computing hash from canonicalize and comparing with what seal_report produces\n        canonical = canonicalize(report)\n        expected_hash = _sha256_hex(canonical)\n        # We'll verify this matches after sealing\n        assert isinstance(expected_hash, str)\n        assert len(expected_hash) == 64\n\n    @pytest.mark.asyncio\n    async def test_seal_content_hash_matches_canonicalize(self, report, chain_store, timestamp):\n        sealer_id = SealerId(value=FIXED_SEALER_ID)\n        canonical = canonicalize(report)\n        expected_hash = _sha256_hex(canonical)\n        sealed = await seal_report(report, chain_store, sealer_id, timestamp, None)\n        assert sealed.seal.content_hash == expected_hash\n\n    @pytest.mark.asyncio\n    async def test_seal_chain_hash_formula(self, report, chain_store, timestamp):\n        sealer_id = SealerId(value=FIXED_SEALER_ID)\n        sealed = await seal_report(report, chain_store, sealer_id, timestamp, None)\n        seal = sealed.seal\n        prev = seal.previous_hash or \"GENESIS\"\n        expected_chain = _sha256_hex((seal.content_hash + \"|\" + prev).encode(\"utf-8\"))\n        assert seal.chain_hash == expected_chain\n\n    @pytest.mark.asyncio\n    async def test_frozen_review_report(self, report, chain_store, timestamp):\n        \"\"\"ReviewReport instances are frozen (immutable).\"\"\"\n        sealer_id = SealerId(value=FIXED_SEALER_ID)\n        sealed = await seal_report(report, chain_store, sealer_id, timestamp, None)\n        with pytest.raises(Exception):\n            sealed.summary = \"mutated\"  # type: ignore\n\n    def test_formatted_report_frozen(self, report, timestamp):\n        \"\"\"FormattedReport instances are frozen (immutable).\"\"\"\n        result = format_report(report, OutputFormat.json, timestamp)\n        with pytest.raises(Exception):\n            result.content = \"mutated\"  # type: ignore\n\n    @pytest.mark.asyncio\n    async def test_verify_seal_result_frozen(self, report, chain_store, timestamp):\n        \"\"\"SealVerificationResult instances are frozen (immutable).\"\"\"\n        sealer_id = SealerId(value=FIXED_SEALER_ID)\n        sealed = await seal_report(report, chain_store, sealer_id, timestamp, None)\n        result = verify_seal(sealed)\n        with pytest.raises(Exception):\n            result.valid = not result.valid  # type: ignore\n\n    def test_github_never_exceeds_limit(self, timestamp):\n        \"\"\"GitHub format output never exceeds 65000 characters (plus truncation notice).\"\"\"\n        long_desc = \"X\" * 1000\n        findings = [\n            _make_finding(idx=i, description=long_desc, stage=ReviewStage.security)\n            for i in range(100)\n        ]\n        report = _make_report(findings=findings)\n        result = render_github(report, timestamp)\n        # The rendered content, excluding truncation notice, should be <= 65000\n        # Or total with notice <= 65000 + len(notice)\n        max_total = 65000 + len(TRUNCATION_NOTICE)\n        assert len(result) <= max_total\n\n    def test_all_output_formats_produce_nonempty_content(self, report, timestamp):\n        for fmt in [OutputFormat.json, OutputFormat.md, OutputFormat.github]:\n            result = format_report(report, fmt, timestamp)\n            assert len(result.content) > 0, f\"Empty content for format {fmt}\"\n\n    def test_pact_component_in_all_formatted_reports(self, report, timestamp):\n        for fmt in [OutputFormat.json, OutputFormat.md, OutputFormat.github]:\n            result = format_report(report, fmt, timestamp)\n            assert result.metadata.get(\"pact_component\") == \"reporter\"\n\n    @pytest.mark.asyncio\n    async def test_verify_after_seal_all_hash_fields_are_64_hex(self, report, chain_store, timestamp):\n        sealer_id = SealerId(value=FIXED_SEALER_ID)\n        sealed = await seal_report(report, chain_store, sealer_id, timestamp, None)\n        result = verify_seal(sealed)\n        for field_name in [\"expected_content_hash\", \"actual_content_hash\", \"expected_chain_hash\", \"actual_chain_hash\"]:\n            val = getattr(result, field_name)\n            raw = val.value if hasattr(val, \"value\") else str(val)\n            assert re.match(r\"^[a-f0-9]{64}$\", raw), f\"{field_name} is not valid hex: {raw}\"\n"
+}

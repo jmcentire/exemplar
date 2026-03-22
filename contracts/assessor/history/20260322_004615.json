@@ -1,0 +1,1501 @@
+{
+  "component_id": "assessor",
+  "name": "Assessment Merger & Trust Scoring",
+  "description": "Merges multiple reviewer Assessments into a single ReviewReport using Arbiter trust-weighted scoring. Conflict resolution: security BLOCK overrides style PASS with explanation; configurable priority ordering. Per-finding confidence scores derived from reviewer trust weight × finding confidence. Deduplicates overlapping findings across reviewers. Produces final ReviewDecision (block/warn/pass) based on configurable thresholds. Emits assessment.merged Chronicler event via fire-and-forget callback.",
+  "version": 1,
+  "types": [
+    {
+      "name": "Severity",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ],
+      "inner_types": [],
+      "description": "Severity level of a review finding, ordered from most to least critical.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ReviewDecision",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "block",
+        "warn",
+        "pass"
+      ],
+      "inner_types": [],
+      "description": "Final decision on a pull request review: block merging, warn, or pass.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ReviewStage",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "security",
+        "correctness",
+        "style",
+        "architecture"
+      ],
+      "inner_types": [],
+      "description": "Named stage in the review circuit pipeline.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ReviewRequestId",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The review request identifier string.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1,max=256",
+              "error_message": "review_request_id must be between 1 and 256 characters"
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Non-empty string identifier for a review request, used to correlate assessments, reports, and Chronicler events.",
+      "owner_component": ""
+    },
+    {
+      "name": "ReviewerId",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The reviewer identifier.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1,max=128",
+              "error_message": "reviewer_id must be between 1 and 128 characters"
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Non-empty identifier for a reviewer instance, used as a key for trust-score matching.",
+      "owner_component": ""
+    },
+    {
+      "name": "TrustWeight",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "float",
+          "required": true,
+          "default": "",
+          "description": "Trust weight between 0.0 (no trust) and 1.0 (full trust).",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0.0,max=1.0",
+              "error_message": "Trust weight must be between 0.0 and 1.0 inclusive"
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A trust weight value in the range [0.0, 1.0] representing the relative reliability of a reviewer.",
+      "owner_component": ""
+    },
+    {
+      "name": "ConfidenceScore",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "float",
+          "required": true,
+          "default": "",
+          "description": "Confidence between 0.0 (no confidence) and 1.0 (full confidence).",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0.0,max=1.0",
+              "error_message": "Confidence score must be between 0.0 and 1.0 inclusive"
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A confidence score in the range [0.0, 1.0] representing certainty in a finding or report.",
+      "owner_component": ""
+    },
+    {
+      "name": "FindingDeduplicationKey",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "hunk_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the diff hunk containing the finding.",
+          "validators": []
+        },
+        {
+          "name": "file_path",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Relative file path where the finding was detected.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1,max=1024",
+              "error_message": "file_path must be non-empty and at most 1024 characters"
+            }
+          ]
+        },
+        {
+          "name": "line_number",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "1-based line number of the finding.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=1",
+              "error_message": "line_number must be a positive integer"
+            }
+          ]
+        },
+        {
+          "name": "rule_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the rule that triggered the finding.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1,max=256",
+              "error_message": "rule_id must be non-empty"
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Composite key used to identify duplicate findings across reviewers. Two findings with the same key are considered overlapping.",
+      "owner_component": ""
+    },
+    {
+      "name": "Finding",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique finding identifier.",
+          "validators": []
+        },
+        {
+          "name": "hunk_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the DiffHunk this finding applies to.",
+          "validators": []
+        },
+        {
+          "name": "file_path",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "File path where the finding was detected.",
+          "validators": []
+        },
+        {
+          "name": "line_number",
+          "type_ref": "Optional[int]",
+          "required": false,
+          "default": "null",
+          "description": "Specific line number if applicable.",
+          "validators": []
+        },
+        {
+          "name": "severity",
+          "type_ref": "Severity",
+          "required": true,
+          "default": "",
+          "description": "Severity of the finding.",
+          "validators": []
+        },
+        {
+          "name": "confidence",
+          "type_ref": "Confidence",
+          "required": true,
+          "default": "",
+          "description": "Reviewer confidence in this finding.",
+          "validators": []
+        },
+        {
+          "name": "title",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Short human-readable title of the finding.",
+          "validators": []
+        },
+        {
+          "name": "description",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Detailed explanation of the issue.",
+          "validators": []
+        },
+        {
+          "name": "suggestion",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Suggested fix or remediation.",
+          "validators": []
+        },
+        {
+          "name": "rule_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the rule or pattern that triggered this finding.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "Which review stage produced this finding.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single issue found by a reviewer in a specific hunk.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "TrustScore",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the reviewer this score applies to.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "Stage the reviewer operates in.",
+          "validators": []
+        },
+        {
+          "name": "weight",
+          "type_ref": "float",
+          "required": true,
+          "default": "",
+          "description": "Trust weight in range [0.0, 1.0].",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "0.0 <= value <= 1.0",
+              "error_message": "Trust weight must be between 0.0 and 1.0"
+            }
+          ]
+        },
+        {
+          "name": "accepted_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "0",
+          "description": "Number of findings from this reviewer that humans accepted.",
+          "validators": []
+        },
+        {
+          "name": "dismissed_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "0",
+          "description": "Number of findings from this reviewer that humans dismissed.",
+          "validators": []
+        },
+        {
+          "name": "updated_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of last trust score update.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Arbiter trust weight for a reviewer agent, used in weighted assessment merging.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "Assessment",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique assessment identifier.",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the ReviewRequest this assessment responds to.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "The review stage this assessment covers.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the reviewer agent that produced this assessment.",
+          "validators": []
+        },
+        {
+          "name": "decision",
+          "type_ref": "ReviewDecision",
+          "required": true,
+          "default": "",
+          "description": "This reviewer's overall decision.",
+          "validators": []
+        },
+        {
+          "name": "findings",
+          "type_ref": "list[Finding]",
+          "required": true,
+          "default": "[]",
+          "description": "List of findings from this reviewer.",
+          "validators": []
+        },
+        {
+          "name": "confidence",
+          "type_ref": "Confidence",
+          "required": true,
+          "default": "",
+          "description": "Overall confidence of this assessment.",
+          "validators": []
+        },
+        {
+          "name": "is_partial",
+          "type_ref": "bool",
+          "required": true,
+          "default": "false",
+          "description": "True if the reviewer failed/timed out and this is a degraded result.",
+          "validators": []
+        },
+        {
+          "name": "error_message",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Error message if the reviewer encountered an issue.",
+          "validators": []
+        },
+        {
+          "name": "duration_ms",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Time in milliseconds the reviewer took to produce this assessment.",
+          "validators": []
+        },
+        {
+          "name": "created_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of assessment creation.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single reviewer's complete assessment of the diff hunks it was given.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ConflictNote",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "description",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable description of the conflict and its resolution.",
+          "validators": []
+        },
+        {
+          "name": "overriding_stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "The stage whose assessment took priority.",
+          "validators": []
+        },
+        {
+          "name": "overridden_stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "The stage whose assessment was overridden.",
+          "validators": []
+        },
+        {
+          "name": "overriding_decision",
+          "type_ref": "ReviewDecision",
+          "required": true,
+          "default": "",
+          "description": "The decision that was kept.",
+          "validators": []
+        },
+        {
+          "name": "overridden_decision",
+          "type_ref": "ReviewDecision",
+          "required": true,
+          "default": "",
+          "description": "The decision that was overridden.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Documents a conflict between reviewer assessments and the resolution applied.",
+      "owner_component": ""
+    },
+    {
+      "name": "PactAttribution",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "component",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "PACT component key identifying this module.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1",
+              "error_message": "PACT component key must be non-empty"
+            }
+          ]
+        },
+        {
+          "name": "version",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Contract version number.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=1",
+              "error_message": "Version must be a positive integer"
+            }
+          ]
+        },
+        {
+          "name": "timestamp",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO 8601 timestamp of report generation.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "PACT governance attribution metadata embedded in every public output for Sentinel traceability.",
+      "owner_component": ""
+    },
+    {
+      "name": "ReviewReport",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique report identifier.",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the originating ReviewRequest.",
+          "validators": []
+        },
+        {
+          "name": "decision",
+          "type_ref": "ReviewDecision",
+          "required": true,
+          "default": "",
+          "description": "Final merged decision.",
+          "validators": []
+        },
+        {
+          "name": "findings",
+          "type_ref": "list[Finding]",
+          "required": true,
+          "default": "",
+          "description": "Deduplicated, merged findings from all reviewers.",
+          "validators": []
+        },
+        {
+          "name": "assessments",
+          "type_ref": "list[Assessment]",
+          "required": true,
+          "default": "",
+          "description": "All individual reviewer assessments that contributed.",
+          "validators": []
+        },
+        {
+          "name": "confidence",
+          "type_ref": "Confidence",
+          "required": true,
+          "default": "",
+          "description": "Overall confidence of the merged report.",
+          "validators": []
+        },
+        {
+          "name": "trust_scores",
+          "type_ref": "list[TrustScore]",
+          "required": true,
+          "default": "",
+          "description": "Trust scores of all reviewers at the time of merge.",
+          "validators": []
+        },
+        {
+          "name": "conflict_notes",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Explanations of any conflicts between reviewers and how they were resolved.",
+          "validators": []
+        },
+        {
+          "name": "summary",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable summary of the review outcome.",
+          "validators": []
+        },
+        {
+          "name": "seal",
+          "type_ref": "Optional[TesseraSeal]",
+          "required": false,
+          "default": "null",
+          "description": "Tessera hash-chain seal over the report content, set after sealing.",
+          "validators": []
+        },
+        {
+          "name": "created_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of report creation.",
+          "validators": []
+        },
+        {
+          "name": "metadata",
+          "type_ref": "dict[str, str]",
+          "required": true,
+          "default": "{}",
+          "description": "Arbitrary key-value metadata carried from ReviewRequest.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "The final merged review report: all assessments combined with trust-weighted scoring and a tamper-proof seal.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "MergeContext",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "default_trust_weight",
+          "type_ref": "TrustWeight",
+          "required": true,
+          "default": "",
+          "description": "Fallback trust weight when no explicit TrustScore is provided for a reviewer+stage.",
+          "validators": []
+        },
+        {
+          "name": "block_threshold",
+          "type_ref": "float",
+          "required": true,
+          "default": "",
+          "description": "Aggregate score at or above which the final decision is BLOCK.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0.0",
+              "error_message": "block_threshold must be non-negative"
+            }
+          ]
+        },
+        {
+          "name": "warn_threshold",
+          "type_ref": "float",
+          "required": true,
+          "default": "",
+          "description": "Aggregate score at or above which the final decision is WARN (below block_threshold).",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0.0",
+              "error_message": "warn_threshold must be non-negative"
+            }
+          ]
+        },
+        {
+          "name": "stage_priority",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "Ordered list of stages from highest to lowest priority for conflict resolution.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1",
+              "error_message": "stage_priority must contain at least one stage"
+            }
+          ]
+        },
+        {
+          "name": "security_block_overrides",
+          "type_ref": "bool",
+          "required": true,
+          "default": "",
+          "description": "If true, any security-stage BLOCK unconditionally forces the final decision to BLOCK.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Internal frozen Pydantic model holding extracted configuration values relevant to the merge algorithm. Constructed from ExemplarConfig at Assessor instantiation.",
+      "owner_component": ""
+    },
+    {
+      "name": "ChroniclerEvent",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "event_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique event identifier.",
+          "validators": []
+        },
+        {
+          "name": "event_type",
+          "type_ref": "ChroniclerEventType",
+          "required": true,
+          "default": "",
+          "description": "Well-known event type.",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the ReviewRequest this event relates to.",
+          "validators": []
+        },
+        {
+          "name": "timestamp",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of when the event occurred.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "Optional[ReviewStage]",
+          "required": false,
+          "default": "null",
+          "description": "Review stage this event relates to, if applicable.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Reviewer agent ID if this event is reviewer-specific.",
+          "validators": []
+        },
+        {
+          "name": "payload",
+          "type_ref": "dict[str, str]",
+          "required": true,
+          "default": "{}",
+          "description": "Arbitrary structured data associated with the event.",
+          "validators": []
+        },
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable description of the event.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A structured event emitted at review lifecycle boundaries for audit trail and story assembly.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "SeverityScoreMap",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "info",
+          "type_ref": "float",
+          "required": true,
+          "default": "1.0",
+          "description": "Score for info-level findings.",
+          "validators": []
+        },
+        {
+          "name": "warning",
+          "type_ref": "float",
+          "required": true,
+          "default": "3.0",
+          "description": "Score for warning-level findings.",
+          "validators": []
+        },
+        {
+          "name": "error",
+          "type_ref": "float",
+          "required": true,
+          "default": "7.0",
+          "description": "Score for error-level findings.",
+          "validators": []
+        },
+        {
+          "name": "critical",
+          "type_ref": "float",
+          "required": true,
+          "default": "15.0",
+          "description": "Score for critical-level findings.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Module-level constant mapping Severity variants to numeric scores for weighted scoring.",
+      "owner_component": ""
+    },
+    {
+      "name": "ConfidenceScoreMap",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "low",
+          "type_ref": "float",
+          "required": true,
+          "default": "0.3",
+          "description": "Multiplier for low-confidence findings.",
+          "validators": []
+        },
+        {
+          "name": "medium",
+          "type_ref": "float",
+          "required": true,
+          "default": "0.6",
+          "description": "Multiplier for medium-confidence findings.",
+          "validators": []
+        },
+        {
+          "name": "high",
+          "type_ref": "float",
+          "required": true,
+          "default": "1.0",
+          "description": "Multiplier for high-confidence findings.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Module-level constant providing base confidence score multipliers used in the weighting formula.",
+      "owner_component": ""
+    },
+    {
+      "name": "Confidence",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "inner_types": [],
+      "description": "Confidence level of a reviewer finding or merged assessment.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ChroniclerEventType",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "review.started",
+        "stage.started",
+        "stage.complete",
+        "assessment.merged",
+        "report.sealed",
+        "review.complete",
+        "policy.violation",
+        "pattern.detected",
+        "learning.recorded"
+      ],
+      "inner_types": [],
+      "description": "Well-known Chronicler event types emitted throughout the review lifecycle.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "TesseraSeal",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "content_hash",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "SHA-256 hash of the canonical JSON content that was sealed.",
+          "validators": []
+        },
+        {
+          "name": "previous_hash",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Hash of the previous seal in the chain (null for first seal).",
+          "validators": []
+        },
+        {
+          "name": "chain_hash",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "SHA-256 hash of (content_hash + previous_hash), forming the chain link.",
+          "validators": []
+        },
+        {
+          "name": "sealed_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of when the seal was created.",
+          "validators": []
+        },
+        {
+          "name": "sealer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the entity that created this seal.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A hash-chain tamper-proof seal over serialized content, verifiable independently.",
+      "owner_component": "schemas"
+    }
+  ],
+  "functions": [
+    {
+      "name": "merge_assessments",
+      "description": "Merges multiple reviewer Assessments into a single ReviewReport using trust-weighted scoring, deduplication, conflict resolution, and categorical overrides. This is the sole public method of AssessorProtocol. Executes a 4-phase algorithm: (1) resolve trust scores for each assessment, (2) deduplicate findings by composite key, (3) compute decision from weighted scores and categorical overrides, (4) build deterministic ReviewReport and emit assessment.merged Chronicler event.",
+      "inputs": [
+        {
+          "name": "assessments",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "List of Assessment objects from individual reviewers to merge. May be empty (produces a pass decision with no findings).",
+          "validators": []
+        },
+        {
+          "name": "trust_scores",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "List of TrustScore objects mapping reviewer_id+stage to trust weights. Missing entries fall back to config default_trust_weight.",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique identifier for the review request being assessed. Used for correlation across all outputs and the Chronicler event.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1,max=256",
+              "error_message": "review_request_id must be between 1 and 256 characters"
+            }
+          ]
+        }
+      ],
+      "output_type": "ReviewReport",
+      "error_cases": [
+        {
+          "name": "invalid_review_request_id",
+          "condition": "review_request_id is empty or exceeds 256 characters",
+          "error_type": "ValueError",
+          "error_data": {
+            "param": "review_request_id",
+            "detail": "review_request_id must be a non-empty string of at most 256 characters"
+          }
+        },
+        {
+          "name": "assessment_request_id_mismatch",
+          "condition": "Any Assessment.review_request_id does not match the provided review_request_id",
+          "error_type": "ValueError",
+          "error_data": {
+            "param": "assessments",
+            "detail": "All assessments must have review_request_id matching the provided review_request_id"
+          }
+        },
+        {
+          "name": "invalid_trust_weight",
+          "condition": "Any TrustScore.weight is outside the range [0.0, 1.0]",
+          "error_type": "ValueError",
+          "error_data": {
+            "param": "trust_scores",
+            "detail": "All trust score weights must be in the range [0.0, 1.0]"
+          }
+        },
+        {
+          "name": "invalid_finding_confidence",
+          "condition": "Any Finding.confidence is outside the range [0.0, 1.0]",
+          "error_type": "ValueError",
+          "error_data": {
+            "param": "assessments",
+            "detail": "All finding confidence scores must be in the range [0.0, 1.0]"
+          }
+        },
+        {
+          "name": "chronicler_emission_failure",
+          "condition": "ChroniclerEmitter raises an exception during event emission. This is fire-and-forget: the error is logged but does not propagate.",
+          "error_type": "None",
+          "error_data": {
+            "behavior": "Logged and suppressed; ReviewReport is still returned successfully"
+          }
+        },
+        {
+          "name": "duplicate_assessment_reviewer_stage",
+          "condition": "Two or more assessments share the same (reviewer_id, stage) pair, indicating a duplicate submission",
+          "error_type": "ValueError",
+          "error_data": {
+            "param": "assessments",
+            "detail": "Each (reviewer_id, stage) pair must be unique across assessments"
+          }
+        }
+      ],
+      "preconditions": [
+        "review_request_id is a non-empty string of at most 256 characters",
+        "All Assessment objects in assessments have review_request_id matching the provided review_request_id",
+        "Each Assessment contains a valid reviewer_id and stage",
+        "Each Finding within each Assessment has valid severity, confidence in [0.0, 1.0], and positive line_number",
+        "Each TrustScore has weight in [0.0, 1.0]",
+        "Assessor was constructed with valid MergeContext (block_threshold >= warn_threshold >= 0)"
+      ],
+      "postconditions": [
+        "Returned ReviewReport.review_request_id == review_request_id",
+        "Returned ReviewReport.findings is sorted by (file_path ASC, line_number ASC, severity DESC, id ASC)",
+        "Returned ReviewReport.assessments_merged_count == len(assessments)",
+        "No duplicate findings exist in output: each composite key (hunk_id, file_path, line_number, rule_id) appears at most once",
+        "If any security-stage assessment has decision BLOCK and security_block_overrides is True, final decision is BLOCK",
+        "If total_score >= block_threshold, decision is BLOCK (unless overridden to a stricter categorical BLOCK)",
+        "If total_score >= warn_threshold and total_score < block_threshold, decision is WARN",
+        "If total_score < warn_threshold and no categorical override applies, decision is PASS",
+        "Each finding's confidence == min(1.0, max(contributing trust weights) × original confidence)",
+        "All conflict_notes are sorted by stage priority (highest priority stage first)",
+        "Returned ReviewReport.pact.component == 'assessor'",
+        "Returned ReviewReport.timestamp is the value returned by the injected clock",
+        "An assessment.merged ChroniclerEvent was emitted (fire-and-forget, failure does not affect return value)",
+        "If assessments is empty, decision is PASS, findings is empty, total_score is 0.0, computed_confidence is 1.0"
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "logging",
+          "target": "assessor.merge_assessments",
+          "description": "Logs merge phases, trust resolution fallbacks, deduplication statistics, and final decision at DEBUG/INFO level."
+        },
+        {
+          "kind": "network_call",
+          "target": "ChroniclerEmitter.emit",
+          "description": "Fire-and-forget emission of assessment.merged ChroniclerEvent to Chronicler service. Failure is caught, logged, and suppressed."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 50,
+        "max_memory_mb": 64,
+        "complexity": "O(n log n) where n = total findings across all assessments"
+      }
+    },
+    {
+      "name": "_resolve_trust",
+      "description": "Phase 1: Matches each Assessment to its TrustScore by (reviewer_id, stage) composite key. Falls back to MergeContext.default_trust_weight if no explicit TrustScore is found. Returns a mapping from (reviewer_id, stage) to resolved TrustWeight.",
+      "inputs": [
+        {
+          "name": "assessments",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "List of Assessment objects to resolve trust for.",
+          "validators": []
+        },
+        {
+          "name": "trust_scores",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "List of explicitly provided TrustScore objects.",
+          "validators": []
+        },
+        {
+          "name": "merge_context",
+          "type_ref": "MergeContext",
+          "required": true,
+          "default": "",
+          "description": "Configuration context containing default_trust_weight for fallback.",
+          "validators": []
+        }
+      ],
+      "output_type": "dict",
+      "error_cases": [],
+      "preconditions": [
+        "All assessments have valid reviewer_id and stage",
+        "All trust_scores have weight in [0.0, 1.0]",
+        "merge_context.default_trust_weight is in [0.0, 1.0]"
+      ],
+      "postconditions": [
+        "Returned dict has an entry for every unique (reviewer_id, stage) pair in assessments",
+        "Every value in returned dict is a float in [0.0, 1.0]",
+        "If an explicit TrustScore exists for (reviewer_id, stage), that weight is used",
+        "If no explicit TrustScore exists, merge_context.default_trust_weight is used"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "logging",
+          "target": "assessor._resolve_trust",
+          "description": "Logs fallback to default trust weight at DEBUG level when no explicit score matches."
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "_deduplicate_findings",
+      "description": "Phase 2: Deduplicates findings across all assessments using composite key (hunk_id, file_path, line_number, rule_id). For each group of duplicates, keeps the finding with the highest severity. Boosts the kept finding's confidence to min(1.0, max_trust_weight_among_contributors × original_confidence). Populates contributing_reviewers list on deduplicated findings.",
+      "inputs": [
+        {
+          "name": "assessments",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "List of Assessment objects whose findings to deduplicate.",
+          "validators": []
+        },
+        {
+          "name": "resolved_trust",
+          "type_ref": "dict",
+          "required": true,
+          "default": "",
+          "description": "Mapping from (reviewer_id, stage) to resolved trust weight float. Output of _resolve_trust.",
+          "validators": []
+        }
+      ],
+      "output_type": "list",
+      "error_cases": [],
+      "preconditions": [
+        "resolved_trust contains entries for all (reviewer_id, stage) pairs present in assessments",
+        "All findings have valid composite key fields (non-empty hunk_id, file_path, rule_id; positive line_number)"
+      ],
+      "postconditions": [
+        "No two findings in the output share the same (hunk_id, file_path, line_number, rule_id)",
+        "For each group of duplicates, the output finding has the maximum severity from the group",
+        "Each output finding's confidence is min(1.0, max_trust_weight × original_confidence)",
+        "Each output finding's contributing_reviewers lists all reviewer_ids that reported that finding",
+        "Output count <= total input finding count across all assessments"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure computation with no side effects."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": null,
+        "max_memory_mb": null,
+        "complexity": "O(n log n) where n = total findings across all assessments"
+      }
+    },
+    {
+      "name": "_compute_decision",
+      "description": "Phase 3: Computes the final ReviewDecision from deduplicated findings and resolved trust. Scores each finding as SEVERITY_SCORE[severity] × trust_weight × confidence, sums all scores to total_score. Applies categorical override: if security_block_overrides is enabled and any security-stage assessment has decision BLOCK, final decision is BLOCK regardless of score. Otherwise, compares total_score to block_threshold and warn_threshold from MergeContext. Also detects and records ConflictNotes when higher-priority stage decisions override lower-priority stage decisions.",
+      "inputs": [
+        {
+          "name": "deduplicated_findings",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "Deduplicated findings from Phase 2.",
+          "validators": []
+        },
+        {
+          "name": "assessments",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "Original assessments for checking stage-level decisions and generating conflict notes.",
+          "validators": []
+        },
+        {
+          "name": "resolved_trust",
+          "type_ref": "dict",
+          "required": true,
+          "default": "",
+          "description": "Mapping from (reviewer_id, stage) to resolved trust weight.",
+          "validators": []
+        },
+        {
+          "name": "merge_context",
+          "type_ref": "MergeContext",
+          "required": true,
+          "default": "",
+          "description": "Configuration context with thresholds, stage priority, and override flags.",
+          "validators": []
+        }
+      ],
+      "output_type": "dict",
+      "error_cases": [],
+      "preconditions": [
+        "deduplicated_findings contains no duplicate composite keys",
+        "resolved_trust covers all (reviewer_id, stage) pairs in assessments",
+        "merge_context.block_threshold >= merge_context.warn_threshold >= 0"
+      ],
+      "postconditions": [
+        "Returned dict contains keys: 'decision' (ReviewDecision), 'total_score' (float >= 0), 'conflict_notes' (list[ConflictNote])",
+        "If security_block_overrides and any security assessment decision is BLOCK, decision is BLOCK",
+        "If total_score >= block_threshold (without categorical override), decision is BLOCK",
+        "If total_score >= warn_threshold and < block_threshold, decision is WARN",
+        "If total_score < warn_threshold and no categorical override, decision is PASS",
+        "conflict_notes are ordered by stage priority (highest priority first)"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure computation with no side effects."
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "_build_report",
+      "description": "Phase 4: Constructs the final ReviewReport from computed results. Sorts findings deterministically by (file_path ASC, line_number ASC, severity DESC, id ASC). Attaches PACT attribution with component='assessor', contract version, and injected clock timestamp. Emits assessment.merged ChroniclerEvent via ChroniclerEmitter (fire-and-forget). Returns the frozen ReviewReport.",
+      "inputs": [
+        {
+          "name": "review_request_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Review request identifier.",
+          "validators": []
+        },
+        {
+          "name": "decision",
+          "type_ref": "ReviewDecision",
+          "required": true,
+          "default": "",
+          "description": "Computed final decision from Phase 3.",
+          "validators": []
+        },
+        {
+          "name": "total_score",
+          "type_ref": "float",
+          "required": true,
+          "default": "",
+          "description": "Aggregate weighted score from Phase 3.",
+          "validators": []
+        },
+        {
+          "name": "deduplicated_findings",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "Deduplicated findings from Phase 2.",
+          "validators": []
+        },
+        {
+          "name": "conflict_notes",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "Conflict notes from Phase 3.",
+          "validators": []
+        },
+        {
+          "name": "trust_scores_used",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "Resolved TrustScore objects used during the merge.",
+          "validators": []
+        },
+        {
+          "name": "assessments_merged_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of assessments that were merged.",
+          "validators": []
+        }
+      ],
+      "output_type": "ReviewReport",
+      "error_cases": [
+        {
+          "name": "chronicler_emission_failure",
+          "condition": "ChroniclerEmitter raises during event emission",
+          "error_type": "None",
+          "error_data": {
+            "behavior": "Logged and suppressed; report returned successfully"
+          }
+        }
+      ],
+      "preconditions": [
+        "review_request_id is non-empty",
+        "total_score >= 0.0",
+        "assessments_merged_count >= 0"
+      ],
+      "postconditions": [
+        "Returned ReviewReport.findings sorted by (file_path ASC, line_number ASC, severity DESC, id ASC)",
+        "Returned ReviewReport.pact.component == 'assessor'",
+        "Returned ReviewReport.pact.version == contract version (1)",
+        "Returned ReviewReport.timestamp is from injected clock",
+        "An assessment.merged ChroniclerEvent was emitted (failure suppressed)"
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "network_call",
+          "target": "ChroniclerEmitter.emit",
+          "description": "Fire-and-forget assessment.merged event emission. Failures are caught and logged."
+        },
+        {
+          "kind": "logging",
+          "target": "assessor._build_report",
+          "description": "Logs report construction and event emission at INFO/DEBUG level."
+        }
+      ],
+      "performance_budget": null
+    }
+  ],
+  "dependencies": [
+    "schemas",
+    "chronicle",
+    "config",
+    "circuit"
+  ],
+  "dependency_contracts": {
+    "schemas": [
+      "Assessment",
+      "ReviewReport",
+      "ReviewDecision",
+      "Finding",
+      "Severity",
+      "ReviewStage",
+      "TrustScore",
+      "ChroniclerEvent",
+      "PactAttribution"
+    ],
+    "chronicle": [
+      "ChroniclerEmitterProtocol"
+    ],
+    "config": [
+      "ExemplarConfig"
+    ],
+    "circuit": [
+      "CircuitConfig"
+    ]
+  },
+  "invariants": [
+    "All data models are frozen (Pydantic frozen=True); no mutation after construction",
+    "The Assessor is constructed with a valid MergeContext where block_threshold >= warn_threshold >= 0.0",
+    "The injected clock callable always returns a valid ISO 8601 timestamp string",
+    "ChroniclerEmitter failures are always caught and logged; they never propagate to callers",
+    "PACT_COMPONENT constant is always 'assessor' and is embedded in every ReviewReport and ChroniclerEvent",
+    "DEFAULT_TRUST_WEIGHT is 0.5 and is used as the fallback when no explicit TrustScore matches a (reviewer_id, stage) pair",
+    "SEVERITY_SCORE maps info=1.0, warning=3.0, error=7.0, critical=15.0",
+    "STAGE_PRIORITY ordering is [security, correctness, architecture, style] from highest to lowest priority",
+    "Finding sort order is deterministic: (file_path ASC, line_number ASC, severity DESC, id ASC)",
+    "Conflict notes sort order follows stage priority: higher priority stages appear first",
+    "Deduplication uses composite key (hunk_id, file_path, line_number, rule_id); within a duplicate group the highest severity finding is kept",
+    "For deduplicated findings, confidence is boosted to min(1.0, max_contributing_trust_weight × original_confidence)",
+    "Empty assessments input produces a PASS decision with no findings, total_score=0.0, and computed_confidence=1.0",
+    "A security-stage BLOCK categorical override (when enabled) takes absolute precedence over score-based thresholds",
+    "Each (reviewer_id, stage) pair must be unique across the input assessments list"
+  ],
+  "requires": [
+    "schemas.Assessment",
+    "schemas.ReviewReport",
+    "schemas.ReviewDecision",
+    "schemas.Finding",
+    "schemas.Severity",
+    "schemas.ReviewStage",
+    "schemas.TrustScore",
+    "schemas.ChroniclerEvent",
+    "schemas.PactAttribution",
+    "chronicle.ChroniclerEmitterProtocol",
+    "config.ExemplarConfig",
+    "circuit.CircuitConfig"
+  ],
+  "processing_register": "rigorous-analytical",
+  "data_access": {
+    "reads": [
+      "INTERNAL"
+    ],
+    "writes": [
+      "INTERNAL"
+    ],
+    "rationale": "Reads reviewer Assessment objects containing code review findings (file paths, line numbers, rule violations, severity levels) and TrustScore objects mapping reviewer identities to trust weights. All data is INTERNAL classification: it contains source code location metadata and internal review decisions but no PII or credentials. Writes a merged ReviewReport to the caller and emits an assessment.merged ChroniclerEvent containing the review decision, aggregate score, and finding count for operational observability.",
+    "side_effects": [
+      {
+        "type": "chronicler_event_emission",
+        "classification": "INTERNAL",
+        "fields": [
+          "review_request_id",
+          "decision",
+          "total_score",
+          "finding_count",
+          "assessments_merged_count",
+          "timestamp"
+        ],
+        "rationale": "Emits an assessment.merged event to the Chronicler service for governance audit trail and operational observability. Contains the merge outcome summary but no raw source code content."
+      },
+      {
+        "type": "logging",
+        "classification": "INTERNAL",
+        "fields": [
+          "review_request_id",
+          "reviewer_id",
+          "stage",
+          "decision",
+          "trust_weight",
+          "finding_count"
+        ],
+        "rationale": "Structured logging at DEBUG/INFO level for merge diagnostics: trust resolution fallbacks, deduplication statistics, conflict resolutions, and final decision. Includes reviewer identifiers and review metadata for troubleshooting."
+      }
+    ]
+  },
+  "authority": {
+    "domains": [
+      "review_decision",
+      "finding_deduplication",
+      "trust_weighted_scoring"
+    ],
+    "rationale": "The assessor is the authoritative component for computing the final merged ReviewDecision from multiple reviewer assessments. It owns the trust-weighted scoring algorithm, the finding deduplication logic (composite key resolution and confidence boosting), and the conflict resolution rules (categorical overrides and threshold-based decisions). No other component in the Exemplar system may independently compute a final review decision or deduplicate findings across reviewers."
+  }
+}

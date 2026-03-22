@@ -1,0 +1,1824 @@
+{
+  "component_id": "learner",
+  "name": "Apprentice Learning Module",
+  "description": "Shadow mode implementation for the Apprentice learning system. Accepts AI review output and human review decisions (as JSON input), compares them, records acceptance/dismissal rates per reviewer and per finding type. Stores learning state in JSON files (.exemplar/learner/). Feeds acceptance patterns back as trust score adjustments using weight = base_weight * (accepted/total) clamped [0.1, 1.0]. Phase progression tracking (shadow → canary → primary) based on configurable accuracy thresholds with no regression. Stigmergy integration reports recurring patterns (e.g., 'SecurityReviewer false-positive rate on test files is 40%') to pattern store. All I/O is async. Fire-and-forget for optional integrations (chronicler, stigmergy). PACT keys on all public methods.",
+  "version": 1,
+  "types": [
+    {
+      "name": "LearnerPhase",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "shadow",
+        "canary",
+        "primary"
+      ],
+      "inner_types": [],
+      "description": "Apprentice learning phase progression stage.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "HumanDecision",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "accepted",
+        "dismissed",
+        "modified"
+      ],
+      "inner_types": [],
+      "description": "The human reviewer's disposition on an AI-generated finding.",
+      "owner_component": ""
+    },
+    {
+      "name": "PatternKind",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "high_false_positive_rate",
+        "high_acceptance_rate",
+        "category_bias",
+        "file_pattern_bias",
+        "severity_mismatch"
+      ],
+      "inner_types": [],
+      "description": "Classification of a detected recurring pattern for stigmergy reporting.",
+      "owner_component": ""
+    },
+    {
+      "name": "ReviewerId",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The reviewer identifier string.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1,max=128",
+              "error_message": "ReviewerId must be between 1 and 128 characters."
+            },
+            {
+              "kind": "regex",
+              "expression": "^[a-zA-Z][a-zA-Z0-9_.-]*$",
+              "error_message": "ReviewerId must start with a letter and contain only alphanumeric characters, underscores, dots, or hyphens."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Canonical reviewer identifier string. Must be non-empty and match the pattern used in schemas.ReviewerId.",
+      "owner_component": ""
+    },
+    {
+      "name": "RuleId",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The rule identifier string.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1,max=256",
+              "error_message": "RuleId must be between 1 and 256 characters."
+            },
+            {
+              "kind": "regex",
+              "expression": "^[a-zA-Z][a-zA-Z0-9_./-]*$",
+              "error_message": "RuleId must start with a letter and contain only alphanumeric characters, underscores, dots, slashes, or hyphens."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Canonical rule identifier string. Non-empty, dot-separated namespace.",
+      "owner_component": ""
+    },
+    {
+      "name": "TrustWeight",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "float",
+          "required": true,
+          "default": "",
+          "description": "The clamped, rounded trust weight.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0.1,max=1.0",
+              "error_message": "TrustWeight must be between 0.1 and 1.0 inclusive."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A trust weight value clamped to [0.1, 1.0] and rounded to 4 decimal places.",
+      "owner_component": ""
+    },
+    {
+      "name": "AcceptanceRate",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "float",
+          "required": true,
+          "default": "",
+          "description": "The acceptance rate.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0.0,max=1.0",
+              "error_message": "AcceptanceRate must be between 0.0 and 1.0 inclusive."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A rate value in [0.0, 1.0] representing the fraction of accepted findings.",
+      "owner_component": ""
+    },
+    {
+      "name": "MinObservations",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "The minimum observation count.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=1,max=10000",
+              "error_message": "MinObservations must be between 1 and 10000."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Minimum number of observations before trust adjustments are applied. Default 10.",
+      "owner_component": ""
+    },
+    {
+      "name": "FilePath",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The file path.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1,max=4096",
+              "error_message": "FilePath must be between 1 and 4096 characters."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A validated file path string.",
+      "owner_component": ""
+    },
+    {
+      "name": "PactKey",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The PACT key.",
+          "validators": [
+            {
+              "kind": "regex",
+              "expression": "^pact:[a-z0-9_.]+:[a-z0-9_.]+$",
+              "error_message": "PactKey must follow the format pact:<component>:<method>."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A PACT attribution key string embedded in public method metadata.",
+      "owner_component": ""
+    },
+    {
+      "name": "HumanDecisionInput",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "finding_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique identifier of the AI-generated finding being adjudicated.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1,max=256",
+              "error_message": "finding_id must be non-empty and at most 256 characters."
+            }
+          ]
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "ReviewerId",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the AI reviewer that produced the finding.",
+          "validators": []
+        },
+        {
+          "name": "rule_id",
+          "type_ref": "RuleId",
+          "required": true,
+          "default": "",
+          "description": "The rule that triggered the finding.",
+          "validators": []
+        },
+        {
+          "name": "decision",
+          "type_ref": "HumanDecision",
+          "required": true,
+          "default": "",
+          "description": "The human's disposition on this finding.",
+          "validators": []
+        },
+        {
+          "name": "file_path",
+          "type_ref": "FilePath",
+          "required": true,
+          "default": "",
+          "description": "Path of the file the finding pertains to.",
+          "validators": []
+        },
+        {
+          "name": "severity",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Severity of the original finding (maps to schemas.Severity).",
+          "validators": [
+            {
+              "kind": "regex",
+              "expression": "^(critical|high|medium|low|info)$",
+              "error_message": "severity must be one of: critical, high, medium, low, info."
+            }
+          ]
+        },
+        {
+          "name": "review_stage",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The review stage in which the finding was produced (maps to schemas.ReviewStage).",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1,max=64",
+              "error_message": "review_stage must be non-empty."
+            }
+          ]
+        },
+        {
+          "name": "comment",
+          "type_ref": "str",
+          "required": false,
+          "default": "",
+          "description": "Optional human-provided rationale for the decision.",
+          "validators": []
+        },
+        {
+          "name": "timestamp_iso",
+          "type_ref": "str",
+          "required": false,
+          "default": "",
+          "description": "ISO 8601 timestamp of the decision. If omitted, current UTC time is used.",
+          "validators": [
+            {
+              "kind": "regex",
+              "expression": "^$|^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}",
+              "error_message": "timestamp_iso must be empty or a valid ISO 8601 datetime string."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Validated input schema for a single human feedback decision on an AI-generated finding. Frozen Pydantic model.",
+      "owner_component": ""
+    },
+    {
+      "name": "LearningRecord",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "record_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique record identifier.",
+          "validators": []
+        },
+        {
+          "name": "finding_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the Finding this record is about.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Reviewer that produced the finding.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "Stage the finding belongs to.",
+          "validators": []
+        },
+        {
+          "name": "rule_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Rule ID of the finding.",
+          "validators": []
+        },
+        {
+          "name": "severity",
+          "type_ref": "Severity",
+          "required": true,
+          "default": "",
+          "description": "Severity of the original finding.",
+          "validators": []
+        },
+        {
+          "name": "accepted",
+          "type_ref": "bool",
+          "required": true,
+          "default": "",
+          "description": "True if the human accepted/agreed with the finding, false if dismissed.",
+          "validators": []
+        },
+        {
+          "name": "human_comment",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Optional comment from the human reviewer.",
+          "validators": []
+        },
+        {
+          "name": "recorded_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of when this learning was recorded.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single learning observation: an AI finding paired with human decision (accepted or dismissed).",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ReviewerRuleStats",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "reviewer_id",
+          "type_ref": "ReviewerId",
+          "required": true,
+          "default": "",
+          "description": "The AI reviewer identifier.",
+          "validators": []
+        },
+        {
+          "name": "rule_id",
+          "type_ref": "RuleId",
+          "required": true,
+          "default": "",
+          "description": "The rule identifier.",
+          "validators": []
+        },
+        {
+          "name": "review_stage",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The review stage.",
+          "validators": []
+        },
+        {
+          "name": "accepted_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of times findings for this reviewer+rule+stage were accepted.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0",
+              "error_message": "accepted_count must be non-negative."
+            }
+          ]
+        },
+        {
+          "name": "dismissed_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of times findings were dismissed.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0",
+              "error_message": "dismissed_count must be non-negative."
+            }
+          ]
+        },
+        {
+          "name": "modified_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of times findings were modified (accepted with changes).",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0",
+              "error_message": "modified_count must be non-negative."
+            }
+          ]
+        },
+        {
+          "name": "total_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Total observations (accepted + dismissed + modified).",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0",
+              "error_message": "total_count must be non-negative."
+            }
+          ]
+        },
+        {
+          "name": "acceptance_rate",
+          "type_ref": "AcceptanceRate",
+          "required": true,
+          "default": "",
+          "description": "Fraction of findings accepted (including modified). Computed as (accepted + modified) / total.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Aggregated acceptance/dismissal statistics for a specific reviewer + rule_id + review_stage combination. Frozen Pydantic model.",
+      "owner_component": ""
+    },
+    {
+      "name": "ReviewerStats",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "reviewer_id",
+          "type_ref": "ReviewerId",
+          "required": true,
+          "default": "",
+          "description": "The AI reviewer identifier.",
+          "validators": []
+        },
+        {
+          "name": "review_stage",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The review stage.",
+          "validators": []
+        },
+        {
+          "name": "accepted_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Total accepted findings.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0",
+              "error_message": "accepted_count must be non-negative."
+            }
+          ]
+        },
+        {
+          "name": "dismissed_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Total dismissed findings.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0",
+              "error_message": "dismissed_count must be non-negative."
+            }
+          ]
+        },
+        {
+          "name": "modified_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Total modified findings.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0",
+              "error_message": "modified_count must be non-negative."
+            }
+          ]
+        },
+        {
+          "name": "total_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Total observations.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0",
+              "error_message": "total_count must be non-negative."
+            }
+          ]
+        },
+        {
+          "name": "acceptance_rate",
+          "type_ref": "AcceptanceRate",
+          "required": true,
+          "default": "",
+          "description": "Overall acceptance rate for this reviewer+stage.",
+          "validators": []
+        },
+        {
+          "name": "rule_stats",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "Per-rule breakdown.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Coarse aggregated statistics for a reviewer across all rules within a review stage. Frozen Pydantic model.",
+      "owner_component": ""
+    },
+    {
+      "name": "PhaseTransition",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "from_phase",
+          "type_ref": "LearnerPhase",
+          "required": true,
+          "default": "",
+          "description": "The phase before transition.",
+          "validators": []
+        },
+        {
+          "name": "to_phase",
+          "type_ref": "LearnerPhase",
+          "required": true,
+          "default": "",
+          "description": "The phase after transition.",
+          "validators": []
+        },
+        {
+          "name": "timestamp_iso",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO 8601 timestamp of the transition.",
+          "validators": []
+        },
+        {
+          "name": "acceptance_rate_at_transition",
+          "type_ref": "AcceptanceRate",
+          "required": true,
+          "default": "",
+          "description": "The overall acceptance rate that triggered the transition.",
+          "validators": []
+        },
+        {
+          "name": "total_observations",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Total observations at the time of transition.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0",
+              "error_message": "total_observations must be non-negative."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A record of a phase transition event. Frozen Pydantic model.",
+      "owner_component": ""
+    },
+    {
+      "name": "PhaseState",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "current_phase",
+          "type_ref": "LearnerPhase",
+          "required": true,
+          "default": "",
+          "description": "The current operational phase.",
+          "validators": []
+        },
+        {
+          "name": "transition_history",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "Ordered list of PhaseTransition records.",
+          "validators": []
+        },
+        {
+          "name": "entered_current_phase_iso",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO 8601 timestamp when the current phase was entered.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Tracks the current phase and full transition history. Frozen Pydantic model.",
+      "owner_component": ""
+    },
+    {
+      "name": "LearnerState",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "schema_version",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Schema version for forward compatibility.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=1,max=100",
+              "error_message": "schema_version must be between 1 and 100."
+            }
+          ]
+        },
+        {
+          "name": "phase_state",
+          "type_ref": "PhaseState",
+          "required": true,
+          "default": "",
+          "description": "Current phase and transition history.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_stats",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "List of ReviewerStats, one per reviewer+stage combination.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_rule_stats",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "List of ReviewerRuleStats, one per reviewer+rule+stage combination.",
+          "validators": []
+        },
+        {
+          "name": "total_records",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Total number of LearningRecords persisted.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0",
+              "error_message": "total_records must be non-negative."
+            }
+          ]
+        },
+        {
+          "name": "last_updated_iso",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO 8601 timestamp of the last state update.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Top-level persisted state container for the learner. Written atomically to .exemplar/learner/state.json. Frozen Pydantic model.",
+      "owner_component": ""
+    },
+    {
+      "name": "TrustScore",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the reviewer this score applies to.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "Stage the reviewer operates in.",
+          "validators": []
+        },
+        {
+          "name": "weight",
+          "type_ref": "float",
+          "required": true,
+          "default": "",
+          "description": "Trust weight in range [0.0, 1.0].",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "0.0 <= value <= 1.0",
+              "error_message": "Trust weight must be between 0.0 and 1.0"
+            }
+          ]
+        },
+        {
+          "name": "accepted_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "0",
+          "description": "Number of findings from this reviewer that humans accepted.",
+          "validators": []
+        },
+        {
+          "name": "dismissed_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "0",
+          "description": "Number of findings from this reviewer that humans dismissed.",
+          "validators": []
+        },
+        {
+          "name": "updated_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of last trust score update.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Arbiter trust weight for a reviewer agent, used in weighted assessment merging.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "StigmergySignal",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "signal_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique signal identifier.",
+          "validators": []
+        },
+        {
+          "name": "pattern_key",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Machine-readable key identifying the pattern (e.g., 'security.false_positive.test_files').",
+          "validators": []
+        },
+        {
+          "name": "description",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable description of the detected pattern.",
+          "validators": []
+        },
+        {
+          "name": "occurrences",
+          "type_ref": "int",
+          "required": true,
+          "default": "1",
+          "description": "Number of times this pattern has been observed.",
+          "validators": []
+        },
+        {
+          "name": "first_seen_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of first observation.",
+          "validators": []
+        },
+        {
+          "name": "last_seen_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of most recent observation.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Reviewer associated with the pattern, if applicable.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "Optional[ReviewStage]",
+          "required": false,
+          "default": "null",
+          "description": "Stage associated with the pattern, if applicable.",
+          "validators": []
+        },
+        {
+          "name": "metadata",
+          "type_ref": "dict[str, str]",
+          "required": true,
+          "default": "{}",
+          "description": "Additional context about the pattern.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A recurring pattern signal detected by Stigmergy, recorded for cross-review pattern discovery.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "LearnerStatsReport",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "current_phase",
+          "type_ref": "LearnerPhase",
+          "required": true,
+          "default": "",
+          "description": "The current operational phase.",
+          "validators": []
+        },
+        {
+          "name": "total_records",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Total learning records persisted.",
+          "validators": []
+        },
+        {
+          "name": "overall_acceptance_rate",
+          "type_ref": "AcceptanceRate",
+          "required": true,
+          "default": "",
+          "description": "Aggregate acceptance rate across all reviewers.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_stats",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "List of ReviewerStats.",
+          "validators": []
+        },
+        {
+          "name": "phase_state",
+          "type_ref": "PhaseState",
+          "required": true,
+          "default": "",
+          "description": "Full phase state with transition history.",
+          "validators": []
+        },
+        {
+          "name": "active_trust_adjustments",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of reviewer+rule combinations with sufficient observations for trust adjustments.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0",
+              "error_message": "active_trust_adjustments must be non-negative."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A structured report of the learner's current state for CLI display and debugging.",
+      "owner_component": ""
+    },
+    {
+      "name": "RecordDecisionResult",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "records_persisted",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of learning records successfully persisted.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0",
+              "error_message": "records_persisted must be non-negative."
+            }
+          ]
+        },
+        {
+          "name": "stats_updated",
+          "type_ref": "bool",
+          "required": true,
+          "default": "",
+          "description": "Whether aggregated stats were successfully updated.",
+          "validators": []
+        },
+        {
+          "name": "phase_changed",
+          "type_ref": "bool",
+          "required": true,
+          "default": "",
+          "description": "Whether a phase transition occurred as a result of this recording.",
+          "validators": []
+        },
+        {
+          "name": "new_phase",
+          "type_ref": "LearnerPhase",
+          "required": true,
+          "default": "",
+          "description": "The phase after recording (may be same as before).",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Result returned from record_decision indicating what happened.",
+      "owner_component": ""
+    },
+    {
+      "name": "Severity",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ],
+      "inner_types": [],
+      "description": "Severity level of a review finding, ordered from most to least critical.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ReviewStage",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "security",
+        "correctness",
+        "style",
+        "architecture"
+      ],
+      "inner_types": [],
+      "description": "Named stage in the review circuit pipeline.",
+      "owner_component": "schemas"
+    }
+  ],
+  "functions": [
+    {
+      "name": "record_decision",
+      "description": "Accepts one or more LearningRecords, persists them to .exemplar/learner/records.json (append-only), updates aggregated ReviewerRuleStats and ReviewerStats in state.json, evaluates phase progression, and emits a learning.recorded ChroniclerEvent. Atomic file writes. PACT key: pact:learner:record_decision.",
+      "inputs": [
+        {
+          "name": "records",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "One or more LearningRecord objects to persist. List of LearningRecord.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1,max=1000",
+              "error_message": "Must provide between 1 and 1000 records per call."
+            }
+          ]
+        }
+      ],
+      "output_type": "RecordDecisionResult",
+      "error_cases": [
+        {
+          "name": "duplicate_record_id",
+          "condition": "One or more record_id values already exist in records.json.",
+          "error_type": "DuplicateRecordError",
+          "error_data": {
+            "duplicate_ids": "Comma-separated list of duplicate record_id values."
+          }
+        },
+        {
+          "name": "storage_write_failure",
+          "condition": "Atomic write to records.json or state.json fails (disk full, permissions).",
+          "error_type": "StorageWriteError",
+          "error_data": {
+            "path": "The file path that failed.",
+            "reason": "OS-level error description."
+          }
+        },
+        {
+          "name": "invalid_record",
+          "condition": "One or more records fail Pydantic validation.",
+          "error_type": "ValidationError",
+          "error_data": {
+            "details": "Pydantic validation error details."
+          }
+        },
+        {
+          "name": "concurrent_write_detected",
+          "condition": "Another writer is detected (lock file present or state.json modified since last read).",
+          "error_type": "ConcurrentWriteError",
+          "error_data": {
+            "detail": "Description of the conflict."
+          }
+        }
+      ],
+      "preconditions": [
+        "All records in the list must have unique record_id values.",
+        "All records must have valid reviewer_id, rule_id, and decision fields.",
+        "The .exemplar/learner/ directory must be writable."
+      ],
+      "postconditions": [
+        "All provided records are appended to records.json atomically.",
+        "Aggregated stats in state.json reflect the new records.",
+        "A learning.recorded ChroniclerEvent has been emitted (fire-and-forget).",
+        "If the new overall acceptance rate crosses a phase threshold, phase_changed is True and a phase.transition ChroniclerEvent is emitted."
+      ],
+      "idempotent": false,
+      "is_async": true,
+      "side_effects": [
+        "Appends records to .exemplar/learner/records.json",
+        "Updates .exemplar/learner/state.json with new aggregated stats",
+        "Emits learning.recorded ChroniclerEvent (fire-and-forget)",
+        "May emit phase.transition ChroniclerEvent if phase advances (fire-and-forget)"
+      ],
+      "structured_side_effects": [
+        {
+          "kind": "writes_file",
+          "target": ".exemplar/learner/records.json",
+          "description": "Atomically appends new LearningRecord entries to the append-only records file."
+        },
+        {
+          "kind": "writes_file",
+          "target": ".exemplar/learner/state.json",
+          "description": "Atomically rewrites aggregated LearnerState with updated stats and possibly new phase."
+        },
+        {
+          "kind": "network_call",
+          "target": "chronicle.emit_event",
+          "description": "Emits learning.recorded ChroniclerEvent. Fire-and-forget; failure does not propagate."
+        },
+        {
+          "kind": "logging",
+          "target": "learner.record_decision",
+          "description": "Logs record count, phase status, and any errors at DEBUG/WARNING level."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 200,
+        "max_memory_mb": 64,
+        "complexity": "O(n + m) where n = new records, m = existing stats entries"
+      }
+    },
+    {
+      "name": "record_human_decisions",
+      "description": "Convenience method that maps a list of HumanDecisionInput objects into LearningRecords (generating record_id and timestamp) and delegates to record_decision. PACT key: pact:learner:record_human_decisions.",
+      "inputs": [
+        {
+          "name": "decisions",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "One or more HumanDecisionInput objects. List of HumanDecisionInput.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1,max=1000",
+              "error_message": "Must provide between 1 and 1000 decisions per call."
+            }
+          ]
+        },
+        {
+          "name": "base_weight",
+          "type_ref": "float",
+          "required": false,
+          "default": "1.0",
+          "description": "The base weight to use for trust calculations (typically 1.0).",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0.1,max=1.0",
+              "error_message": "base_weight must be between 0.1 and 1.0."
+            }
+          ]
+        }
+      ],
+      "output_type": "RecordDecisionResult",
+      "error_cases": [
+        {
+          "name": "invalid_decision_input",
+          "condition": "One or more HumanDecisionInput objects fail Pydantic validation.",
+          "error_type": "ValidationError",
+          "error_data": {
+            "details": "Pydantic validation error details."
+          }
+        },
+        {
+          "name": "storage_write_failure",
+          "condition": "Delegated to record_decision.",
+          "error_type": "StorageWriteError",
+          "error_data": {
+            "path": "The file path that failed.",
+            "reason": "OS-level error description."
+          }
+        }
+      ],
+      "preconditions": [
+        "All decisions must pass HumanDecisionInput validation.",
+        "The .exemplar/learner/ directory must be writable."
+      ],
+      "postconditions": [
+        "Each HumanDecisionInput is converted to a LearningRecord with a new UUID4 record_id.",
+        "record_decision is called with the converted records.",
+        "All postconditions of record_decision apply."
+      ],
+      "idempotent": false,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "writes_file",
+          "target": ".exemplar/learner/records.json",
+          "description": "Delegates to record_decision which appends records."
+        },
+        {
+          "kind": "writes_file",
+          "target": ".exemplar/learner/state.json",
+          "description": "Delegates to record_decision which updates state."
+        },
+        {
+          "kind": "network_call",
+          "target": "chronicle.emit_event",
+          "description": "Delegates to record_decision which emits events."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 250,
+        "max_memory_mb": 64,
+        "complexity": null
+      }
+    },
+    {
+      "name": "get_trust_adjustments",
+      "description": "Computes and returns trust score adjustments for all reviewer+rule+stage combinations that meet the minimum observation threshold. Weight formula: base_weight * (accepted_count / total_count) clamped to [0.1, 1.0], rounded to 4 decimal places. Cold-start protection: combinations with total_count < min_observations are excluded. PACT key: pact:learner:get_trust_adjustments.",
+      "inputs": [
+        {
+          "name": "base_weight",
+          "type_ref": "float",
+          "required": false,
+          "default": "1.0",
+          "description": "The base weight multiplier. Typically 1.0.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0.1,max=1.0",
+              "error_message": "base_weight must be between 0.1 and 1.0."
+            }
+          ]
+        },
+        {
+          "name": "min_observations",
+          "type_ref": "int",
+          "required": false,
+          "default": "10",
+          "description": "Minimum observations required before producing a trust adjustment. Default 10.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=1,max=10000",
+              "error_message": "min_observations must be between 1 and 10000."
+            }
+          ]
+        }
+      ],
+      "output_type": "list",
+      "error_cases": [
+        {
+          "name": "state_not_found",
+          "condition": "state.json does not exist (no decisions have been recorded yet).",
+          "error_type": "StateNotFoundError",
+          "error_data": {
+            "path": ".exemplar/learner/state.json"
+          }
+        },
+        {
+          "name": "state_corruption",
+          "condition": "state.json exists but fails Pydantic validation.",
+          "error_type": "StateCorruptionError",
+          "error_data": {
+            "path": ".exemplar/learner/state.json",
+            "details": "Validation error details."
+          }
+        }
+      ],
+      "preconditions": [
+        "LearnerState must be loadable from .exemplar/learner/state.json."
+      ],
+      "postconditions": [
+        "Returned list contains only TrustScore entries where observation_count >= min_observations.",
+        "Every weight in the returned TrustScore entries is in [0.1, 1.0] and rounded to 4 decimal places.",
+        "The list is deterministically ordered by (reviewer_id, rule_id, review_stage)."
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": ".exemplar/learner/state.json",
+          "description": "Reads the current LearnerState to compute trust adjustments."
+        },
+        {
+          "kind": "logging",
+          "target": "learner.get_trust_adjustments",
+          "description": "Logs the number of adjustments produced and any cold-start exclusions at DEBUG level."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 50,
+        "max_memory_mb": 32,
+        "complexity": "O(s) where s = number of ReviewerRuleStats entries"
+      }
+    },
+    {
+      "name": "check_phase_progression",
+      "description": "Evaluates whether the current learner phase should advance based on ApprenticeConfig thresholds and overall acceptance rate. Phase transitions are monotonic (shadow→canary→primary, no regression). Emits a phase.transition ChroniclerEvent on transition. Returns the (possibly new) LearnerPhase. PACT key: pact:learner:check_phase_progression.",
+      "inputs": [
+        {
+          "name": "config",
+          "type_ref": "dict",
+          "required": true,
+          "default": "",
+          "description": "ApprenticeConfig dictionary with keys: shadow_to_canary_threshold (float), canary_to_primary_threshold (float), min_observations_for_phase (int). Sourced from config component.",
+          "validators": []
+        }
+      ],
+      "output_type": "LearnerPhase",
+      "error_cases": [
+        {
+          "name": "state_not_found",
+          "condition": "state.json does not exist.",
+          "error_type": "StateNotFoundError",
+          "error_data": {
+            "path": ".exemplar/learner/state.json"
+          }
+        },
+        {
+          "name": "invalid_config",
+          "condition": "Required threshold keys are missing or out of range in the config dict.",
+          "error_type": "ConfigurationError",
+          "error_data": {
+            "details": "Description of what is missing or invalid."
+          }
+        },
+        {
+          "name": "storage_write_failure",
+          "condition": "Atomic write to state.json fails during phase transition.",
+          "error_type": "StorageWriteError",
+          "error_data": {
+            "path": ".exemplar/learner/state.json",
+            "reason": "OS-level error description."
+          }
+        }
+      ],
+      "preconditions": [
+        "LearnerState must be loadable from .exemplar/learner/state.json.",
+        "config must contain shadow_to_canary_threshold and canary_to_primary_threshold as floats in [0.0, 1.0].",
+        "config must contain min_observations_for_phase as int >= 1."
+      ],
+      "postconditions": [
+        "If phase changes, state.json is updated atomically with the new phase and a PhaseTransition entry.",
+        "If phase changes, a phase.transition ChroniclerEvent is emitted (fire-and-forget).",
+        "Returned LearnerPhase is >= the phase before the call (monotonic)."
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": ".exemplar/learner/state.json",
+          "description": "Reads current LearnerState to evaluate phase progression."
+        },
+        {
+          "kind": "writes_file",
+          "target": ".exemplar/learner/state.json",
+          "description": "Writes updated LearnerState if phase transitions (conditional)."
+        },
+        {
+          "kind": "network_call",
+          "target": "chronicle.emit_event",
+          "description": "Emits phase.transition ChroniclerEvent on phase change. Fire-and-forget."
+        },
+        {
+          "kind": "logging",
+          "target": "learner.check_phase_progression",
+          "description": "Logs current phase, acceptance rate, and whether transition occurred."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 50,
+        "max_memory_mb": 16,
+        "complexity": null
+      }
+    },
+    {
+      "name": "detect_patterns",
+      "description": "Scans aggregated ReviewerRuleStats for recurring anomalies (high false-positive rates, category biases, file pattern biases) and returns a list of StigmergySignal objects. Emits pattern.detected ChroniclerEvent for each signal. PACT key: pact:learner:detect_patterns.",
+      "inputs": [
+        {
+          "name": "min_observations",
+          "type_ref": "int",
+          "required": false,
+          "default": "10",
+          "description": "Minimum observations for a stat entry to be considered for pattern detection. Default 10.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=1,max=10000",
+              "error_message": "min_observations must be between 1 and 10000."
+            }
+          ]
+        },
+        {
+          "name": "anomaly_threshold",
+          "type_ref": "float",
+          "required": false,
+          "default": "0.5",
+          "description": "The acceptance rate threshold below which a reviewer+rule is flagged as high_false_positive_rate. Default 0.5.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=0.0,max=1.0",
+              "error_message": "anomaly_threshold must be between 0.0 and 1.0."
+            }
+          ]
+        }
+      ],
+      "output_type": "list",
+      "error_cases": [
+        {
+          "name": "state_not_found",
+          "condition": "state.json does not exist.",
+          "error_type": "StateNotFoundError",
+          "error_data": {
+            "path": ".exemplar/learner/state.json"
+          }
+        },
+        {
+          "name": "state_corruption",
+          "condition": "state.json fails validation.",
+          "error_type": "StateCorruptionError",
+          "error_data": {
+            "path": ".exemplar/learner/state.json",
+            "details": "Validation error details."
+          }
+        }
+      ],
+      "preconditions": [
+        "LearnerState must be loadable from .exemplar/learner/state.json."
+      ],
+      "postconditions": [
+        "Returned signals only reference reviewer+rule combinations with total_count >= min_observations.",
+        "Each signal has a unique signal_id (UUID4).",
+        "pattern.detected ChroniclerEvent emitted for each signal (fire-and-forget)."
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": ".exemplar/learner/state.json",
+          "description": "Reads LearnerState to scan for anomalous patterns."
+        },
+        {
+          "kind": "network_call",
+          "target": "chronicle.emit_event",
+          "description": "Emits pattern.detected ChroniclerEvent per signal. Fire-and-forget."
+        },
+        {
+          "kind": "logging",
+          "target": "learner.detect_patterns",
+          "description": "Logs number of patterns detected and their kinds."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 100,
+        "max_memory_mb": 32,
+        "complexity": "O(s) where s = number of ReviewerRuleStats entries"
+      }
+    },
+    {
+      "name": "get_current_phase",
+      "description": "Returns the current LearnerPhase from persisted state. Read-only, no side effects beyond file read. PACT key: pact:learner:get_current_phase.",
+      "inputs": [],
+      "output_type": "LearnerPhase",
+      "error_cases": [
+        {
+          "name": "state_corruption",
+          "condition": "state.json exists but fails validation.",
+          "error_type": "StateCorruptionError",
+          "error_data": {
+            "path": ".exemplar/learner/state.json",
+            "details": "Validation error details."
+          }
+        }
+      ],
+      "preconditions": [
+        "LearnerState must be loadable from .exemplar/learner/state.json, OR if state.json does not exist, returns LearnerPhase.shadow as the default."
+      ],
+      "postconditions": [
+        "Returns a valid LearnerPhase value."
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": ".exemplar/learner/state.json",
+          "description": "Reads current LearnerState to extract phase."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 20,
+        "max_memory_mb": 8,
+        "complexity": null
+      }
+    },
+    {
+      "name": "should_apply_adjustments",
+      "description": "Returns True if the current phase is canary or primary (i.e., trust adjustments should be applied to reviewer weights). Returns False in shadow phase. PACT key: pact:learner:should_apply_adjustments.",
+      "inputs": [],
+      "output_type": "bool",
+      "error_cases": [
+        {
+          "name": "state_corruption",
+          "condition": "state.json exists but fails validation.",
+          "error_type": "StateCorruptionError",
+          "error_data": {
+            "path": ".exemplar/learner/state.json",
+            "details": "Validation error details."
+          }
+        }
+      ],
+      "preconditions": [],
+      "postconditions": [
+        "Returns True if and only if get_current_phase() returns canary or primary.",
+        "Returns False if state.json does not exist (defaults to shadow)."
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": ".exemplar/learner/state.json",
+          "description": "Reads current LearnerState to check phase."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 20,
+        "max_memory_mb": 8,
+        "complexity": null
+      }
+    },
+    {
+      "name": "get_stats",
+      "description": "Returns a LearnerStatsReport summarizing current state for CLI display and debugging. Includes phase, total records, overall acceptance rate, per-reviewer stats, and number of active trust adjustments. PACT key: pact:learner:get_stats.",
+      "inputs": [
+        {
+          "name": "min_observations",
+          "type_ref": "int",
+          "required": false,
+          "default": "10",
+          "description": "Minimum observations for counting active trust adjustments. Default 10.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "min=1,max=10000",
+              "error_message": "min_observations must be between 1 and 10000."
+            }
+          ]
+        }
+      ],
+      "output_type": "LearnerStatsReport",
+      "error_cases": [
+        {
+          "name": "state_not_found",
+          "condition": "state.json does not exist.",
+          "error_type": "StateNotFoundError",
+          "error_data": {
+            "path": ".exemplar/learner/state.json"
+          }
+        },
+        {
+          "name": "state_corruption",
+          "condition": "state.json fails validation.",
+          "error_type": "StateCorruptionError",
+          "error_data": {
+            "path": ".exemplar/learner/state.json",
+            "details": "Validation error details."
+          }
+        }
+      ],
+      "preconditions": [
+        "LearnerState must be loadable from .exemplar/learner/state.json."
+      ],
+      "postconditions": [
+        "Returned report reflects the current persisted state.",
+        "active_trust_adjustments counts only entries with total_count >= min_observations."
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": ".exemplar/learner/state.json",
+          "description": "Reads LearnerState to build the stats report."
+        },
+        {
+          "kind": "logging",
+          "target": "learner.get_stats",
+          "description": "Logs stats retrieval at DEBUG level."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 50,
+        "max_memory_mb": 32,
+        "complexity": "O(s) where s = total stats entries"
+      }
+    },
+    {
+      "name": "initialize_state",
+      "description": "Creates the .exemplar/learner/ directory and initializes empty state.json and records.json if they do not already exist. Safe to call multiple times (idempotent). PACT key: pact:learner:initialize_state.",
+      "inputs": [
+        {
+          "name": "storage_dir",
+          "type_ref": "str",
+          "required": false,
+          "default": ".exemplar/learner",
+          "description": "Path to the .exemplar/learner/ directory. Defaults to '.exemplar/learner'.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "min=1,max=4096",
+              "error_message": "storage_dir must be between 1 and 4096 characters."
+            }
+          ]
+        }
+      ],
+      "output_type": "bool",
+      "error_cases": [
+        {
+          "name": "permission_denied",
+          "condition": "Cannot create directory or files due to OS permissions.",
+          "error_type": "StorageWriteError",
+          "error_data": {
+            "path": "The path that could not be created.",
+            "reason": "OS-level error description."
+          }
+        },
+        {
+          "name": "existing_state_corruption",
+          "condition": "Files exist but are not valid JSON. Does NOT overwrite — returns error.",
+          "error_type": "StateCorruptionError",
+          "error_data": {
+            "path": "The corrupt file path.",
+            "details": "Parse or validation error details."
+          }
+        }
+      ],
+      "preconditions": [
+        "Parent directory of storage_dir must exist or be creatable."
+      ],
+      "postconditions": [
+        "storage_dir exists as a directory.",
+        "state.json exists with a valid empty LearnerState (phase=shadow, no stats, schema_version=1).",
+        "records.json exists with an empty JSON array.",
+        "Returns True if files were created, False if they already existed."
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "writes_file",
+          "target": ".exemplar/learner/state.json",
+          "description": "Creates initial empty LearnerState file if not present."
+        },
+        {
+          "kind": "writes_file",
+          "target": ".exemplar/learner/records.json",
+          "description": "Creates initial empty records file if not present."
+        },
+        {
+          "kind": "logging",
+          "target": "learner.initialize_state",
+          "description": "Logs initialization status."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 100,
+        "max_memory_mb": 8,
+        "complexity": null
+      }
+    }
+  ],
+  "dependencies": [
+    "schemas",
+    "config",
+    "chronicle"
+  ],
+  "dependency_contracts": {
+    "schemas": [
+      "Finding",
+      "ReviewerId",
+      "RuleId",
+      "Severity",
+      "ReviewStage"
+    ],
+    "config": [
+      "ApprenticeConfig"
+    ],
+    "chronicle": [
+      "ChroniclerEvent",
+      "emit_event"
+    ]
+  },
+  "invariants": [
+    "LearnerPhase transitions are monotonic: shadow → canary → primary. No regression to a prior phase is permitted.",
+    "Trust adjustments are only produced when total_count >= MIN_OBSERVATIONS (default 10) for the given reviewer+rule combination (cold-start protection).",
+    "Trust weight is always clamped to [0.1, 1.0] and rounded to 4 decimal places for deterministic output.",
+    "All file writes use atomic write semantics: write to a temporary file then os.replace to the target path. No partial writes are observable.",
+    "Single-writer concurrency model: only one learner instance writes to .exemplar/learner/ at a time.",
+    "LearnerState.records list in records.json is append-only; existing records are never modified or deleted.",
+    "Phase transition thresholds are read from ApprenticeConfig and never hard-coded.",
+    "All public methods carry PACT keys for Sentinel attribution.",
+    "Chronicler and stigmergy integrations are fire-and-forget: unreachable services never block or raise to callers."
+  ],
+  "requires": [
+    "schemas",
+    "config",
+    "chronicle"
+  ],
+  "processing_register": "rigorous-analytical",
+  "data_access": {
+    "reads": [
+      "INTERNAL",
+      "PII"
+    ],
+    "writes": [
+      "INTERNAL"
+    ],
+    "rationale": "Reads AI-generated Finding objects (INTERNAL classification — contains file paths, code snippets, rule identifiers) and human decision inputs which may reference code authored by identifiable contributors (PII — author names or reviewer identities in HumanDecisionInput). Writes aggregated learning state and per-reviewer acceptance statistics to .exemplar/learner/state.json and .exemplar/learner/records.json (INTERNAL — no raw PII is persisted, only reviewer_id keys and numeric counters).",
+    "side_effects": [
+      {
+        "type": "file_write",
+        "classification": "INTERNAL",
+        "fields": [
+          "LearnerState",
+          "LearningRecord"
+        ],
+        "rationale": "Persists aggregated acceptance/dismissal stats and individual learning records to .exemplar/learner/state.json and .exemplar/learner/records.json via atomic write (temp file + os.replace)."
+      },
+      {
+        "type": "event_emission",
+        "classification": "INTERNAL",
+        "fields": [
+          "ChroniclerEvent"
+        ],
+        "rationale": "Emits learning.recorded, phase.transition, and pattern.detected ChroniclerEvents at stage boundaries for governance traceability. Fire-and-forget — failures do not block."
+      },
+      {
+        "type": "stigmergy_report",
+        "classification": "INTERNAL",
+        "fields": [
+          "StigmergySignal"
+        ],
+        "rationale": "Reports recurring reviewer accuracy patterns to the stigmergy pattern store for cross-component consumption. Fire-and-forget."
+      }
+    ]
+  },
+  "authority": {
+    "domains": [
+      "learning_state",
+      "trust_adjustments",
+      "phase_progression"
+    ],
+    "rationale": "The learner module is the sole authoritative owner of learning state (acceptance/dismissal records, aggregated reviewer stats, phase progression history) and the sole producer of trust score adjustments derived from that state. No other component may write to .exemplar/learner/ or independently compute trust adjustments."
+  }
+}

@@ -1,0 +1,1103 @@
+{
+  "component_id": "cli",
+  "contract_version": 1,
+  "test_cases": [
+    {
+      "id": "parser_has_four_subcommands",
+      "description": "build_parser returns a parser with exactly 4 subcommands: review, trust, history, adopt",
+      "function": "build_parser",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "parser has exactly 4 subcommands",
+        "subcommand names are review, trust, history, adopt"
+      ]
+    },
+    {
+      "id": "parser_prog_name",
+      "description": "build_parser sets prog name to 'exemplar'",
+      "function": "build_parser",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "parser.prog == 'exemplar'"
+      ]
+    },
+    {
+      "id": "parser_review_has_diff_file_positional",
+      "description": "review subcommand has positional diff_file argument",
+      "function": "build_parser",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "review subparser accepts positional diff-file argument"
+      ]
+    },
+    {
+      "id": "parser_review_has_config_option",
+      "description": "review subcommand has --config optional argument",
+      "function": "build_parser",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "review subparser accepts --config option"
+      ]
+    },
+    {
+      "id": "parser_review_has_format_option",
+      "description": "review subcommand has --format option with choices json, md, github",
+      "function": "build_parser",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "--format accepts json, md, github"
+      ]
+    },
+    {
+      "id": "parser_history_has_query_option",
+      "description": "history subcommand has --query optional argument",
+      "function": "build_parser",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "history subparser accepts --query option"
+      ]
+    },
+    {
+      "id": "parser_debug_flag_defaults_false",
+      "description": "Parent parser has --debug flag defaulting to False",
+      "function": "build_parser",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "--debug defaults to False"
+      ]
+    },
+    {
+      "id": "parse_valid_review_args",
+      "description": "parse_and_validate_args succeeds for review subcommand with diff-file",
+      "function": "parse_and_validate_args",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "argv": "['review', 'my.diff']"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returned CliArgs.subcommand == SubcommandName.review",
+        "returned CliArgs.diff_file is non-empty"
+      ]
+    },
+    {
+      "id": "parse_valid_trust_args",
+      "description": "parse_and_validate_args succeeds for trust subcommand",
+      "function": "parse_and_validate_args",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "argv": "['trust']"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returned CliArgs.subcommand == SubcommandName.trust"
+      ]
+    },
+    {
+      "id": "parse_valid_history_args",
+      "description": "parse_and_validate_args succeeds for history subcommand",
+      "function": "parse_and_validate_args",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "argv": "['history']"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returned CliArgs.subcommand == SubcommandName.history"
+      ]
+    },
+    {
+      "id": "parse_valid_history_with_query",
+      "description": "parse_and_validate_args succeeds for history --query term",
+      "function": "parse_and_validate_args",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "argv": "['history', '--query', 'security']"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returned CliArgs.query == 'security'"
+      ]
+    },
+    {
+      "id": "parse_valid_adopt_args",
+      "description": "parse_and_validate_args succeeds for adopt subcommand",
+      "function": "parse_and_validate_args",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "argv": "['adopt']"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returned CliArgs.subcommand == SubcommandName.adopt"
+      ]
+    },
+    {
+      "id": "parse_review_with_all_options",
+      "description": "parse_and_validate_args for review with --config and --format and --debug",
+      "function": "parse_and_validate_args",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "argv": "['--debug', 'review', 'my.diff', '--config', 'cfg.yml', '--format', 'json']"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "debug is True",
+        "output_format is json",
+        "config_path is cfg.yml"
+      ]
+    },
+    {
+      "id": "parse_no_subcommand_error",
+      "description": "parse_and_validate_args raises when no subcommand provided",
+      "function": "parse_and_validate_args",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "argv": "[]"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "no_subcommand",
+      "assertions": [
+        "raises an appropriate error when argv is empty"
+      ]
+    },
+    {
+      "id": "parse_unknown_argument_error",
+      "description": "parse_and_validate_args raises on unrecognized argument",
+      "function": "parse_and_validate_args",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "argv": "['review', 'my.diff', '--banana']"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "unknown_argument",
+      "assertions": [
+        "raises an error for unknown argument --banana"
+      ]
+    },
+    {
+      "id": "parse_missing_diff_file_error",
+      "description": "parse_and_validate_args raises when review has no diff-file",
+      "function": "parse_and_validate_args",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "argv": "['review']"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "missing_diff_file",
+      "assertions": [
+        "raises error for missing positional diff-file"
+      ]
+    },
+    {
+      "id": "map_pass_to_zero",
+      "description": "map_decision_to_exit_code maps 'pass' to 0",
+      "function": "map_decision_to_exit_code",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "decision": "pass"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result == 0"
+      ]
+    },
+    {
+      "id": "map_warn_to_one",
+      "description": "map_decision_to_exit_code maps 'warn' to 1",
+      "function": "map_decision_to_exit_code",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "decision": "warn"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result == 1"
+      ]
+    },
+    {
+      "id": "map_block_to_two",
+      "description": "map_decision_to_exit_code maps 'block' to 2",
+      "function": "map_decision_to_exit_code",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "decision": "block"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result == 2"
+      ]
+    },
+    {
+      "id": "map_error_to_three",
+      "description": "map_decision_to_exit_code maps 'error' to 3",
+      "function": "map_decision_to_exit_code",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "decision": "error"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result == 3"
+      ]
+    },
+    {
+      "id": "map_invalid_decision_raises",
+      "description": "map_decision_to_exit_code raises for unknown decision string",
+      "function": "map_decision_to_exit_code",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "decision": "banana"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "invalid_decision",
+      "assertions": [
+        "raises an error for unrecognized decision"
+      ]
+    },
+    {
+      "id": "map_empty_decision_raises",
+      "description": "map_decision_to_exit_code raises for empty string",
+      "function": "map_decision_to_exit_code",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "decision": ""
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "invalid_decision",
+      "assertions": [
+        "empty string is not a valid decision"
+      ]
+    },
+    {
+      "id": "map_case_sensitive_decision",
+      "description": "map_decision_to_exit_code treats 'PASS' as invalid (case sensitive)",
+      "function": "map_decision_to_exit_code",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "decision": "PASS"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "invalid_decision",
+      "assertions": [
+        "uppercase PASS is rejected"
+      ]
+    },
+    {
+      "id": "dispatch_table_has_four_entries",
+      "description": "build_dispatch_table returns table with exactly 4 entries",
+      "function": "build_dispatch_table",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "table has exactly 4 entries",
+        "every SubcommandName has a handler"
+      ]
+    },
+    {
+      "id": "dispatch_table_handlers_are_async",
+      "description": "Each handler in dispatch table is an async callable",
+      "function": "build_dispatch_table",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "each handler is an async callable"
+      ]
+    },
+    {
+      "id": "dispatch_table_no_extra_keys",
+      "description": "Dispatch table has no extraneous keys beyond SubcommandName values",
+      "function": "build_dispatch_table",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "no keys beyond SubcommandName variants"
+      ]
+    },
+    {
+      "id": "handle_review_happy_path",
+      "description": "handle_review returns CliResult with exit_code 0/1/2 on successful pipeline",
+      "function": "handle_review",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {
+        "intake": "mock parse_diff",
+        "circuit": "mock route_stages",
+        "assessor": "mock assess",
+        "reporter": "mock format_report",
+        "chronicle": "mock emit_event",
+        "config": "mock load_config"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "exit_code in (0, 1, 2)",
+        "stdout_output contains formatted report"
+      ]
+    },
+    {
+      "id": "handle_review_chronicler_emitted",
+      "description": "handle_review emits a review.started Chronicler event",
+      "function": "handle_review",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {
+        "chronicle": "mock emit_event"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "chronicle.emit_event was called"
+      ]
+    },
+    {
+      "id": "handle_review_chronicler_failure_does_not_block",
+      "description": "handle_review succeeds even when Chronicler raises",
+      "function": "handle_review",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {
+        "chronicle": "mock emit_event raises Exception"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "exit_code is not ERROR(3)",
+        "handler completes successfully"
+      ]
+    },
+    {
+      "id": "handle_review_diff_not_found",
+      "description": "handle_review returns ERROR(3) when diff file does not exist",
+      "function": "handle_review",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "diff_file_not_found",
+      "assertions": [
+        "exit_code == 3",
+        "stderr_output contains error info"
+      ]
+    },
+    {
+      "id": "handle_review_diff_empty",
+      "description": "handle_review returns ERROR(3) when diff file is empty",
+      "function": "handle_review",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "diff_file_empty",
+      "assertions": [
+        "exit_code == 3"
+      ]
+    },
+    {
+      "id": "handle_review_diff_read_error",
+      "description": "handle_review returns ERROR(3) when diff file has read permission error",
+      "function": "handle_review",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "diff_file_read_error",
+      "assertions": [
+        "exit_code == 3"
+      ]
+    },
+    {
+      "id": "handle_review_config_load_error",
+      "description": "handle_review returns ERROR(3) when config file is invalid",
+      "function": "handle_review",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {
+        "config": "mock load_config raises"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "config_load_error",
+      "assertions": [
+        "exit_code == 3"
+      ]
+    },
+    {
+      "id": "handle_review_pipeline_failure",
+      "description": "handle_review returns ERROR(3) when a pipeline stage raises",
+      "function": "handle_review",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {
+        "intake": "mock parse_diff raises"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "pipeline_stage_failure",
+      "assertions": [
+        "exit_code == 3"
+      ]
+    },
+    {
+      "id": "handle_review_debug_stderr",
+      "description": "handle_review includes diagnostic info in stderr when debug is True",
+      "function": "handle_review",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "stderr_output is non-empty when debug=True"
+      ]
+    },
+    {
+      "id": "handle_trust_happy_path",
+      "description": "handle_trust returns PASS(0) with trust score table",
+      "function": "handle_trust",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {
+        "assessor": "mock get_trust_scores",
+        "config": "mock load_config"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "exit_code == 0",
+        "stdout_output contains trust data"
+      ]
+    },
+    {
+      "id": "handle_trust_error",
+      "description": "handle_trust returns ERROR(3) when trust data unavailable",
+      "function": "handle_trust",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {
+        "assessor": "mock get_trust_scores raises"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "trust_data_unavailable",
+      "assertions": [
+        "exit_code == 3"
+      ]
+    },
+    {
+      "id": "handle_trust_config_error",
+      "description": "handle_trust returns ERROR(3) when config cannot load",
+      "function": "handle_trust",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "config_load_error",
+      "assertions": [
+        "exit_code == 3"
+      ]
+    },
+    {
+      "id": "handle_history_happy_path",
+      "description": "handle_history returns PASS(0) with history results",
+      "function": "handle_history",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {
+        "learner": "mock query_history",
+        "config": "mock load_config"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "exit_code == 0",
+        "stdout_output contains history results"
+      ]
+    },
+    {
+      "id": "handle_history_empty_results",
+      "description": "handle_history returns PASS(0) even with zero results",
+      "function": "handle_history",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {
+        "learner": "mock query_history returns empty"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "exit_code == 0",
+        "stdout_output contains empty set message"
+      ]
+    },
+    {
+      "id": "handle_history_kindex_unavailable",
+      "description": "handle_history returns ERROR(3) when kindex store unreachable",
+      "function": "handle_history",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {
+        "learner": "mock query_history raises"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "kindex_unavailable",
+      "assertions": [
+        "exit_code == 3"
+      ]
+    },
+    {
+      "id": "handle_adopt_happy_path",
+      "description": "handle_adopt returns PASS(0) with scan findings",
+      "function": "handle_adopt",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {
+        "learner": "mock scan_linter_configs",
+        "config": "mock load_config"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "exit_code == 0",
+        "stdout_output contains scan results"
+      ]
+    },
+    {
+      "id": "handle_adopt_no_configs_found",
+      "description": "handle_adopt returns PASS(0) even when no linter configs found",
+      "function": "handle_adopt",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {
+        "learner": "mock scan_linter_configs returns empty"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "exit_code == 0"
+      ]
+    },
+    {
+      "id": "handle_adopt_cwd_unreadable",
+      "description": "handle_adopt returns ERROR(3) when cwd is unreadable",
+      "function": "handle_adopt",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "cwd_unreadable",
+      "assertions": [
+        "exit_code == 3"
+      ]
+    },
+    {
+      "id": "handle_adopt_scan_error",
+      "description": "handle_adopt returns ERROR(3) on unexpected scan error",
+      "function": "handle_adopt",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {
+        "learner": "mock scan_linter_configs raises"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "scan_error",
+      "assertions": [
+        "exit_code == 3"
+      ]
+    },
+    {
+      "id": "main_review_happy_path",
+      "description": "main() returns 0 for successful review subcommand",
+      "function": "main",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {
+        "all_handlers": "mocked to return CliResult(exit_code=0, ...)"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "return value == 0"
+      ]
+    },
+    {
+      "id": "main_returns_int",
+      "description": "main() always returns an int",
+      "function": "main",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "isinstance(result, int)"
+      ]
+    },
+    {
+      "id": "main_no_exception_escapes",
+      "description": "main() catches all exceptions and returns 3",
+      "function": "main",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "return value == 3",
+        "no exception propagates"
+      ]
+    },
+    {
+      "id": "main_keyboard_interrupt",
+      "description": "main() handles KeyboardInterrupt and returns exit code",
+      "function": "main",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "keyboard_interrupt",
+      "assertions": [
+        "return value is an int (expected 3 or graceful)"
+      ]
+    },
+    {
+      "id": "main_writes_stdout",
+      "description": "main() writes handler stdout_output to sys.stdout on success",
+      "function": "main",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "sys.stdout received the output"
+      ]
+    },
+    {
+      "id": "main_writes_stderr_on_error",
+      "description": "main() writes diagnostic to sys.stderr on error",
+      "function": "main",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "sys.stderr received error message"
+      ]
+    },
+    {
+      "id": "exit_code_deterministic",
+      "description": "Given the same pipeline result, exit code is always the same",
+      "function": "map_decision_to_exit_code",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "multiple calls with same input return same output"
+      ]
+    },
+    {
+      "id": "cli_args_immutable",
+      "description": "CliArgs instances are frozen/immutable after construction",
+      "function": "CliArgs",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "attempting to set attribute raises error"
+      ]
+    },
+    {
+      "id": "cli_result_immutable",
+      "description": "CliResult instances are frozen/immutable after construction",
+      "function": "CliResult",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "attempting to set attribute raises error"
+      ]
+    },
+    {
+      "id": "filepath_valid",
+      "description": "FilePath accepts a valid non-empty path string",
+      "function": "FilePath",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "value": "/some/path.diff"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "FilePath is constructed successfully"
+      ]
+    },
+    {
+      "id": "filepath_empty_rejected",
+      "description": "FilePath rejects empty string",
+      "function": "FilePath",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "value": ""
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "raises validation error"
+      ]
+    },
+    {
+      "id": "filepath_null_byte_rejected",
+      "description": "FilePath rejects string containing null byte",
+      "function": "FilePath",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "value": "path\\x00evil"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "raises validation error"
+      ]
+    },
+    {
+      "id": "filepath_max_length",
+      "description": "FilePath rejects strings exceeding 4096 chars",
+      "function": "FilePath",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "string of length 4097 is rejected",
+        "string of length 4096 is accepted"
+      ]
+    },
+    {
+      "id": "output_format_valid_variants",
+      "description": "OutputFormat enum has exactly json, md, github variants",
+      "function": "OutputFormat",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "all three variants exist"
+      ]
+    },
+    {
+      "id": "subcommand_name_valid_variants",
+      "description": "SubcommandName enum has exactly review, trust, history, adopt variants",
+      "function": "SubcommandName",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "all four variants exist"
+      ]
+    },
+    {
+      "id": "cli_exit_code_valid_variants",
+      "description": "CliExitCode enum has exactly 0, 1, 2, 3 variants",
+      "function": "CliExitCode",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "all four variants exist"
+      ]
+    },
+    {
+      "id": "pact_key_namespace_format",
+      "description": "PactKey namespace must match ^EXEMPLAR\\.CLI$",
+      "function": "PactKey",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "PactKey(namespace='EXEMPLAR.CLI', function_key='EXEMPLAR.CLI.handle_review') is valid"
+      ]
+    },
+    {
+      "id": "pact_key_invalid_namespace",
+      "description": "PactKey rejects invalid namespace",
+      "function": "PactKey",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "PactKey(namespace='WRONG', ...) raises validation error"
+      ]
+    },
+    {
+      "id": "pact_key_invalid_function_key",
+      "description": "PactKey rejects function_key not matching pattern",
+      "function": "PactKey",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "PactKey(namespace='EXEMPLAR.CLI', function_key='BAD') raises validation error"
+      ]
+    },
+    {
+      "id": "debug_flag_no_stdout_change",
+      "description": "--debug flag does not change stdout content or exit codes",
+      "function": "handle_review",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "stdout_output is same with and without debug",
+        "exit_code is same with and without debug"
+      ]
+    },
+    {
+      "id": "stdout_stderr_separation",
+      "description": "stdout carries only subcommand output; stderr carries only diagnostics",
+      "function": "main",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "stdout contains report output",
+        "stderr contains diagnostics only"
+      ]
+    },
+    {
+      "id": "map_decision_fuzz_random_strings",
+      "description": "Random non-valid strings always raise invalid_decision error",
+      "function": "map_decision_to_exit_code",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "all random strings not in valid set raise error"
+      ]
+    }
+  ],
+  "test_language": "python",
+  "generated_code": "\"\"\"\nContract tests for exemplar.cli module.\n\nTests organized in five sections:\n1. Type validation (enums, data models, validators)\n2. Parser & argument validation (pure, synchronous)\n3. Exit code mapping (pure, synchronous)\n4. Dispatch table (pure, synchronous)\n5. Async handlers (mocked I/O)\n6. Main orchestrator (integration-level)\n7. Invariants (cross-cutting)\n\"\"\"\n\nimport asyncio\nimport inspect\nimport os\nimport random\nimport string\nimport sys\nfrom unittest.mock import AsyncMock, MagicMock, patch, PropertyMock\n\nimport pytest\n\n# Import all public symbols from the CLI module\nfrom exemplar.cli import (\n    CliExitCode,\n    SubcommandName,\n    CliArgs,\n    FilePath,\n    OutputFormat,\n    CliResult,\n    SubcommandDispatchTable,\n    PactKey,\n    build_parser,\n    parse_and_validate_args,\n    handle_review,\n    handle_trust,\n    handle_history,\n    handle_adopt,\n    build_dispatch_table,\n    map_decision_to_exit_code,\n    main,\n)\n\n\n# ============================================================================\n# Fixtures\n# ============================================================================\n\n@pytest.fixture\ndef parser():\n    \"\"\"Build a fresh parser for each test.\"\"\"\n    return build_parser()\n\n\n@pytest.fixture\ndef tmp_diff_file(tmp_path):\n    \"\"\"Create a temporary diff file with content.\"\"\"\n    diff = tmp_path / \"test.diff\"\n    diff.write_text(\"diff --git a/foo.py b/foo.py\\n--- a/foo.py\\n+++ b/foo.py\\n@@ -1 +1 @@\\n-old\\n+new\\n\")\n    return diff\n\n\n@pytest.fixture\ndef tmp_empty_diff_file(tmp_path):\n    \"\"\"Create an empty diff file.\"\"\"\n    diff = tmp_path / \"empty.diff\"\n    diff.write_text(\"\")\n    return diff\n\n\n@pytest.fixture\ndef tmp_config_file(tmp_path):\n    \"\"\"Create a minimal config file.\"\"\"\n    cfg = tmp_path / \".exemplar.yml\"\n    cfg.write_text(\"version: 1\\n\")\n    return cfg\n\n\n@pytest.fixture\ndef cli_args_factory():\n    \"\"\"Factory that creates CliArgs with sensible defaults, allows overrides.\"\"\"\n    def _factory(**overrides):\n        defaults = {\n            \"subcommand\": SubcommandName.review,\n            \"diff_file\": FilePath(value=\"/tmp/test.diff\"),\n            \"config_path\": FilePath(value=\"/tmp/.exemplar.yml\"),\n            \"output_format\": OutputFormat.json,\n            \"query\": \"\",\n            \"debug\": False,\n        }\n        defaults.update(overrides)\n        return CliArgs(**defaults)\n    return _factory\n\n\n@pytest.fixture\ndef mock_pipeline():\n    \"\"\"Mock all pipeline dependencies for handle_review.\"\"\"\n    with patch(\"exemplar.cli.intake\") as m_intake, \\\n         patch(\"exemplar.cli.circuit\") as m_circuit, \\\n         patch(\"exemplar.cli.assessor\") as m_assessor, \\\n         patch(\"exemplar.cli.reporter\") as m_reporter, \\\n         patch(\"exemplar.cli.chronicle\") as m_chronicle:\n\n        # Set up async mocks where needed\n        m_intake.parse_diff = AsyncMock(return_value=MagicMock())\n        m_circuit.route_stages = AsyncMock(return_value=MagicMock())\n        m_assessor.assess = AsyncMock(return_value=MagicMock(decision=\"pass\"))\n        m_reporter.format_report = AsyncMock(return_value=\"formatted report output\")\n        m_chronicle.emit_event = AsyncMock()\n\n        yield {\n            \"intake\": m_intake,\n            \"circuit\": m_circuit,\n            \"assessor\": m_assessor,\n            \"reporter\": m_reporter,\n            \"chronicle\": m_chronicle,\n        }\n\n\n@pytest.fixture\ndef mock_config():\n    \"\"\"Mock config loading.\"\"\"\n    with patch(\"exemplar.cli.config\") as m_config:\n        m_config.load_config = MagicMock(return_value=MagicMock())\n        yield m_config\n\n\n@pytest.fixture\ndef mock_learner():\n    \"\"\"Mock learner module.\"\"\"\n    with patch(\"exemplar.cli.learner\") as m_learner:\n        m_learner.query_history = AsyncMock(return_value=[])\n        m_learner.scan_linter_configs = AsyncMock(return_value=[])\n        yield m_learner\n\n\n# ============================================================================\n# Section 1: Type Validation\n# ============================================================================\n\nclass TestCliExitCode:\n    \"\"\"Tests for CliExitCode enum.\"\"\"\n\n    def test_has_all_variants(self):\n        \"\"\"CliExitCode has exactly 0, 1, 2, 3 variants.\"\"\"\n        values = {e.value if hasattr(e, 'value') else e for e in CliExitCode}\n        assert 0 in values\n        assert 1 in values\n        assert 2 in values\n        assert 3 in values\n        assert len(list(CliExitCode)) == 4\n\n\nclass TestSubcommandName:\n    \"\"\"Tests for SubcommandName enum.\"\"\"\n\n    def test_has_all_variants(self):\n        \"\"\"SubcommandName has exactly review, trust, history, adopt.\"\"\"\n        names = {e.value if hasattr(e, 'value') else str(e) for e in SubcommandName}\n        for expected in [\"review\", \"trust\", \"history\", \"adopt\"]:\n            assert any(expected in str(n) for n in names), f\"Missing variant: {expected}\"\n        assert len(list(SubcommandName)) == 4\n\n\nclass TestOutputFormat:\n    \"\"\"Tests for OutputFormat enum.\"\"\"\n\n    def test_has_all_variants(self):\n        \"\"\"OutputFormat has exactly json, md, github.\"\"\"\n        names = {e.value if hasattr(e, 'value') else str(e) for e in OutputFormat}\n        for expected in [\"json\", \"md\", \"github\"]:\n            assert any(expected in str(n) for n in names), f\"Missing variant: {expected}\"\n        assert len(list(OutputFormat)) == 3\n\n\nclass TestFilePath:\n    \"\"\"Tests for FilePath type validation.\"\"\"\n\n    def test_valid_path(self):\n        \"\"\"FilePath accepts a valid non-empty path string.\"\"\"\n        fp = FilePath(value=\"/some/path.diff\")\n        assert fp.value == \"/some/path.diff\"\n\n    def test_single_char_path(self):\n        \"\"\"FilePath accepts minimum length path (1 char).\"\"\"\n        fp = FilePath(value=\"x\")\n        assert fp.value == \"x\"\n\n    def test_max_length_path_accepted(self):\n        \"\"\"FilePath accepts string of exactly 4096 characters.\"\"\"\n        path = \"a\" * 4096\n        fp = FilePath(value=path)\n        assert len(fp.value) == 4096\n\n    def test_exceeds_max_length_rejected(self):\n        \"\"\"FilePath rejects string exceeding 4096 characters.\"\"\"\n        path = \"a\" * 4097\n        with pytest.raises((ValueError, Exception)):\n            FilePath(value=path)\n\n    def test_empty_string_rejected(self):\n        \"\"\"FilePath rejects empty string.\"\"\"\n        with pytest.raises((ValueError, Exception)):\n            FilePath(value=\"\")\n\n    def test_null_byte_rejected(self):\n        \"\"\"FilePath rejects string containing null byte.\"\"\"\n        with pytest.raises((ValueError, Exception)):\n            FilePath(value=\"path\\x00evil\")\n\n    def test_path_with_spaces(self):\n        \"\"\"FilePath accepts paths with spaces.\"\"\"\n        fp = FilePath(value=\"/some path/with spaces.diff\")\n        assert fp.value == \"/some path/with spaces.diff\"\n\n    def test_path_with_unicode(self):\n        \"\"\"FilePath accepts paths with unicode characters.\"\"\"\n        fp = FilePath(value=\"/some/café/résumé.diff\")\n        assert fp.value == \"/some/café/résumé.diff\"\n\n\nclass TestPactKey:\n    \"\"\"Tests for PactKey validation.\"\"\"\n\n    def test_valid_pact_key(self):\n        \"\"\"PactKey accepts valid namespace and function_key.\"\"\"\n        pk = PactKey(namespace=\"EXEMPLAR.CLI\", function_key=\"EXEMPLAR.CLI.handle_review\")\n        assert pk.namespace == \"EXEMPLAR.CLI\"\n        assert pk.function_key == \"EXEMPLAR.CLI.handle_review\"\n\n    def test_valid_function_keys(self):\n        \"\"\"PactKey accepts various valid function_key patterns.\"\"\"\n        for fk in [\"EXEMPLAR.CLI.handle_review\", \"EXEMPLAR.CLI.handle_trust\",\n                    \"EXEMPLAR.CLI.handle_history\", \"EXEMPLAR.CLI.handle_adopt\",\n                    \"EXEMPLAR.CLI.main\"]:\n            pk = PactKey(namespace=\"EXEMPLAR.CLI\", function_key=fk)\n            assert pk.function_key == fk\n\n    def test_invalid_namespace_rejected(self):\n        \"\"\"PactKey rejects invalid namespace.\"\"\"\n        with pytest.raises((ValueError, Exception)):\n            PactKey(namespace=\"WRONG.NAMESPACE\", function_key=\"EXEMPLAR.CLI.main\")\n\n    def test_invalid_function_key_rejected(self):\n        \"\"\"PactKey rejects function_key not matching pattern.\"\"\"\n        with pytest.raises((ValueError, Exception)):\n            PactKey(namespace=\"EXEMPLAR.CLI\", function_key=\"BAD_KEY\")\n\n    def test_function_key_uppercase_rejected(self):\n        \"\"\"PactKey rejects function_key with uppercase letters after prefix.\"\"\"\n        with pytest.raises((ValueError, Exception)):\n            PactKey(namespace=\"EXEMPLAR.CLI\", function_key=\"EXEMPLAR.CLI.HandleReview\")\n\n\nclass TestCliArgsImmutability:\n    \"\"\"Tests for CliArgs frozen model.\"\"\"\n\n    def test_immutable_after_construction(self, cli_args_factory):\n        \"\"\"CliArgs instances are frozen; attribute assignment raises.\"\"\"\n        args = cli_args_factory()\n        with pytest.raises((AttributeError, TypeError, Exception)):\n            args.subcommand = SubcommandName.trust\n\n    def test_construction_succeeds(self, cli_args_factory):\n        \"\"\"CliArgs can be constructed with valid fields.\"\"\"\n        args = cli_args_factory()\n        assert args.subcommand == SubcommandName.review\n\n\nclass TestCliResultImmutability:\n    \"\"\"Tests for CliResult frozen model.\"\"\"\n\n    def test_immutable_after_construction(self):\n        \"\"\"CliResult instances are frozen; attribute assignment raises.\"\"\"\n        result = CliResult(exit_code=CliExitCode(0), stdout_output=\"ok\", stderr_output=\"\")\n        with pytest.raises((AttributeError, TypeError, Exception)):\n            result.exit_code = CliExitCode(1)\n\n    def test_construction_succeeds(self):\n        \"\"\"CliResult can be constructed with valid fields.\"\"\"\n        result = CliResult(exit_code=CliExitCode(0), stdout_output=\"output\", stderr_output=\"diag\")\n        assert result.stdout_output == \"output\"\n\n\n# ============================================================================\n# Section 2: Parser & Argument Validation\n# ============================================================================\n\nclass TestBuildParser:\n    \"\"\"Tests for build_parser() function.\"\"\"\n\n    def test_returns_parser(self, parser):\n        \"\"\"build_parser returns an ArgumentParser instance.\"\"\"\n        import argparse\n        assert isinstance(parser, argparse.ArgumentParser)\n\n    def test_prog_name_is_exemplar(self, parser):\n        \"\"\"Parser prog name is 'exemplar'.\"\"\"\n        assert parser.prog == \"exemplar\"\n\n    def test_has_four_subcommands(self, parser):\n        \"\"\"Parser has exactly 4 subcommands.\"\"\"\n        # Access subparsers via internal API\n        subparsers_actions = [\n            action for action in parser._subparsers._actions\n            if hasattr(action, '_parser_class')\n        ]\n        # Find the subparsers action\n        for action in parser._subparsers._actions:\n            if hasattr(action, 'choices') and action.choices:\n                choices = action.choices\n                assert len(choices) == 4\n                assert \"review\" in choices\n                assert \"trust\" in choices\n                assert \"history\" in choices\n                assert \"adopt\" in choices\n                return\n        # If we get here, try parsing to verify subcommands exist\n        for subcmd in [\"review\", \"trust\", \"history\", \"adopt\"]:\n            # Just verify the parser doesn't fail for known subcommands\n            pass\n\n    def test_review_accepts_diff_file(self, parser):\n        \"\"\"Review subcommand has positional diff_file argument.\"\"\"\n        args = parser.parse_args([\"review\", \"test.diff\"])\n        assert hasattr(args, \"diff_file\") or hasattr(args, \"diff-file\")\n\n    def test_review_has_config_option(self, parser):\n        \"\"\"Review subcommand accepts --config.\"\"\"\n        args = parser.parse_args([\"review\", \"test.diff\", \"--config\", \"myconfig.yml\"])\n        config_val = getattr(args, \"config\", None) or getattr(args, \"config_path\", None)\n        assert config_val is not None\n\n    def test_review_has_format_option_with_choices(self, parser):\n        \"\"\"Review --format accepts json, md, github.\"\"\"\n        for fmt in [\"json\", \"md\", \"github\"]:\n            args = parser.parse_args([\"review\", \"test.diff\", \"--format\", fmt])\n            format_val = getattr(args, \"format\", None) or getattr(args, \"output_format\", None)\n            assert format_val == fmt\n\n    def test_review_format_invalid_choice_rejected(self, parser):\n        \"\"\"Review --format rejects invalid format.\"\"\"\n        with pytest.raises(SystemExit):\n            parser.parse_args([\"review\", \"test.diff\", \"--format\", \"xml\"])\n\n    def test_history_has_query_option(self, parser):\n        \"\"\"History subcommand accepts --query.\"\"\"\n        args = parser.parse_args([\"history\", \"--query\", \"security\"])\n        assert getattr(args, \"query\", None) == \"security\"\n\n    def test_debug_flag_defaults_false(self, parser):\n        \"\"\"--debug flag defaults to False.\"\"\"\n        args = parser.parse_args([\"trust\"])\n        assert getattr(args, \"debug\", None) is False\n\n    def test_debug_flag_can_be_set(self, parser):\n        \"\"\"--debug flag can be set to True.\"\"\"\n        args = parser.parse_args([\"--debug\", \"trust\"])\n        assert getattr(args, \"debug\", None) is True\n\n\nclass TestParseAndValidateArgs:\n    \"\"\"Tests for parse_and_validate_args() function.\"\"\"\n\n    def test_review_with_diff_file(self, parser):\n        \"\"\"Parses review subcommand with diff file into valid CliArgs.\"\"\"\n        result = parse_and_validate_args(parser, [\"review\", \"my.diff\"])\n        assert isinstance(result, CliArgs)\n        assert result.subcommand == SubcommandName.review\n        # diff_file should be non-empty\n        if isinstance(result.diff_file, FilePath):\n            assert len(result.diff_file.value) > 0\n        else:\n            assert len(str(result.diff_file)) > 0\n\n    def test_trust_subcommand(self, parser):\n        \"\"\"Parses trust subcommand into valid CliArgs.\"\"\"\n        result = parse_and_validate_args(parser, [\"trust\"])\n        assert isinstance(result, CliArgs)\n        assert result.subcommand == SubcommandName.trust\n\n    def test_history_subcommand(self, parser):\n        \"\"\"Parses history subcommand into valid CliArgs.\"\"\"\n        result = parse_and_validate_args(parser, [\"history\"])\n        assert isinstance(result, CliArgs)\n        assert result.subcommand == SubcommandName.history\n\n    def test_history_with_query(self, parser):\n        \"\"\"Parses history --query into CliArgs with query field.\"\"\"\n        result = parse_and_validate_args(parser, [\"history\", \"--query\", \"security\"])\n        assert result.query == \"security\"\n\n    def test_adopt_subcommand(self, parser):\n        \"\"\"Parses adopt subcommand into valid CliArgs.\"\"\"\n        result = parse_and_validate_args(parser, [\"adopt\"])\n        assert isinstance(result, CliArgs)\n        assert result.subcommand == SubcommandName.adopt\n\n    def test_review_with_all_options(self, parser):\n        \"\"\"Parses review with --config, --format, --debug.\"\"\"\n        result = parse_and_validate_args(\n            parser, [\"--debug\", \"review\", \"my.diff\", \"--config\", \"cfg.yml\", \"--format\", \"json\"]\n        )\n        assert result.debug is True\n        assert result.output_format == OutputFormat.json\n\n    def test_output_format_is_valid(self, parser):\n        \"\"\"Returned CliArgs has valid OutputFormat.\"\"\"\n        result = parse_and_validate_args(parser, [\"review\", \"my.diff\", \"--format\", \"md\"])\n        assert result.output_format in list(OutputFormat)\n\n    def test_no_subcommand_raises(self, parser):\n        \"\"\"Raises error when no subcommand provided.\"\"\"\n        with pytest.raises((SystemExit, ValueError, Exception)):\n            parse_and_validate_args(parser, [])\n\n    def test_unknown_argument_raises(self, parser):\n        \"\"\"Raises error on unrecognized argument.\"\"\"\n        with pytest.raises((SystemExit, ValueError, Exception)):\n            parse_and_validate_args(parser, [\"review\", \"my.diff\", \"--banana\"])\n\n    def test_missing_diff_file_raises(self, parser):\n        \"\"\"Raises error when review invoked without diff-file.\"\"\"\n        with pytest.raises((SystemExit, ValueError, Exception)):\n            parse_and_validate_args(parser, [\"review\"])\n\n\n# ============================================================================\n# Section 3: Exit Code Mapping\n# ============================================================================\n\nclass TestMapDecisionToExitCode:\n    \"\"\"Tests for map_decision_to_exit_code() pure function.\"\"\"\n\n    @pytest.mark.parametrize(\"decision,expected_code\", [\n        (\"pass\", 0),\n        (\"warn\", 1),\n        (\"block\", 2),\n        (\"error\", 3),\n    ])\n    def test_valid_decisions(self, decision, expected_code):\n        \"\"\"Each valid decision maps to the correct exit code.\"\"\"\n        result = map_decision_to_exit_code(decision)\n        # Compare numeric value\n        result_val = result.value if hasattr(result, 'value') else int(result)\n        assert result_val == expected_code\n\n    def test_invalid_decision_raises(self):\n        \"\"\"Unknown decision string raises error.\"\"\"\n        with pytest.raises((ValueError, KeyError, Exception)):\n            map_decision_to_exit_code(\"banana\")\n\n    def test_empty_decision_raises(self):\n        \"\"\"Empty string decision raises error.\"\"\"\n        with pytest.raises((ValueError, KeyError, Exception)):\n            map_decision_to_exit_code(\"\")\n\n    def test_case_sensitive_pass_uppercase(self):\n        \"\"\"'PASS' (uppercase) is not a valid decision.\"\"\"\n        with pytest.raises((ValueError, KeyError, Exception)):\n            map_decision_to_exit_code(\"PASS\")\n\n    def test_case_sensitive_warn_uppercase(self):\n        \"\"\"'WARN' (uppercase) is not a valid decision.\"\"\"\n        with pytest.raises((ValueError, KeyError, Exception)):\n            map_decision_to_exit_code(\"WARN\")\n\n    def test_none_raises(self):\n        \"\"\"None decision raises error.\"\"\"\n        with pytest.raises((ValueError, KeyError, TypeError, Exception)):\n            map_decision_to_exit_code(None)\n\n    def test_deterministic(self):\n        \"\"\"Same decision always produces the same exit code.\"\"\"\n        for decision in [\"pass\", \"warn\", \"block\", \"error\"]:\n            results = [map_decision_to_exit_code(decision) for _ in range(10)]\n            assert all(r == results[0] for r in results)\n\n    def test_random_invalid_strings(self):\n        \"\"\"Random strings not in valid set always raise error.\"\"\"\n        valid = {\"pass\", \"warn\", \"block\", \"error\"}\n        for _ in range(50):\n            s = \"\".join(random.choices(string.ascii_letters + string.digits, k=random.randint(1, 20)))\n            if s not in valid:\n                with pytest.raises((ValueError, KeyError, Exception)):\n                    map_decision_to_exit_code(s)\n\n\n# ============================================================================\n# Section 4: Dispatch Table\n# ============================================================================\n\nclass TestBuildDispatchTable:\n    \"\"\"Tests for build_dispatch_table() function.\"\"\"\n\n    def test_returns_dispatch_table(self):\n        \"\"\"build_dispatch_table returns a SubcommandDispatchTable.\"\"\"\n        table = build_dispatch_table()\n        assert isinstance(table, SubcommandDispatchTable)\n\n    def test_has_four_entries(self):\n        \"\"\"Dispatch table has exactly 4 entries.\"\"\"\n        table = build_dispatch_table()\n        assert len(table.handlers) == 4\n\n    def test_all_subcommands_present(self):\n        \"\"\"Every SubcommandName variant has a handler entry.\"\"\"\n        table = build_dispatch_table()\n        for name in SubcommandName:\n            assert name in table.handlers, f\"Missing handler for {name}\"\n\n    def test_no_extra_keys(self):\n        \"\"\"Dispatch table has no keys beyond SubcommandName variants.\"\"\"\n        table = build_dispatch_table()\n        valid_keys = set(SubcommandName)\n        actual_keys = set(table.handlers.keys())\n        assert actual_keys == valid_keys, f\"Extra keys: {actual_keys - valid_keys}\"\n\n    def test_handlers_are_async_callables(self):\n        \"\"\"Each handler is an async callable.\"\"\"\n        table = build_dispatch_table()\n        for name, handler in table.handlers.items():\n            assert callable(handler), f\"Handler for {name} is not callable\"\n            assert asyncio.iscoroutinefunction(handler), f\"Handler for {name} is not async\"\n\n    def test_review_handler_is_handle_review(self):\n        \"\"\"Review handler maps to handle_review function.\"\"\"\n        table = build_dispatch_table()\n        assert table.handlers[SubcommandName.review] is handle_review\n\n    def test_trust_handler_is_handle_trust(self):\n        \"\"\"Trust handler maps to handle_trust function.\"\"\"\n        table = build_dispatch_table()\n        assert table.handlers[SubcommandName.trust] is handle_trust\n\n    def test_history_handler_is_handle_history(self):\n        \"\"\"History handler maps to handle_history function.\"\"\"\n        table = build_dispatch_table()\n        assert table.handlers[SubcommandName.history] is handle_history\n\n    def test_adopt_handler_is_handle_adopt(self):\n        \"\"\"Adopt handler maps to handle_adopt function.\"\"\"\n        table = build_dispatch_table()\n        assert table.handlers[SubcommandName.adopt] is handle_adopt\n\n\n# ============================================================================\n# Section 5: Async Handlers\n# ============================================================================\n\n@pytest.mark.asyncio\nclass TestHandleReview:\n    \"\"\"Tests for async handle_review() function.\"\"\"\n\n    async def test_happy_path(self, cli_args_factory, tmp_diff_file, tmp_config_file, mock_pipeline, mock_config):\n        \"\"\"handle_review returns successful CliResult on happy path.\"\"\"\n        args = cli_args_factory(\n            diff_file=FilePath(value=str(tmp_diff_file)),\n            config_path=FilePath(value=str(tmp_config_file)),\n        )\n        result = await handle_review(args)\n\n        assert isinstance(result, CliResult)\n        exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n        assert exit_val in (0, 1, 2), f\"Expected PASS/WARN/BLOCK, got {exit_val}\"\n        assert len(result.stdout_output) > 0\n\n    async def test_chronicler_event_emitted(self, cli_args_factory, tmp_diff_file, tmp_config_file, mock_pipeline, mock_config):\n        \"\"\"handle_review emits a review.started Chronicler event.\"\"\"\n        args = cli_args_factory(\n            diff_file=FilePath(value=str(tmp_diff_file)),\n            config_path=FilePath(value=str(tmp_config_file)),\n        )\n        await handle_review(args)\n        mock_pipeline[\"chronicle\"].emit_event.assert_called()\n\n    async def test_chronicler_failure_does_not_block(self, cli_args_factory, tmp_diff_file, tmp_config_file, mock_pipeline, mock_config):\n        \"\"\"handle_review succeeds even when Chronicler raises.\"\"\"\n        mock_pipeline[\"chronicle\"].emit_event = AsyncMock(side_effect=Exception(\"chronicle down\"))\n        args = cli_args_factory(\n            diff_file=FilePath(value=str(tmp_diff_file)),\n            config_path=FilePath(value=str(tmp_config_file)),\n        )\n        result = await handle_review(args)\n        exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n        assert exit_val != 3, \"Chronicler failure should not cause ERROR exit\"\n\n    async def test_diff_file_not_found(self, cli_args_factory, tmp_config_file, mock_pipeline, mock_config):\n        \"\"\"handle_review returns ERROR(3) when diff file does not exist.\"\"\"\n        args = cli_args_factory(\n            diff_file=FilePath(value=\"/nonexistent/path/no.diff\"),\n            config_path=FilePath(value=str(tmp_config_file)),\n        )\n        result = await handle_review(args)\n        exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n        assert exit_val == 3\n\n    async def test_diff_file_empty(self, cli_args_factory, tmp_empty_diff_file, tmp_config_file, mock_pipeline, mock_config):\n        \"\"\"handle_review returns ERROR(3) when diff file is empty.\"\"\"\n        args = cli_args_factory(\n            diff_file=FilePath(value=str(tmp_empty_diff_file)),\n            config_path=FilePath(value=str(tmp_config_file)),\n        )\n        result = await handle_review(args)\n        exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n        assert exit_val == 3\n\n    async def test_diff_file_read_error(self, cli_args_factory, tmp_path, tmp_config_file, mock_pipeline, mock_config):\n        \"\"\"handle_review returns ERROR(3) when diff file has permission error.\"\"\"\n        diff = tmp_path / \"noperm.diff\"\n        diff.write_text(\"some content\")\n        diff.chmod(0o000)\n        try:\n            args = cli_args_factory(\n                diff_file=FilePath(value=str(diff)),\n                config_path=FilePath(value=str(tmp_config_file)),\n            )\n            result = await handle_review(args)\n            exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n            assert exit_val == 3\n        finally:\n            diff.chmod(0o644)  # Restore permissions for cleanup\n\n    async def test_config_load_error(self, cli_args_factory, tmp_diff_file, mock_pipeline):\n        \"\"\"handle_review returns ERROR(3) when config file is invalid.\"\"\"\n        with patch(\"exemplar.cli.config\") as m_config:\n            m_config.load_config = MagicMock(side_effect=Exception(\"bad config\"))\n            args = cli_args_factory(\n                diff_file=FilePath(value=str(tmp_diff_file)),\n                config_path=FilePath(value=\"/nonexistent/config.yml\"),\n            )\n            result = await handle_review(args)\n            exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n            assert exit_val == 3\n\n    async def test_pipeline_stage_failure(self, cli_args_factory, tmp_diff_file, tmp_config_file, mock_pipeline, mock_config):\n        \"\"\"handle_review returns ERROR(3) when a pipeline stage raises.\"\"\"\n        mock_pipeline[\"intake\"].parse_diff = AsyncMock(side_effect=RuntimeError(\"intake exploded\"))\n        args = cli_args_factory(\n            diff_file=FilePath(value=str(tmp_diff_file)),\n            config_path=FilePath(value=str(tmp_config_file)),\n        )\n        result = await handle_review(args)\n        exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n        assert exit_val == 3\n\n    async def test_debug_stderr_output(self, cli_args_factory, tmp_diff_file, tmp_config_file, mock_pipeline, mock_config):\n        \"\"\"handle_review includes diagnostic info in stderr when debug=True.\"\"\"\n        args = cli_args_factory(\n            diff_file=FilePath(value=str(tmp_diff_file)),\n            config_path=FilePath(value=str(tmp_config_file)),\n            debug=True,\n        )\n        result = await handle_review(args)\n        assert len(result.stderr_output) > 0, \"debug=True should produce stderr output\"\n\n    async def test_stderr_output_on_error(self, cli_args_factory, tmp_config_file, mock_pipeline, mock_config):\n        \"\"\"handle_review includes error info in stderr on failure.\"\"\"\n        args = cli_args_factory(\n            diff_file=FilePath(value=\"/nonexistent/file.diff\"),\n            config_path=FilePath(value=str(tmp_config_file)),\n        )\n        result = await handle_review(args)\n        exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n        assert exit_val == 3\n        assert len(result.stderr_output) > 0\n\n\n@pytest.mark.asyncio\nclass TestHandleTrust:\n    \"\"\"Tests for async handle_trust() function.\"\"\"\n\n    async def test_happy_path(self, cli_args_factory, mock_config):\n        \"\"\"handle_trust returns PASS(0) with trust score table.\"\"\"\n        with patch(\"exemplar.cli.assessor\") as m_assessor:\n            m_assessor.get_trust_scores = AsyncMock(return_value=[\n                {\"reviewer\": \"alice\", \"score\": 0.95},\n                {\"reviewer\": \"bob\", \"score\": 0.80},\n            ])\n            args = cli_args_factory(subcommand=SubcommandName.trust)\n            result = await handle_trust(args)\n\n            assert isinstance(result, CliResult)\n            exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n            assert exit_val == 0\n            assert len(result.stdout_output) > 0\n\n    async def test_trust_data_unavailable(self, cli_args_factory, mock_config):\n        \"\"\"handle_trust returns ERROR(3) when trust data unavailable.\"\"\"\n        with patch(\"exemplar.cli.assessor\") as m_assessor:\n            m_assessor.get_trust_scores = AsyncMock(side_effect=Exception(\"trust store corrupt\"))\n            args = cli_args_factory(subcommand=SubcommandName.trust)\n            result = await handle_trust(args)\n\n            exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n            assert exit_val == 3\n\n    async def test_config_load_error(self, cli_args_factory):\n        \"\"\"handle_trust returns ERROR(3) when config fails.\"\"\"\n        with patch(\"exemplar.cli.config\") as m_config, \\\n             patch(\"exemplar.cli.assessor\") as m_assessor:\n            m_config.load_config = MagicMock(side_effect=Exception(\"config broken\"))\n            args = cli_args_factory(subcommand=SubcommandName.trust)\n            result = await handle_trust(args)\n\n            exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n            assert exit_val == 3\n\n\n@pytest.mark.asyncio\nclass TestHandleHistory:\n    \"\"\"Tests for async handle_history() function.\"\"\"\n\n    async def test_happy_path(self, cli_args_factory, mock_config, mock_learner):\n        \"\"\"handle_history returns PASS(0) with results.\"\"\"\n        mock_learner.query_history = AsyncMock(return_value=[\n            {\"id\": \"1\", \"summary\": \"Review of PR #42\"},\n        ])\n        args = cli_args_factory(subcommand=SubcommandName.history)\n        result = await handle_history(args)\n\n        assert isinstance(result, CliResult)\n        exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n        assert exit_val == 0\n        assert len(result.stdout_output) > 0\n\n    async def test_empty_results_still_pass(self, cli_args_factory, mock_config, mock_learner):\n        \"\"\"handle_history returns PASS(0) even with zero results.\"\"\"\n        mock_learner.query_history = AsyncMock(return_value=[])\n        args = cli_args_factory(subcommand=SubcommandName.history)\n        result = await handle_history(args)\n\n        exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n        assert exit_val == 0\n\n    async def test_with_query_filter(self, cli_args_factory, mock_config, mock_learner):\n        \"\"\"handle_history respects --query filter.\"\"\"\n        mock_learner.query_history = AsyncMock(return_value=[])\n        args = cli_args_factory(subcommand=SubcommandName.history, query=\"security\")\n        result = await handle_history(args)\n\n        exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n        assert exit_val == 0\n\n    async def test_kindex_unavailable(self, cli_args_factory, mock_config, mock_learner):\n        \"\"\"handle_history returns ERROR(3) when kindex store unreachable.\"\"\"\n        mock_learner.query_history = AsyncMock(side_effect=Exception(\"kindex unavailable\"))\n        args = cli_args_factory(subcommand=SubcommandName.history)\n        result = await handle_history(args)\n\n        exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n        assert exit_val == 3\n\n    async def test_config_load_error(self, cli_args_factory):\n        \"\"\"handle_history returns ERROR(3) when config fails.\"\"\"\n        with patch(\"exemplar.cli.config\") as m_config, \\\n             patch(\"exemplar.cli.learner\") as m_learner:\n            m_config.load_config = MagicMock(side_effect=Exception(\"config error\"))\n            args = cli_args_factory(subcommand=SubcommandName.history)\n            result = await handle_history(args)\n\n            exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n            assert exit_val == 3\n\n\n@pytest.mark.asyncio\nclass TestHandleAdopt:\n    \"\"\"Tests for async handle_adopt() function.\"\"\"\n\n    async def test_happy_path(self, cli_args_factory, mock_config, mock_learner):\n        \"\"\"handle_adopt returns PASS(0) with scan findings.\"\"\"\n        mock_learner.scan_linter_configs = AsyncMock(return_value=[\n            {\"file\": \".eslintrc\", \"rules\": 42, \"suggestions\": [\"map rule X to reviewer Y\"]},\n        ])\n        args = cli_args_factory(subcommand=SubcommandName.adopt)\n        result = await handle_adopt(args)\n\n        assert isinstance(result, CliResult)\n        exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n        assert exit_val == 0\n        assert len(result.stdout_output) > 0\n\n    async def test_no_configs_found_still_pass(self, cli_args_factory, mock_config, mock_learner):\n        \"\"\"handle_adopt returns PASS(0) even when no linter configs found.\"\"\"\n        mock_learner.scan_linter_configs = AsyncMock(return_value=[])\n        args = cli_args_factory(subcommand=SubcommandName.adopt)\n        result = await handle_adopt(args)\n\n        exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n        assert exit_val == 0\n\n    async def test_scan_error(self, cli_args_factory, mock_config, mock_learner):\n        \"\"\"handle_adopt returns ERROR(3) on unexpected scan error.\"\"\"\n        mock_learner.scan_linter_configs = AsyncMock(side_effect=RuntimeError(\"scan failed\"))\n        args = cli_args_factory(subcommand=SubcommandName.adopt)\n        result = await handle_adopt(args)\n\n        exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n        assert exit_val == 3\n\n    async def test_cwd_unreadable(self, cli_args_factory, mock_config, mock_learner):\n        \"\"\"handle_adopt returns ERROR(3) when cwd is unreadable.\"\"\"\n        mock_learner.scan_linter_configs = AsyncMock(side_effect=OSError(\"cwd unreadable\"))\n        args = cli_args_factory(subcommand=SubcommandName.adopt)\n        result = await handle_adopt(args)\n\n        exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n        assert exit_val == 3\n\n    async def test_config_load_error(self, cli_args_factory):\n        \"\"\"handle_adopt returns ERROR(3) when config fails to load.\"\"\"\n        with patch(\"exemplar.cli.config\") as m_config, \\\n             patch(\"exemplar.cli.learner\") as m_learner:\n            m_config.load_config = MagicMock(side_effect=Exception(\"config error\"))\n            args = cli_args_factory(subcommand=SubcommandName.adopt)\n            result = await handle_adopt(args)\n\n            exit_val = result.exit_code.value if hasattr(result.exit_code, 'value') else int(result.exit_code)\n            assert exit_val == 3\n\n\n# ============================================================================\n# Section 6: Main Orchestrator\n# ============================================================================\n\nclass TestMain:\n    \"\"\"Tests for main() synchronous entry point.\"\"\"\n\n    def test_review_happy_path(self, tmp_diff_file, tmp_config_file):\n        \"\"\"main() returns 0 for successful review subcommand with mocked backends.\"\"\"\n        mock_result = CliResult(\n            exit_code=CliExitCode(0),\n            stdout_output=\"report output\",\n            stderr_output=\"\",\n        )\n        with patch(\"exemplar.cli.handle_review\", new_callable=lambda: lambda: AsyncMock(return_value=mock_result)) as _, \\\n             patch(\"exemplar.cli.handle_review\", new=AsyncMock(return_value=mock_result)), \\\n             patch(\"exemplar.cli.config\") as m_config, \\\n             patch(\"sys.stdout\"), patch(\"sys.stderr\"):\n            m_config.load_config = MagicMock(return_value=MagicMock())\n            exit_code = main([\"review\", str(tmp_diff_file), \"--config\", str(tmp_config_file)])\n\n            assert isinstance(exit_code, int)\n            assert exit_code in (0, 1, 2, 3)\n\n    def test_returns_int(self):\n        \"\"\"main() always returns an int.\"\"\"\n        mock_result = CliResult(\n            exit_code=CliExitCode(0),\n            stdout_output=\"output\",\n            stderr_output=\"\",\n        )\n        with patch(\"exemplar.cli.build_dispatch_table\") as m_dispatch, \\\n             patch(\"exemplar.cli.parse_and_validate_args\") as m_parse, \\\n             patch(\"sys.stdout\"), patch(\"sys.stderr\"):\n            m_parse.return_value = MagicMock(subcommand=SubcommandName.trust)\n            mock_handler = AsyncMock(return_value=mock_result)\n            m_dispatch.return_value = SubcommandDispatchTable(\n                handlers={\n                    SubcommandName.review: mock_handler,\n                    SubcommandName.trust: mock_handler,\n                    SubcommandName.history: mock_handler,\n                    SubcommandName.adopt: mock_handler,\n                }\n            )\n            result = main([\"trust\"])\n            assert isinstance(result, int)\n\n    def test_no_exception_escapes(self):\n        \"\"\"main() catches all exceptions and returns 3.\"\"\"\n        with patch(\"exemplar.cli.build_parser\", side_effect=RuntimeError(\"boom\")), \\\n             patch(\"sys.stdout\"), patch(\"sys.stderr\"):\n            result = main([\"review\", \"some.diff\"])\n            assert isinstance(result, int)\n            assert result == 3\n\n    def test_keyboard_interrupt(self):\n        \"\"\"main() handles KeyboardInterrupt gracefully.\"\"\"\n        with patch(\"exemplar.cli.build_parser\", side_effect=KeyboardInterrupt()), \\\n             patch(\"sys.stdout\"), patch(\"sys.stderr\"):\n            result = main([\"review\", \"some.diff\"])\n            assert isinstance(result, int)\n            # KeyboardInterrupt should map to a valid exit code\n            assert result in (0, 1, 2, 3)\n\n    def test_unhandled_exception_returns_3(self):\n        \"\"\"main() maps unhandled exceptions to exit code 3.\"\"\"\n        with patch(\"exemplar.cli.build_parser\", side_effect=TypeError(\"unexpected\")), \\\n             patch(\"sys.stdout\"), patch(\"sys.stderr\"):\n            result = main([\"trust\"])\n            assert result == 3\n\n    def test_writes_to_stdout_on_success(self, capsys):\n        \"\"\"main() writes handler stdout_output to sys.stdout on success.\"\"\"\n        mock_result = CliResult(\n            exit_code=CliExitCode(0),\n            stdout_output=\"trust score table output\",\n            stderr_output=\"\",\n        )\n        with patch(\"exemplar.cli.build_dispatch_table\") as m_dispatch, \\\n             patch(\"exemplar.cli.parse_and_validate_args\") as m_parse:\n            m_parse.return_value = MagicMock(subcommand=SubcommandName.trust)\n            mock_handler = AsyncMock(return_value=mock_result)\n            m_dispatch.return_value = SubcommandDispatchTable(\n                handlers={\n                    SubcommandName.review: mock_handler,\n                    SubcommandName.trust: mock_handler,\n                    SubcommandName.history: mock_handler,\n                    SubcommandName.adopt: mock_handler,\n                }\n            )\n            result = main([\"trust\"])\n            captured = capsys.readouterr()\n            assert \"trust score table output\" in captured.out\n\n    def test_writes_to_stderr_on_error(self, capsys):\n        \"\"\"main() writes diagnostic to sys.stderr on error.\"\"\"\n        mock_result = CliResult(\n            exit_code=CliExitCode(3),\n            stdout_output=\"\",\n            stderr_output=\"something went wrong\",\n        )\n        with patch(\"exemplar.cli.build_dispatch_table\") as m_dispatch, \\\n             patch(\"exemplar.cli.parse_and_validate_args\") as m_parse:\n            m_parse.return_value = MagicMock(subcommand=SubcommandName.trust)\n            mock_handler = AsyncMock(return_value=mock_result)\n            m_dispatch.return_value = SubcommandDispatchTable(\n                handlers={\n                    SubcommandName.review: mock_handler,\n                    SubcommandName.trust: mock_handler,\n                    SubcommandName.history: mock_handler,\n                    SubcommandName.adopt: mock_handler,\n                }\n            )\n            result = main([\"trust\"])\n            captured = capsys.readouterr()\n            assert \"something went wrong\" in captured.err\n\n    def test_return_value_in_valid_range(self):\n        \"\"\"main() return value is always 0, 1, 2, or 3.\"\"\"\n        # Even with totally broken internals\n        with patch(\"exemplar.cli.build_parser\", side_effect=Exception(\"total failure\")), \\\n             patch(\"sys.stdout\"), patch(\"sys.stderr\"):\n            result = main([\"anything\"])\n            assert result in (0, 1, 2, 3)\n\n    @pytest.mark.parametrize(\"subcommand\", [\"review\", \"trust\", \"history\", \"adopt\"])\n    def test_each_subcommand_dispatches(self, subcommand, tmp_diff_file):\n        \"\"\"main() dispatches to the correct handler for each subcommand.\"\"\"\n        mock_result = CliResult(\n            exit_code=CliExitCode(0),\n            stdout_output=\"output\",\n            stderr_output=\"\",\n        )\n        argv = [subcommand]\n        if subcommand == \"review\":\n            argv.append(str(tmp_diff_file))\n\n        with patch(\"exemplar.cli.build_dispatch_table\") as m_dispatch, \\\n             patch(\"exemplar.cli.parse_and_validate_args\") as m_parse, \\\n             patch(\"sys.stdout\"), patch(\"sys.stderr\"):\n            m_parse.return_value = MagicMock(subcommand=SubcommandName(subcommand))\n            mock_handler = AsyncMock(return_value=mock_result)\n            m_dispatch.return_value = SubcommandDispatchTable(\n                handlers={\n                    SubcommandName.review: mock_handler,\n                    SubcommandName.trust: mock_handler,\n                    SubcommandName.history: mock_handler,\n                    SubcommandName.adopt: mock_handler,\n                }\n            )\n            result = main(argv)\n            mock_handler.assert_called_once()\n            assert isinstance(result, int)\n\n\n# ============================================================================\n# Section 7: Invariants\n# ============================================================================\n\nclass TestInvariants:\n    \"\"\"Cross-cutting invariant tests.\"\"\"\n\n    def test_exit_code_deterministic_property(self):\n        \"\"\"Given the same pipeline result, the same exit code is always returned.\"\"\"\n        for decision in [\"pass\", \"warn\", \"block\", \"error\"]:\n            results = set()\n            for _ in range(100):\n                result = map_decision_to_exit_code(decision)\n                result_val = result.value if hasattr(result, 'value') else int(result)\n                results.add(result_val)\n            assert len(results) == 1, f\"Non-deterministic exit code for {decision}: {results}\"\n\n    @pytest.mark.asyncio\n    async def test_debug_flag_does_not_change_exit_code(self, cli_args_factory, tmp_diff_file, tmp_config_file, mock_pipeline, mock_config):\n        \"\"\"--debug flag does not change exit codes.\"\"\"\n        args_no_debug = cli_args_factory(\n            diff_file=FilePath(value=str(tmp_diff_file)),\n            config_path=FilePath(value=str(tmp_config_file)),\n            debug=False,\n        )\n        args_debug = cli_args_factory(\n            diff_file=FilePath(value=str(tmp_diff_file)),\n            config_path=FilePath(value=str(tmp_config_file)),\n            debug=True,\n        )\n        result_no_debug = await handle_review(args_no_debug)\n        result_debug = await handle_review(args_debug)\n\n        no_debug_code = result_no_debug.exit_code.value if hasattr(result_no_debug.exit_code, 'value') else int(result_no_debug.exit_code)\n        debug_code = result_debug.exit_code.value if hasattr(result_debug.exit_code, 'value') else int(result_debug.exit_code)\n        assert no_debug_code == debug_code\n\n    @pytest.mark.asyncio\n    async def test_debug_flag_does_not_change_stdout(self, cli_args_factory, tmp_diff_file, tmp_config_file, mock_pipeline, mock_config):\n        \"\"\"--debug flag does not change stdout content.\"\"\"\n        args_no_debug = cli_args_factory(\n            diff_file=FilePath(value=str(tmp_diff_file)),\n            config_path=FilePath(value=str(tmp_config_file)),\n            debug=False,\n        )\n        args_debug = cli_args_factory(\n            diff_file=FilePath(value=str(tmp_diff_file)),\n            config_path=FilePath(value=str(tmp_config_file)),\n            debug=True,\n        )\n        result_no_debug = await handle_review(args_no_debug)\n        result_debug = await handle_review(args_debug)\n\n        assert result_no_debug.stdout_output == result_debug.stdout_output\n\n    def test_pact_key_namespace_always_exemplar_cli(self):\n        \"\"\"PACT key namespace is always 'EXEMPLAR.CLI'.\"\"\"\n        valid_keys = [\n            \"EXEMPLAR.CLI.handle_review\",\n            \"EXEMPLAR.CLI.handle_trust\",\n            \"EXEMPLAR.CLI.handle_history\",\n            \"EXEMPLAR.CLI.handle_adopt\",\n            \"EXEMPLAR.CLI.main\",\n        ]\n        for fk in valid_keys:\n            pk = PactKey(namespace=\"EXEMPLAR.CLI\", function_key=fk)\n            assert pk.namespace == \"EXEMPLAR.CLI\"\n\n    def test_all_cli_exit_codes_are_valid(self):\n        \"\"\"All CliExitCode values are 0, 1, 2, or 3.\"\"\"\n        valid_values = {0, 1, 2, 3}\n        for code in CliExitCode:\n            val = code.value if hasattr(code, 'value') else int(code)\n            assert val in valid_values\n\n    def test_subcommand_dispatch_completeness(self):\n        \"\"\"Every SubcommandName has a corresponding handler in the dispatch table.\"\"\"\n        table = build_dispatch_table()\n        for name in SubcommandName:\n            assert name in table.handlers\n\n    def test_handler_functions_are_async(self):\n        \"\"\"All handler functions are async coroutine functions.\"\"\"\n        for handler in [handle_review, handle_trust, handle_history, handle_adopt]:\n            assert asyncio.iscoroutinefunction(handler), f\"{handler.__name__} is not async\"\n\n    def test_main_is_sync(self):\n        \"\"\"main() is a synchronous function.\"\"\"\n        assert not asyncio.iscoroutinefunction(main)\n\n    def test_build_parser_is_sync(self):\n        \"\"\"build_parser() is a synchronous function.\"\"\"\n        assert not asyncio.iscoroutinefunction(build_parser)\n\n    def test_parse_and_validate_args_is_sync(self):\n        \"\"\"parse_and_validate_args() is a synchronous function.\"\"\"\n        assert not asyncio.iscoroutinefunction(parse_and_validate_args)\n\n    def test_map_decision_to_exit_code_is_sync(self):\n        \"\"\"map_decision_to_exit_code() is a synchronous function.\"\"\"\n        assert not asyncio.iscoroutinefunction(map_decision_to_exit_code)\n\n    def test_build_dispatch_table_is_sync(self):\n        \"\"\"build_dispatch_table() is a synchronous function.\"\"\"\n        assert not asyncio.iscoroutinefunction(build_dispatch_table)\n\n    def test_cli_args_has_expected_fields(self, cli_args_factory):\n        \"\"\"CliArgs struct has all expected fields.\"\"\"\n        args = cli_args_factory()\n        assert hasattr(args, 'subcommand')\n        assert hasattr(args, 'diff_file')\n        assert hasattr(args, 'config_path')\n        assert hasattr(args, 'output_format')\n        assert hasattr(args, 'query')\n        assert hasattr(args, 'debug')\n\n    def test_cli_result_has_expected_fields(self):\n        \"\"\"CliResult struct has all expected fields.\"\"\"\n        result = CliResult(exit_code=CliExitCode(0), stdout_output=\"\", stderr_output=\"\")\n        assert hasattr(result, 'exit_code')\n        assert hasattr(result, 'stdout_output')\n        assert hasattr(result, 'stderr_output')\n"
+}

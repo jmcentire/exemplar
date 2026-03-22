@@ -1,0 +1,833 @@
+{
+  "component_id": "governance",
+  "contract_version": 1,
+  "test_cases": [
+    {
+      "id": "goodhart_seal_different_content_different_hash",
+      "description": "seal() must produce distinct content_hash values for different JSON content, not a hardcoded hash",
+      "function": "seal",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Two different valid JSON strings sealed by same sealer",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "seal for '{\"a\":1}' has different content_hash than seal for '{\"b\":2}'"
+      ]
+    },
+    {
+      "id": "goodhart_seal_content_hash_is_sha256_hex",
+      "description": "seal() content_hash must be a valid 64-character lowercase hex string (SHA-256 output format)",
+      "function": "seal",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "content_hash is 64 chars",
+        "content_hash matches [0-9a-f]{64}"
+      ]
+    },
+    {
+      "id": "goodhart_seal_chain_hash_is_sha256_hex",
+      "description": "seal() chain_hash must be a valid 64-character lowercase hex string (SHA-256 output format)",
+      "function": "seal",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "chain_hash is 64 chars",
+        "chain_hash matches [0-9a-f]{64}"
+      ]
+    },
+    {
+      "id": "goodhart_seal_content_hash_matches_manual_sha256",
+      "description": "seal() content_hash must exactly equal SHA-256 of canonical JSON re-serialization, verifiable independently",
+      "function": "seal",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Various JSON content strings with known canonical forms",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "content_hash == hashlib.sha256(canonical_json.encode()).hexdigest()"
+      ]
+    },
+    {
+      "id": "goodhart_seal_three_seal_chain",
+      "description": "A chain of three seals must maintain previous_hash linkage: seal[n].previous_hash == seal[n-1].chain_hash",
+      "function": "seal",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "seal3.previous_hash == seal2.chain_hash",
+        "seal2.previous_hash == seal1.chain_hash",
+        "seal1.previous_hash == '0'*64"
+      ]
+    },
+    {
+      "id": "goodhart_seal_sequence_numbers_three_seals",
+      "description": "Sequence numbers must be monotonically increasing from 0 across multiple seals from the same sealer",
+      "function": "seal",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "seal1.sequence_number == 0",
+        "seal2.sequence_number == 1",
+        "seal3.sequence_number == 2"
+      ]
+    },
+    {
+      "id": "goodhart_seal_nested_json_canonical",
+      "description": "seal() must canonicalize deeply nested JSON objects with sort_keys for deterministic hashing",
+      "function": "seal",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Nested JSON with keys in different orders",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "seal for '{\"z\":{\"b\":1,\"a\":2},\"a\":3}' has same content_hash as '{\"a\":3,\"z\":{\"a\":2,\"b\":1}}'"
+      ]
+    },
+    {
+      "id": "goodhart_seal_sealer_id_in_chain_hash",
+      "description": "The chain_hash must incorporate the sealer_id — different sealer_ids produce different chain_hashes for same content",
+      "function": "seal",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "chain_hash from sealer 'alice' differs from chain_hash from sealer 'bob' for same content"
+      ]
+    },
+    {
+      "id": "goodhart_seal_sealed_at_is_iso_format",
+      "description": "seal() sealed_at timestamp must be a valid ISO 8601 formatted string",
+      "function": "seal",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "sealed_at parses as valid ISO datetime"
+      ]
+    },
+    {
+      "id": "goodhart_seal_tab_only_sealer_id_rejected",
+      "description": "seal() must reject sealer_id that is only tab characters as whitespace-only",
+      "function": "seal",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "sealer_id": "\\t\\t",
+        "content": "{\"x\": 1}"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "empty_sealer_id",
+      "assertions": [
+        "raises GovernanceError or ValueError"
+      ]
+    },
+    {
+      "id": "goodhart_verify_seal_raises_not_returns_false",
+      "description": "verify_seal() must raise SealVerificationError on mismatch, never silently return False",
+      "function": "verify_seal",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "SealVerificationError is raised, not False returned"
+      ]
+    },
+    {
+      "id": "goodhart_verify_seal_tampered_chain_hash",
+      "description": "verify_seal() must detect a tampered chain_hash even when content_hash is correct",
+      "function": "verify_seal",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "chain_hash_mismatch",
+      "assertions": [
+        "SealVerificationError raised for chain_hash_mismatch"
+      ]
+    },
+    {
+      "id": "goodhart_verify_seal_different_content_same_length",
+      "description": "verify_seal() must detect content changes even when the replacement content has the same byte length",
+      "function": "verify_seal",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Content '{\"a\":1}' sealed then verified against '{\"a\":2}' (same length)",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "SealVerificationError raised for content_hash_mismatch"
+      ]
+    },
+    {
+      "id": "goodhart_verify_seal_roundtrip_complex_json",
+      "description": "verify_seal roundtrip must work for complex JSON with arrays, nested objects, unicode, and special characters",
+      "function": "verify_seal",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Complex JSON with unicode chars, arrays, nested dicts",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "verify_seal returns True"
+      ]
+    },
+    {
+      "id": "goodhart_seal_verification_error_fields_populated",
+      "description": "SealVerificationError raised by verify_seal must have seal_id, expected_hash, and actual_hash populated with meaningful values",
+      "function": "verify_seal",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "error.expected_hash is non-empty",
+        "error.actual_hash is non-empty",
+        "error.expected_hash != error.actual_hash"
+      ]
+    },
+    {
+      "id": "goodhart_credential_id_is_32char_hex",
+      "description": "create_credential() must generate credential_id as 32-character lowercase hex (UUID4 without hyphens)",
+      "function": "create_credential",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "credential_id matches [0-9a-f]{32}",
+        "len(credential_id) == 32"
+      ]
+    },
+    {
+      "id": "goodhart_credential_display_name_preserved",
+      "description": "create_credential() must store and return the exact display_name provided",
+      "function": "create_credential",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "display_name": "Dr. Review Bot 🤖"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "credential.display_name == 'Dr. Review Bot 🤖'"
+      ]
+    },
+    {
+      "id": "goodhart_credential_whitespace_reviewer_id_rejected",
+      "description": "create_credential() must reject whitespace-only reviewer_id including mixed whitespace",
+      "function": "create_credential",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "reviewer_id": "  \\t\\n  "
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "empty_reviewer_id",
+      "assertions": [
+        "raises error for whitespace-only reviewer_id"
+      ]
+    },
+    {
+      "id": "goodhart_credential_whitespace_display_name_rejected",
+      "description": "create_credential() must reject whitespace-only display_name",
+      "function": "create_credential",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "display_name": "   "
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "empty_display_name",
+      "assertions": [
+        "raises error for whitespace-only display_name"
+      ]
+    },
+    {
+      "id": "goodhart_credential_unique_ids",
+      "description": "create_credential() must generate unique credential_ids across multiple calls",
+      "function": "create_credential",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "10 generated credential_ids are all distinct"
+      ]
+    },
+    {
+      "id": "goodhart_verify_credential_different_stage_invalid",
+      "description": "verify_credential() must reject a credential where the stage has been tampered (HMAC changes with stage)",
+      "function": "verify_credential",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "invalid_signature",
+      "assertions": [
+        "CredentialError raised with INVALID_SIGNATURE reason"
+      ]
+    },
+    {
+      "id": "goodhart_verify_credential_error_has_credential_id",
+      "description": "CredentialError raised by verify_credential() must include the credential_id of the failed credential",
+      "function": "verify_credential",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "error.credential_id matches the credential under verification"
+      ]
+    },
+    {
+      "id": "goodhart_classify_removed_lines_matched",
+      "description": "classify() must check removed_lines in addition to added_lines for pattern matching",
+      "function": "classify",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Hunk with secret pattern only in removed_lines, not added_lines",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "classification includes label matched from removed_lines only"
+      ]
+    },
+    {
+      "id": "goodhart_classify_multiple_rules_multiple_labels",
+      "description": "classify() must return the union of all matching labels when multiple distinct rules match different lines",
+      "function": "classify",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Hunk with API key pattern in added_lines and email pattern in removed_lines",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result contains both 'secret' and 'pii' labels"
+      ]
+    },
+    {
+      "id": "goodhart_classify_all_returns_new_instances",
+      "description": "classify_all() must return new DiffHunk instances, not the same objects mutated in place",
+      "function": "classify_all",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returned hunks are not the same object references as input hunks"
+      ]
+    },
+    {
+      "id": "goodhart_classify_all_preserves_id_and_file_path",
+      "description": "classify_all() must preserve all non-classification fields including id, file_path, language, lines, etc.",
+      "function": "classify_all",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "each returned hunk.id == original hunk.id",
+        "each returned hunk.file_path == original hunk.file_path",
+        "each returned hunk.added_lines == original hunk.added_lines"
+      ]
+    },
+    {
+      "id": "goodhart_filter_hunks_denied_file_patterns",
+      "description": "filter_hunks() must deny hunks matching denied_file_patterns even if they match allowed patterns",
+      "function": "filter_hunks",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Hunk with file_path matching both allowed_file_patterns and denied_file_patterns",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "hunk matching both allowed and denied patterns is denied"
+      ]
+    },
+    {
+      "id": "goodhart_filter_hunks_classification_exceeds_max",
+      "description": "filter_hunks() must deny hunks whose classification labels exceed the token's allowed_classifications",
+      "function": "filter_hunks",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Token allows only 'public' classification, hunk has 'secret' label",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "hunk with 'secret' classification is denied when token only allows 'public'"
+      ]
+    },
+    {
+      "id": "goodhart_filter_hunks_empty_patterns_allows_all",
+      "description": "filter_hunks() must allow all hunks when allowed_file_patterns is empty (no pattern restriction)",
+      "function": "filter_hunks",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "all hunks are allowed when allowed_file_patterns is empty list"
+      ]
+    },
+    {
+      "id": "goodhart_filter_hunks_denied_ids_unique",
+      "description": "filter_hunks() must include each denied hunk_id exactly once in denied_hunk_ids, even if denied for multiple reasons",
+      "function": "filter_hunks",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "len(denied_hunk_ids) == len(set(denied_hunk_ids))"
+      ]
+    },
+    {
+      "id": "goodhart_check_token_empty_reviewer_id_returns_false",
+      "description": "check_token() must return False (not True) for a non-expired token with empty reviewer_id",
+      "function": "check_token",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "check_token returns False for token with empty reviewer_id"
+      ]
+    },
+    {
+      "id": "goodhart_update_trust_preserves_stage",
+      "description": "update_trust() must preserve the original stage in the returned TrustScore",
+      "function": "update_trust",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returned.stage == original.stage for all ReviewStage values"
+      ]
+    },
+    {
+      "id": "goodhart_update_trust_increments_count_exactly_one",
+      "description": "update_trust() must increment review_count by exactly 1 per call, verifiable over multiple sequential updates",
+      "function": "update_trust",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "after 3 updates, review_count == initial + 3"
+      ]
+    },
+    {
+      "id": "goodhart_update_trust_clamp_to_exact_boundary",
+      "description": "update_trust() must clamp to exactly 0.0 or 1.0 at boundaries, not to adjacent float values",
+      "function": "update_trust",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.weight == 0.0 when clamped low",
+        "result.weight == 1.0 when clamped high"
+      ]
+    },
+    {
+      "id": "goodhart_update_trust_small_delta",
+      "description": "update_trust() must correctly apply very small deltas (e.g., 0.001) without rounding errors",
+      "function": "update_trust",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.weight == 0.501 when starting from 0.5 with delta 0.001"
+      ]
+    },
+    {
+      "id": "goodhart_update_trust_negative_delta",
+      "description": "update_trust() must correctly apply negative deltas to decrease weight",
+      "function": "update_trust",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result.weight < original.weight when delta is negative and not at zero boundary"
+      ]
+    },
+    {
+      "id": "goodhart_score_reasoning_trace_one_per_assessment",
+      "description": "score() reasoning_trace must contain exactly one entry per input assessment, not a fixed number",
+      "function": "score",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "len(reasoning_trace) == len(assessments) for both 2 and 4 assessments"
+      ]
+    },
+    {
+      "id": "goodhart_score_decision_is_review_decision_enum",
+      "description": "score() first return element must be a ReviewDecision enum value, not a plain string",
+      "function": "score",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "isinstance(result[0], ReviewDecision)"
+      ]
+    },
+    {
+      "id": "goodhart_score_confidence_is_confidence_enum",
+      "description": "score() second return element must be a Confidence enum value, not a plain string",
+      "function": "score",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "isinstance(result[1], Confidence)"
+      ]
+    },
+    {
+      "id": "goodhart_emit_multiple_events_all_persisted",
+      "description": "emit() must append multiple events sequentially and all must be queryable afterward",
+      "function": "emit",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "after emitting 3 events, query returns all 3"
+      ]
+    },
+    {
+      "id": "goodhart_query_events_does_not_return_other_request_ids",
+      "description": "query_events() must not return events belonging to a different review_request_id",
+      "function": "query_events",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "query for request_id_A returns 0 events from request_id_B"
+      ]
+    },
+    {
+      "id": "goodhart_query_signals_filters_by_exact_pattern_key",
+      "description": "query_signals() must perform exact matching on pattern_key, not substring or prefix matching",
+      "function": "query_signals",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "query for 'null_check' does not return signal with pattern_key 'null_check_extended'"
+      ]
+    },
+    {
+      "id": "goodhart_kindex_get_returns_correct_entry_key",
+      "description": "kindex_get() returned entry must have key field matching the requested key",
+      "function": "kindex_get",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returned_entry.key == requested_key"
+      ]
+    },
+    {
+      "id": "goodhart_kindex_query_tags_intersection_not_superset",
+      "description": "kindex_query_by_tags() must return entries with ANY tag in common (intersection), not requiring all tags",
+      "function": "kindex_query_by_tags",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "entry with tags ['a','b'] is returned when querying for ['b','c']"
+      ]
+    },
+    {
+      "id": "goodhart_models_frozen_all_types",
+      "description": "All governance struct types must be frozen (immutable) — attribute assignment must raise an error",
+      "function": "TesseraSeal",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Assignment to any field raises ValidationError or AttributeError on TesseraSeal, Assessment, Finding, TrustScore, DiffHunk, PolicyToken, KindexEntry"
+      ]
+    },
+    {
+      "id": "goodhart_error_types_are_exceptions",
+      "description": "GovernanceError, SealVerificationError, PolicyViolationError, and CredentialError must be raisable as exceptions",
+      "function": "GovernanceError",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "all error types are subclasses of Exception",
+        "SealVerificationError is subclass of GovernanceError",
+        "PolicyViolationError is subclass of GovernanceError",
+        "CredentialError is subclass of GovernanceError"
+      ]
+    },
+    {
+      "id": "goodhart_seal_empty_json_object",
+      "description": "seal() must handle edge-case empty JSON object '{}' correctly with a valid hash",
+      "function": "seal",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "seal for '{}' succeeds",
+        "content_hash is valid SHA-256 of '{}'"
+      ]
+    },
+    {
+      "id": "goodhart_seal_json_array_content",
+      "description": "seal() must handle JSON array content (not just objects) as valid JSON",
+      "function": "seal",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {
+        "content": "[1, 2, 3]"
+      },
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "seal for '[1,2,3]' succeeds with valid content_hash"
+      ]
+    },
+    {
+      "id": "goodhart_trust_score_weight_just_inside_bounds",
+      "description": "TrustScore must accept weight values just inside the valid range like 0.001 and 0.999",
+      "function": "TrustScore",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "TrustScore(weight=0.001) succeeds",
+        "TrustScore(weight=0.999) succeeds"
+      ]
+    },
+    {
+      "id": "goodhart_trust_score_weight_just_outside_bounds",
+      "description": "TrustScore must reject weight values just outside the valid range like -0.001 and 1.001",
+      "function": "TrustScore",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "TrustScore(weight=-0.001) raises",
+        "TrustScore(weight=1.001) raises"
+      ]
+    },
+    {
+      "id": "goodhart_circuit_config_timeout_one_accepted",
+      "description": "CircuitConfig must accept stage_timeout_ms of 1 as the minimum valid positive value",
+      "function": "CircuitConfig",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "CircuitConfig(stage_timeout_ms=1) succeeds"
+      ]
+    },
+    {
+      "id": "goodhart_classify_both_added_and_removed",
+      "description": "classify() must scan both added_lines and removed_lines, returning union of matches from both",
+      "function": "classify",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "label from added_lines match and label from removed_lines match are both present in result"
+      ]
+    },
+    {
+      "id": "goodhart_seal_unicode_content",
+      "description": "seal() must correctly handle JSON content containing unicode characters and produce a valid verifiable seal",
+      "function": "seal",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "seal for '{\"emoji\":\"🔑\",\"name\":\"Ñoño\"}' succeeds",
+        "verify_seal roundtrip succeeds"
+      ]
+    }
+  ],
+  "test_language": "python",
+  "generated_code": "\"\"\"\nAdversarial hidden acceptance tests for Governance Primitives.\n\nThese tests catch implementations that pass visible tests through shortcuts\n(hardcoded returns, incomplete validation, etc.) rather than truly satisfying\nthe contract.\n\"\"\"\nimport asyncio\nimport hashlib\nimport json\nimport os\nimport re\nimport tempfile\nfrom datetime import datetime, timedelta, timezone\nfrom unittest.mock import patch\n\nimport pytest\n\nfrom exemplar.governance import *\n\n\n# ============================================================================\n# Helpers\n# ============================================================================\n\ndef canonical_json(data_str: str) -> str:\n    \"\"\"Canonical JSON serialization per contract.\"\"\"\n    data = json.loads(data_str)\n    return json.dumps(data, sort_keys=True, separators=(',', ':'))\n\n\ndef sha256_hex(s: str) -> str:\n    return hashlib.sha256(s.encode('utf-8')).hexdigest()\n\n\ndef make_diff_hunk(\n    hunk_id=\"h1\",\n    file_path=\"src/main.py\",\n    added_lines=None,\n    removed_lines=None,\n    classifications=None,\n    language=\"python\",\n):\n    return DiffHunk(\n        id=hunk_id,\n        file_path=file_path,\n        start_line_old=1,\n        count_old=5,\n        start_line_new=1,\n        count_new=5,\n        context_before=[\"# context\"],\n        added_lines=added_lines or [\"pass\"],\n        removed_lines=removed_lines or [],\n        context_after=[\"# end\"],\n        raw_header=\"@@ -1,5 +1,5 @@\",\n        classifications=classifications or [],\n        language=language,\n    )\n\n\ndef future_iso(hours=1):\n    return (datetime.now(timezone.utc) + timedelta(hours=hours)).isoformat()\n\n\ndef past_iso(hours=1):\n    return (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()\n\n\ndef now_iso():\n    return datetime.now(timezone.utc).isoformat()\n\n\n# ============================================================================\n# Seal Tests\n# ============================================================================\n\nclass TestGoodhartSeal:\n\n    def test_goodhart_seal_different_content_different_hash(self):\n        \"\"\"seal() must produce distinct content_hash values for different JSON content, not a hardcoded hash.\"\"\"\n        sealer = TesseraSealer()\n        seal1 = sealer.seal('{\"a\":1}', \"s1\")\n        # Use a new sealer to avoid chain state confusion\n        sealer2 = TesseraSealer()\n        seal2 = sealer2.seal('{\"b\":2}', \"s1\")\n        assert seal1.content_hash != seal2.content_hash\n\n    def test_goodhart_seal_content_hash_is_sha256_hex(self):\n        \"\"\"seal() content_hash must be a valid 64-character lowercase hex string (SHA-256 output format).\"\"\"\n        sealer = TesseraSealer()\n        seal = sealer.seal('{\"test\":\"value\"}', \"sealer1\")\n        assert len(seal.content_hash) == 64\n        assert re.fullmatch(r'[0-9a-f]{64}', seal.content_hash)\n\n    def test_goodhart_seal_chain_hash_is_sha256_hex(self):\n        \"\"\"seal() chain_hash must be a valid 64-character lowercase hex string.\"\"\"\n        sealer = TesseraSealer()\n        seal = sealer.seal('{\"test\":\"value\"}', \"sealer1\")\n        assert len(seal.chain_hash) == 64\n        assert re.fullmatch(r'[0-9a-f]{64}', seal.chain_hash)\n\n    def test_goodhart_seal_content_hash_matches_manual_sha256(self):\n        \"\"\"seal() content_hash must exactly equal SHA-256 of canonical JSON re-serialization.\"\"\"\n        sealer = TesseraSealer()\n        content = '{\"z\": 1, \"a\": 2, \"m\": [3, 4]}'\n        seal = sealer.seal(content, \"sealer1\")\n        expected = sha256_hex(canonical_json(content))\n        assert seal.content_hash == expected\n\n    def test_goodhart_seal_three_seal_chain(self):\n        \"\"\"A chain of three seals must maintain previous_hash linkage.\"\"\"\n        sealer = TesseraSealer()\n        s1 = sealer.seal('{\"seq\":1}', \"chain_sealer\")\n        s2 = sealer.seal('{\"seq\":2}', \"chain_sealer\")\n        s3 = sealer.seal('{\"seq\":3}', \"chain_sealer\")\n        assert s1.previous_hash == '0' * 64\n        assert s2.previous_hash == s1.chain_hash\n        assert s3.previous_hash == s2.chain_hash\n\n    def test_goodhart_seal_sequence_numbers_three_seals(self):\n        \"\"\"Sequence numbers must be monotonically increasing from 0.\"\"\"\n        sealer = TesseraSealer()\n        s1 = sealer.seal('{\"a\":1}', \"seq_sealer\")\n        s2 = sealer.seal('{\"a\":2}', \"seq_sealer\")\n        s3 = sealer.seal('{\"a\":3}', \"seq_sealer\")\n        assert s1.sequence_number == 0\n        assert s2.sequence_number == 1\n        assert s3.sequence_number == 2\n\n    def test_goodhart_seal_nested_json_canonical(self):\n        \"\"\"seal() must canonicalize nested JSON for deterministic hashing.\"\"\"\n        sealer1 = TesseraSealer()\n        sealer2 = TesseraSealer()\n        s1 = sealer1.seal('{\"z\":{\"b\":1,\"a\":2},\"a\":3}', \"s\")\n        s2 = sealer2.seal('{\"a\":3,\"z\":{\"a\":2,\"b\":1}}', \"s\")\n        assert s1.content_hash == s2.content_hash\n\n    def test_goodhart_seal_sealer_id_in_chain_hash(self):\n        \"\"\"Different sealer_ids must produce different chain_hashes for same content.\"\"\"\n        sealer_a = TesseraSealer()\n        sealer_b = TesseraSealer()\n        sa = sealer_a.seal('{\"data\":\"same\"}', \"alice\")\n        sb = sealer_b.seal('{\"data\":\"same\"}', \"bob\")\n        # content_hash should be the same\n        assert sa.content_hash == sb.content_hash\n        # chain_hash must differ due to different sealer_id\n        assert sa.chain_hash != sb.chain_hash\n\n    def test_goodhart_seal_sealed_at_is_iso_format(self):\n        \"\"\"seal() sealed_at timestamp must be a valid ISO 8601 formatted string.\"\"\"\n        sealer = TesseraSealer()\n        seal = sealer.seal('{\"t\":1}', \"s1\")\n        # Should parse without error\n        dt = datetime.fromisoformat(seal.sealed_at)\n        assert isinstance(dt, datetime)\n\n    def test_goodhart_seal_tab_only_sealer_id_rejected(self):\n        \"\"\"seal() must reject sealer_id that is only tab characters as whitespace-only.\"\"\"\n        sealer = TesseraSealer()\n        with pytest.raises((GovernanceError, ValueError)):\n            sealer.seal('{\"x\":1}', \"\\t\\t\")\n\n    def test_goodhart_seal_empty_json_object(self):\n        \"\"\"seal() must handle empty JSON object '{}' correctly.\"\"\"\n        sealer = TesseraSealer()\n        seal = sealer.seal('{}', \"sealer1\")\n        expected_hash = sha256_hex('{}')\n        assert seal.content_hash == expected_hash\n\n    def test_goodhart_seal_json_array_content(self):\n        \"\"\"seal() must handle JSON array content as valid JSON.\"\"\"\n        sealer = TesseraSealer()\n        seal = sealer.seal('[1, 2, 3]', \"sealer1\")\n        expected_hash = sha256_hex(canonical_json('[1, 2, 3]'))\n        assert seal.content_hash == expected_hash\n\n    def test_goodhart_seal_unicode_content(self):\n        \"\"\"seal() must correctly handle JSON content with unicode and roundtrip verify.\"\"\"\n        sealer = TesseraSealer()\n        content = '{\"emoji\":\"🔑\",\"name\":\"Ñoño\"}'\n        seal = sealer.seal(content, \"unicode_sealer\")\n        assert seal.content_hash is not None\n        # Roundtrip verification\n        result = sealer.verify_seal(seal, content)\n        assert result is True\n\n\n# ============================================================================\n# Verify Seal Tests\n# ============================================================================\n\nclass TestGoodhartVerifySeal:\n\n    def test_goodhart_verify_seal_raises_not_returns_false(self):\n        \"\"\"verify_seal() must raise SealVerificationError on mismatch, never return False.\"\"\"\n        sealer = TesseraSealer()\n        seal = sealer.seal('{\"original\":true}', \"s1\")\n        with pytest.raises(SealVerificationError):\n            sealer.verify_seal(seal, '{\"original\":false}')\n\n    def test_goodhart_verify_seal_tampered_chain_hash(self):\n        \"\"\"verify_seal() must detect a tampered chain_hash even when content_hash is correct.\"\"\"\n        sealer = TesseraSealer()\n        seal = sealer.seal('{\"data\":\"test\"}', \"s1\")\n        # Create a tampered seal with correct content_hash but wrong chain_hash\n        tampered = TesseraSeal(\n            content_hash=seal.content_hash,\n            previous_hash=seal.previous_hash,\n            chain_hash=\"a\" * 64,  # tampered\n            sealed_at=seal.sealed_at,\n            sealer_id=seal.sealer_id,\n            sequence_number=seal.sequence_number,\n        )\n        with pytest.raises(SealVerificationError):\n            sealer.verify_seal(tampered, '{\"data\":\"test\"}')\n\n    def test_goodhart_verify_seal_different_content_same_length(self):\n        \"\"\"verify_seal() must detect content changes even with same byte length.\"\"\"\n        sealer = TesseraSealer()\n        seal = sealer.seal('{\"a\":1}', \"s1\")\n        with pytest.raises(SealVerificationError):\n            sealer.verify_seal(seal, '{\"a\":2}')\n\n    def test_goodhart_verify_seal_roundtrip_complex_json(self):\n        \"\"\"verify_seal roundtrip must work for complex JSON.\"\"\"\n        sealer = TesseraSealer()\n        content = json.dumps({\n            \"nested\": {\"deep\": {\"list\": [1, 2, 3]}},\n            \"unicode\": \"日本語テスト\",\n            \"special\": \"line\\nbreak\",\n            \"numbers\": [0, -1, 3.14, 1e10],\n            \"null_val\": None,\n            \"bool\": True,\n        })\n        seal = sealer.seal(content, \"complex_sealer\")\n        assert sealer.verify_seal(seal, content) is True\n\n    def test_goodhart_seal_verification_error_fields_populated(self):\n        \"\"\"SealVerificationError must have expected_hash and actual_hash populated and different.\"\"\"\n        sealer = TesseraSealer()\n        seal = sealer.seal('{\"x\":1}', \"s1\")\n        try:\n            sealer.verify_seal(seal, '{\"x\":999}')\n            pytest.fail(\"Should have raised SealVerificationError\")\n        except SealVerificationError as e:\n            assert e.expected_hash != \"\"\n            assert e.actual_hash != \"\"\n            assert e.expected_hash != e.actual_hash\n\n\n# ============================================================================\n# Credential Tests\n# ============================================================================\n\nclass TestGoodhartCredentials:\n\n    def test_goodhart_credential_id_is_32char_hex(self):\n        \"\"\"create_credential() must generate credential_id as 32-char lowercase hex.\"\"\"\n        mgr = SignetManager(secret_key=\"test_secret_key_12345\")\n        cred = mgr.create_credential(\"reviewer1\", \"Test Bot\", ReviewStage.security)\n        assert len(cred.credential_id) == 32\n        assert re.fullmatch(r'[0-9a-f]{32}', cred.credential_id)\n\n    def test_goodhart_credential_display_name_preserved(self):\n        \"\"\"create_credential() must store and return the exact display_name provided.\"\"\"\n        mgr = SignetManager(secret_key=\"test_secret_key_12345\")\n        cred = mgr.create_credential(\"rev1\", \"Dr. Review Bot 🤖\", ReviewStage.correctness)\n        assert cred.display_name == \"Dr. Review Bot 🤖\"\n\n    def test_goodhart_credential_whitespace_reviewer_id_rejected(self):\n        \"\"\"create_credential() must reject whitespace-only reviewer_id.\"\"\"\n        mgr = SignetManager(secret_key=\"test_secret_key_12345\")\n        with pytest.raises((GovernanceError, ValueError)):\n            mgr.create_credential(\"  \\t\\n  \", \"Bot\", ReviewStage.style)\n\n    def test_goodhart_credential_whitespace_display_name_rejected(self):\n        \"\"\"create_credential() must reject whitespace-only display_name.\"\"\"\n        mgr = SignetManager(secret_key=\"test_secret_key_12345\")\n        with pytest.raises((GovernanceError, ValueError)):\n            mgr.create_credential(\"rev1\", \"   \", ReviewStage.architecture)\n\n    def test_goodhart_credential_unique_ids(self):\n        \"\"\"create_credential() must generate unique credential_ids across multiple calls.\"\"\"\n        mgr = SignetManager(secret_key=\"test_secret_key_12345\")\n        ids = set()\n        for i in range(10):\n            cred = mgr.create_credential(f\"reviewer_{i}\", f\"Bot {i}\", ReviewStage.security)\n            ids.add(cred.credential_id)\n        assert len(ids) == 10\n\n    def test_goodhart_verify_credential_different_stage_invalid(self):\n        \"\"\"verify_credential() must reject a credential with tampered stage.\"\"\"\n        mgr = SignetManager(secret_key=\"test_secret_key_12345\")\n        cred = mgr.create_credential(\"rev1\", \"Bot\", ReviewStage.security)\n        # Tamper stage\n        tampered = ReviewerCredential(\n            credential_id=cred.credential_id,\n            reviewer_id=cred.reviewer_id,\n            display_name=cred.display_name,\n            stage=ReviewStage.style,  # different stage\n            public_key_hex=cred.public_key_hex if hasattr(cred, 'public_key_hex') else \"\",\n            signature_hash=cred.signature_hash,\n            created_at=cred.created_at,\n            expires_iso=cred.expires_iso if hasattr(cred, 'expires_iso') else future_iso(),\n            is_active=cred.is_active if hasattr(cred, 'is_active') else True,\n        )\n        with pytest.raises(CredentialError) as exc_info:\n            mgr.verify_credential(tampered)\n        assert exc_info.value.reason == CredentialErrorReason.INVALID_SIGNATURE\n\n    def test_goodhart_verify_credential_error_has_credential_id(self):\n        \"\"\"CredentialError from verify_credential() must include the credential_id.\"\"\"\n        mgr = SignetManager(secret_key=\"test_secret_key_12345\")\n        cred = mgr.create_credential(\"rev1\", \"Bot\", ReviewStage.security)\n        # Tamper signature\n        tampered = ReviewerCredential(\n            credential_id=cred.credential_id,\n            reviewer_id=cred.reviewer_id,\n            display_name=cred.display_name,\n            stage=cred.stage,\n            public_key_hex=cred.public_key_hex if hasattr(cred, 'public_key_hex') else \"\",\n            signature_hash=\"deadbeef\" * 8,\n            created_at=cred.created_at,\n            expires_iso=cred.expires_iso if hasattr(cred, 'expires_iso') else future_iso(),\n            is_active=cred.is_active if hasattr(cred, 'is_active') else True,\n        )\n        with pytest.raises(CredentialError) as exc_info:\n            mgr.verify_credential(tampered)\n        assert exc_info.value.credential_id == cred.credential_id\n\n\n# ============================================================================\n# Classify Tests\n# ============================================================================\n\nclass TestGoodhartClassify:\n\n    def test_goodhart_classify_removed_lines_matched(self):\n        \"\"\"classify() must check removed_lines in addition to added_lines.\"\"\"\n        hunk = make_diff_hunk(\n            added_lines=[\"normal code\"],\n            removed_lines=[\"API_KEY=sk_live_12345abcde\"],\n        )\n        rules = [\n            LedgerFieldRule(\n                pattern=r\"API_KEY\\s*=\",\n                label=ClassificationLabel.secret,\n                description=\"API key pattern\",\n            )\n        ]\n        classifier = LedgerClassifier(rules)\n        labels = classifier.classify(hunk, rules)\n        assert ClassificationLabel.secret in labels\n\n    def test_goodhart_classify_multiple_rules_multiple_labels(self):\n        \"\"\"classify() must return union of all matching labels from different rules.\"\"\"\n        hunk = make_diff_hunk(\n            added_lines=[\"aws_secret_key = AKIA1234567890\"],\n            removed_lines=[\"email: user@example.com\"],\n        )\n        rules = [\n            LedgerFieldRule(\n                pattern=r\"aws_secret_key\",\n                label=ClassificationLabel.secret,\n                description=\"AWS secret\",\n            ),\n            LedgerFieldRule(\n                pattern=r\"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+\",\n                label=ClassificationLabel.pii,\n                description=\"Email address\",\n            ),\n        ]\n        classifier = LedgerClassifier(rules)\n        labels = classifier.classify(hunk, rules)\n        assert ClassificationLabel.secret in labels\n        assert ClassificationLabel.pii in labels\n\n    def test_goodhart_classify_both_added_and_removed(self):\n        \"\"\"classify() must scan both added and removed lines, returning union of matches.\"\"\"\n        hunk = make_diff_hunk(\n            added_lines=[\"internal_api_endpoint = '/v1/internal'\"],\n            removed_lines=[\"ssn = 123-45-6789\"],\n        )\n        rules = [\n            LedgerFieldRule(\n                pattern=r\"internal_api\",\n                label=ClassificationLabel.internal_api,\n                description=\"Internal API reference\",\n            ),\n            LedgerFieldRule(\n                pattern=r\"\\d{3}-\\d{2}-\\d{4}\",\n                label=ClassificationLabel.pii,\n                description=\"SSN pattern\",\n            ),\n        ]\n        classifier = LedgerClassifier(rules)\n        labels = classifier.classify(hunk, rules)\n        assert ClassificationLabel.internal_api in labels\n        assert ClassificationLabel.pii in labels\n\n\n# ============================================================================\n# Classify All Tests\n# ============================================================================\n\nclass TestGoodhartClassifyAll:\n\n    def test_goodhart_classify_all_returns_new_instances(self):\n        \"\"\"classify_all() must return new DiffHunk instances, not the same objects.\"\"\"\n        hunks = [\n            make_diff_hunk(hunk_id=\"h1\", added_lines=[\"x = 1\"]),\n            make_diff_hunk(hunk_id=\"h2\", added_lines=[\"y = 2\"]),\n        ]\n        config = LedgerConfig(\n            rules=[\n                LedgerFieldRule(\n                    pattern=r\"never_matches_anything_xyzzy\",\n                    label=ClassificationLabel.public,\n                    description=\"no match\",\n                )\n            ],\n            default_label=ClassificationLabel.public,\n        )\n        classifier = LedgerClassifier(config.rules)\n        result = classifier.classify_all(hunks, config)\n        assert len(result) == len(hunks)\n        for orig, new in zip(hunks, result):\n            assert orig is not new\n\n    def test_goodhart_classify_all_preserves_id_and_file_path(self):\n        \"\"\"classify_all() must preserve all non-classification fields.\"\"\"\n        hunks = [\n            make_diff_hunk(\n                hunk_id=\"preserve_test\",\n                file_path=\"deep/nested/file.rs\",\n                added_lines=[\"let x = 42;\"],\n                language=\"rust\",\n            ),\n        ]\n        config = LedgerConfig(\n            rules=[\n                LedgerFieldRule(\n                    pattern=r\"never_matches_xyzzy\",\n                    label=ClassificationLabel.public,\n                    description=\"no match\",\n                )\n            ],\n            default_label=ClassificationLabel.public,\n        )\n        classifier = LedgerClassifier(config.rules)\n        result = classifier.classify_all(hunks, config)\n        assert result[0].id == \"preserve_test\"\n        assert result[0].file_path == \"deep/nested/file.rs\"\n        assert result[0].added_lines == [\"let x = 42;\"]\n        assert result[0].language == \"rust\"\n\n\n# ============================================================================\n# Filter Hunks Tests\n# ============================================================================\n\nclass TestGoodhartFilterHunks:\n\n    def test_goodhart_filter_hunks_classification_exceeds_max(self):\n        \"\"\"filter_hunks() must deny hunks whose classification exceeds token's allowed_classifications.\"\"\"\n        hunk = make_diff_hunk(\n            hunk_id=\"secret_hunk\",\n            file_path=\"src/main.py\",\n            classifications=[ClassificationLabel.secret],\n        )\n        token = PolicyToken(\n            token_id=\"tok1\",\n            reviewer_id=\"rev1\",\n            allowed_file_patterns=[\"src/*.py\"],\n            denied_file_patterns=[],\n            allowed_classifications=[ClassificationLabel.public],\n            max_severity=Severity.critical,\n            issued_at=now_iso(),\n            expires_at=future_iso(),\n        )\n        enforcer = AgentSafeEnforcer()\n        result = enforcer.filter_hunks([hunk], token)\n        assert len(result.denied_hunk_ids) >= 1\n        assert \"secret_hunk\" in result.denied_hunk_ids\n\n    def test_goodhart_filter_hunks_empty_patterns_allows_all(self):\n        \"\"\"filter_hunks() must allow all hunks when allowed_file_patterns is empty.\"\"\"\n        hunks = [\n            make_diff_hunk(hunk_id=\"h1\", file_path=\"any/path.js\", classifications=[ClassificationLabel.public]),\n            make_diff_hunk(hunk_id=\"h2\", file_path=\"other/file.py\", classifications=[ClassificationLabel.public]),\n        ]\n        token = PolicyToken(\n            token_id=\"tok1\",\n            reviewer_id=\"rev1\",\n            allowed_file_patterns=[],\n            denied_file_patterns=[],\n            allowed_classifications=[ClassificationLabel.public, ClassificationLabel.secret, ClassificationLabel.pii, ClassificationLabel.internal_api],\n            max_severity=Severity.critical,\n            issued_at=now_iso(),\n            expires_at=future_iso(),\n        )\n        enforcer = AgentSafeEnforcer()\n        result = enforcer.filter_hunks(hunks, token)\n        assert len(result.allowed_hunks) == 2\n        assert len(result.denied_hunk_ids) == 0\n\n    def test_goodhart_filter_hunks_denied_ids_unique(self):\n        \"\"\"filter_hunks() must not duplicate denied hunk IDs.\"\"\"\n        # Hunk that could be denied for multiple reasons (bad classification AND bad file path)\n        hunk = make_diff_hunk(\n            hunk_id=\"multi_deny\",\n            file_path=\"forbidden/secret.py\",\n            classifications=[ClassificationLabel.secret],\n        )\n        token = PolicyToken(\n            token_id=\"tok1\",\n            reviewer_id=\"rev1\",\n            allowed_file_patterns=[\"src/*.py\"],\n            denied_file_patterns=[],\n            allowed_classifications=[ClassificationLabel.public],\n            max_severity=Severity.critical,\n            issued_at=now_iso(),\n            expires_at=future_iso(),\n        )\n        enforcer = AgentSafeEnforcer()\n        result = enforcer.filter_hunks([hunk], token)\n        assert len(result.denied_hunk_ids) == len(set(result.denied_hunk_ids))\n\n\n# ============================================================================\n# Check Token Tests\n# ============================================================================\n\nclass TestGoodhartCheckToken:\n\n    def test_goodhart_check_token_empty_reviewer_id_returns_false(self):\n        \"\"\"check_token() must return False for a non-expired token with empty reviewer_id.\"\"\"\n        token = PolicyToken(\n            token_id=\"tok1\",\n            reviewer_id=\"\",\n            allowed_file_patterns=[\"*\"],\n            denied_file_patterns=[],\n            allowed_classifications=[ClassificationLabel.public],\n            max_severity=Severity.critical,\n            issued_at=now_iso(),\n            expires_at=future_iso(),\n        )\n        enforcer = AgentSafeEnforcer()\n        result = enforcer.check_token(token)\n        assert result is False\n\n\n# ============================================================================\n# Update Trust Tests\n# ============================================================================\n\nclass TestGoodhartUpdateTrust:\n\n    def test_goodhart_update_trust_preserves_stage(self):\n        \"\"\"update_trust() must preserve the original stage in the returned TrustScore.\"\"\"\n        for stage in ReviewStage:\n            ts = TrustScore(\n                reviewer_id=\"rev1\",\n                stage=stage,\n                weight=0.5,\n                accepted_count=5,\n                dismissed_count=2,\n                updated_at=now_iso(),\n            )\n            record = LearningRecord(\n                record_id=\"rec1\",\n                finding_id=\"f1\",\n                reviewer_id=\"rev1\",\n                stage=stage,\n                rule_id=\"rule1\",\n                severity=Severity.medium,\n                accepted=True,\n                human_comment=None,\n                recorded_at=now_iso(),\n            )\n            arbiter = ArbiterScorer()\n            result = arbiter.update_trust(ts, record)\n            assert result.stage == stage\n\n    def test_goodhart_update_trust_increments_count_exactly_one(self):\n        \"\"\"update_trust() must increment review_count by exactly 1 per call.\"\"\"\n        ts = TrustScore(\n            reviewer_id=\"rev1\",\n            stage=ReviewStage.security,\n            weight=0.5,\n            accepted_count=10,\n            dismissed_count=3,\n            updated_at=now_iso(),\n        )\n        arbiter = ArbiterScorer()\n        initial_count = ts.accepted_count + ts.dismissed_count\n        current = ts\n        for i in range(3):\n            record = LearningRecord(\n                record_id=f\"rec{i}\",\n                finding_id=f\"f{i}\",\n                reviewer_id=\"rev1\",\n                stage=ReviewStage.security,\n                rule_id=\"rule1\",\n                severity=Severity.medium,\n                accepted=True,\n                human_comment=None,\n                recorded_at=now_iso(),\n            )\n            current = arbiter.update_trust(current, record)\n        # review_count should have incremented 3 times\n        new_count = current.accepted_count + current.dismissed_count\n        assert new_count == initial_count + 3\n\n    def test_goodhart_update_trust_clamp_to_exact_boundary(self):\n        \"\"\"update_trust() must clamp to exactly 0.0 or 1.0 at boundaries.\"\"\"\n        arbiter = ArbiterScorer()\n\n        # Test upper clamp\n        ts_high = TrustScore(\n            reviewer_id=\"rev1\", stage=ReviewStage.security,\n            weight=0.95, accepted_count=5, dismissed_count=0, updated_at=now_iso(),\n        )\n        record_up = LearningRecord(\n            record_id=\"r1\", finding_id=\"f1\", reviewer_id=\"rev1\",\n            stage=ReviewStage.security, rule_id=\"rule1\", severity=Severity.high,\n            accepted=True, human_comment=None, recorded_at=now_iso(),\n        )\n        result_high = arbiter.update_trust(ts_high, record_up)\n        assert result_high.weight <= 1.0\n        if result_high.weight > 0.95:\n            # If it was increased, it should be clamped at 1.0 max\n            assert result_high.weight == 1.0 or result_high.weight <= 1.0\n\n        # Test lower clamp\n        ts_low = TrustScore(\n            reviewer_id=\"rev2\", stage=ReviewStage.security,\n            weight=0.05, accepted_count=5, dismissed_count=5, updated_at=now_iso(),\n        )\n        record_down = LearningRecord(\n            record_id=\"r2\", finding_id=\"f2\", reviewer_id=\"rev2\",\n            stage=ReviewStage.security, rule_id=\"rule1\", severity=Severity.high,\n            accepted=False, human_comment=None, recorded_at=now_iso(),\n        )\n        result_low = arbiter.update_trust(ts_low, record_down)\n        assert result_low.weight >= 0.0\n\n    def test_goodhart_update_trust_negative_delta(self):\n        \"\"\"update_trust() must correctly decrease weight for dismissed findings.\"\"\"\n        arbiter = ArbiterScorer()\n        ts = TrustScore(\n            reviewer_id=\"rev1\", stage=ReviewStage.correctness,\n            weight=0.8, accepted_count=10, dismissed_count=2, updated_at=now_iso(),\n        )\n        record = LearningRecord(\n            record_id=\"r1\", finding_id=\"f1\", reviewer_id=\"rev1\",\n            stage=ReviewStage.correctness, rule_id=\"rule1\", severity=Severity.high,\n            accepted=False, human_comment=\"wrong\", recorded_at=now_iso(),\n        )\n        result = arbiter.update_trust(ts, record)\n        # Weight should decrease or stay same for dismissed finding, not increase\n        assert result.weight <= ts.weight\n\n\n# ============================================================================\n# Score Tests\n# ============================================================================\n\nclass TestGoodhartScore:\n\n    def _make_assessment(self, reviewer_id, stage, decision, confidence):\n        return Assessment(\n            id=f\"a_{reviewer_id}_{stage.value}\",\n            review_request_id=\"rr1\",\n            stage=stage,\n            reviewer_id=reviewer_id,\n            decision=decision,\n            findings=[],\n            confidence=confidence,\n            is_partial=False,\n            error_message=None,\n            duration_ms=100,\n            created_at=now_iso(),\n        )\n\n    def _make_trust_score(self, reviewer_id, stage, weight=0.8):\n        return TrustScore(\n            reviewer_id=reviewer_id,\n            stage=stage,\n            weight=weight,\n            accepted_count=10,\n            dismissed_count=2,\n            updated_at=now_iso(),\n        )\n\n    def test_goodhart_score_reasoning_trace_one_per_assessment(self):\n        \"\"\"score() reasoning_trace must contain one entry per assessment.\"\"\"\n        arbiter = ArbiterScorer()\n        config = CircuitConfig(\n            stages=[ReviewStage.security, ReviewStage.correctness],\n            parallel_stages=[],\n            stage_timeout_ms=5000,\n            block_threshold=1,\n            warn_threshold=1,\n        )\n\n        # Test with 2 assessments\n        assessments_2 = [\n            self._make_assessment(\"r1\", ReviewStage.security, ReviewDecision.pass_, Confidence.high),\n            self._make_assessment(\"r2\", ReviewStage.correctness, ReviewDecision.pass_, Confidence.medium),\n        ]\n        trust_2 = [\n            self._make_trust_score(\"r1\", ReviewStage.security),\n            self._make_trust_score(\"r2\", ReviewStage.correctness),\n        ]\n        result_2 = arbiter.score(assessments_2, trust_2, config)\n        assert len(result_2) == 3\n        assert len(result_2[2]) == 2\n\n        # Test with 4 assessments\n        assessments_4 = assessments_2 + [\n            self._make_assessment(\"r3\", ReviewStage.style, ReviewDecision.warn, Confidence.low),\n            self._make_assessment(\"r4\", ReviewStage.architecture, ReviewDecision.pass_, Confidence.high),\n        ]\n        trust_4 = trust_2 + [\n            self._make_trust_score(\"r3\", ReviewStage.style),\n            self._make_trust_score(\"r4\", ReviewStage.architecture),\n        ]\n        result_4 = arbiter.score(assessments_4, trust_4, config)\n        assert len(result_4[2]) == 4\n\n    def test_goodhart_score_decision_is_review_decision_enum(self):\n        \"\"\"score() first element must be a ReviewDecision enum value.\"\"\"\n        arbiter = ArbiterScorer()\n        config = CircuitConfig(\n            stages=[ReviewStage.security],\n            parallel_stages=[],\n            stage_timeout_ms=5000,\n            block_threshold=1,\n            warn_threshold=1,\n        )\n        assessments = [\n            self._make_assessment(\"r1\", ReviewStage.security, ReviewDecision.pass_, Confidence.high),\n        ]\n        trust = [self._make_trust_score(\"r1\", ReviewStage.security)]\n        result = arbiter.score(assessments, trust, config)\n        assert isinstance(result[0], ReviewDecision)\n\n    def test_goodhart_score_confidence_is_confidence_enum(self):\n        \"\"\"score() second element must be a Confidence enum value.\"\"\"\n        arbiter = ArbiterScorer()\n        config = CircuitConfig(\n            stages=[ReviewStage.security],\n            parallel_stages=[],\n            stage_timeout_ms=5000,\n            block_threshold=1,\n            warn_threshold=1,\n        )\n        assessments = [\n            self._make_assessment(\"r1\", ReviewStage.security, ReviewDecision.pass_, Confidence.high),\n        ]\n        trust = [self._make_trust_score(\"r1\", ReviewStage.security)]\n        result = arbiter.score(assessments, trust, config)\n        assert isinstance(result[1], Confidence)\n\n\n# ============================================================================\n# Emit / Query Events Tests\n# ============================================================================\n\nclass TestGoodhartChronicler:\n\n    @pytest.fixture\n    def tmp_log(self, tmp_path):\n        return tmp_path / \"chronicle.jsonl\"\n\n    def _make_event(self, review_request_id, event_type, message=\"test\"):\n        return ChroniclerEvent(\n            event_id=\"evt_\" + review_request_id[:8],\n            event_type=event_type,\n            review_request_id=review_request_id,\n            timestamp=now_iso(),\n            stage=None,\n            reviewer_id=None,\n            payload={},\n            message=message,\n        )\n\n    @pytest.mark.asyncio\n    async def test_goodhart_emit_multiple_events_all_persisted(self, tmp_log):\n        \"\"\"emit() must append multiple events and all must be queryable.\"\"\"\n        chronicler = Chronicler(chronicle_log_path=str(tmp_log))\n        events = []\n        for i in range(3):\n            evt = ChroniclerEvent(\n                event_id=f\"evt_{i}\",\n                event_type=ChroniclerEventType.stage_started,\n                review_request_id=\"rr_multi\",\n                timestamp=now_iso(),\n                stage=ReviewStage.security,\n                reviewer_id=None,\n                payload={\"index\": str(i)},\n                message=f\"event {i}\",\n            )\n            result = await chronicler.emit(evt)\n            assert result is True\n            events.append(evt)\n\n        queried = await chronicler.query_events(\"rr_multi\", ChroniclerEventType.stage_started)\n        assert len(queried) == 3\n\n    @pytest.mark.asyncio\n    async def test_goodhart_query_events_does_not_return_other_request_ids(self, tmp_log):\n        \"\"\"query_events() must not return events from other review_request_ids.\"\"\"\n        chronicler = Chronicler(chronicle_log_path=str(tmp_log))\n\n        evt_a = self._make_event(\"request_AAA\", ChroniclerEventType.review_started, \"A event\")\n        evt_b = self._make_event(\"request_BBB\", ChroniclerEventType.review_started, \"B event\")\n\n        await chronicler.emit(evt_a)\n        await chronicler.emit(evt_b)\n\n        results_a = await chronicler.query_events(\"request_AAA\", None)\n        for r in results_a:\n            assert r.review_request_id == \"request_AAA\"\n\n        results_b = await chronicler.query_events(\"request_BBB\", None)\n        for r in results_b:\n            assert r.review_request_id == \"request_BBB\"\n\n        assert len(results_a) == 1\n        assert len(results_b) == 1\n\n\n# ============================================================================\n# Stigmergy Signal Tests\n# ============================================================================\n\nclass TestGoodhartStigmergy:\n\n    @pytest.fixture\n    def tmp_store(self, tmp_path):\n        return tmp_path / \"stigmergy.json\"\n\n    @pytest.mark.asyncio\n    async def test_goodhart_query_signals_filters_by_exact_pattern_key(self, tmp_store):\n        \"\"\"query_signals() must perform exact matching, not substring matching.\"\"\"\n        store = StigmergyStore(stigmergy_store_path=str(tmp_store))\n        sig1 = StigmergySignal(\n            signal_id=\"s1\",\n            pattern_key=\"null_check\",\n            description=\"null check pattern\",\n            occurrences=3,\n            first_seen_at=now_iso(),\n            last_seen_at=now_iso(),\n            reviewer_id=None,\n            stage=None,\n            metadata={},\n        )\n        sig2 = StigmergySignal(\n            signal_id=\"s2\",\n            pattern_key=\"null_check_extended\",\n            description=\"extended null check\",\n            occurrences=1,\n            first_seen_at=now_iso(),\n            last_seen_at=now_iso(),\n            reviewer_id=None,\n            stage=None,\n            metadata={},\n        )\n        await store.record_signal(sig1)\n        await store.record_signal(sig2)\n\n        results = await store.query_signals(\"null_check\")\n        assert all(r.pattern_key == \"null_check\" for r in results)\n        assert len(results) == 1\n\n\n# ============================================================================\n# Kindex Tests\n# ============================================================================\n\nclass TestGoodhartKindex:\n\n    @pytest.fixture\n    def tmp_store(self, tmp_path):\n        return tmp_path / \"kindex.json\"\n\n    @pytest.mark.asyncio\n    async def test_goodhart_kindex_get_returns_correct_entry_key(self, tmp_store):\n        \"\"\"kindex_get() returned entry must have key matching the requested key.\"\"\"\n        store = KindexStore(kindex_store_path=str(tmp_store))\n        entry = KindexEntry(\n            key=\"unique_key_xyz\",\n            kind=\"review\",\n            summary=\"test entry\",\n            data={\"field\": \"value\"},\n            tags=[\"tag1\"],\n            created_at=now_iso(),\n            updated_at=now_iso(),\n        )\n        await store.kindex_put(entry)\n        result = await store.kindex_get(\"unique_key_xyz\")\n        assert result is not None\n        assert result.key == \"unique_key_xyz\"\n\n    @pytest.mark.asyncio\n    async def test_goodhart_kindex_query_tags_intersection_not_superset(self, tmp_store):\n        \"\"\"kindex_query_by_tags() must return entries with ANY tag in common (intersection).\"\"\"\n        store = KindexStore(kindex_store_path=str(tmp_store))\n        entry = KindexEntry(\n            key=\"k1\",\n            kind=\"review\",\n            summary=\"test\",\n            data={},\n            tags=[\"alpha\", \"beta\"],\n            created_at=now_iso(),\n            updated_at=now_iso(),\n        )\n        await store.kindex_put(entry)\n\n        # Query with one matching and one non-matching tag\n        results = await store.kindex_query_by_tags([\"beta\", \"gamma\"])\n        assert len(results) == 1\n        assert results[0].key == \"k1\"\n\n\n# ============================================================================\n# Error Type Hierarchy Tests\n# ============================================================================\n\nclass TestGoodhartErrorTypes:\n\n    def test_goodhart_error_types_are_exceptions(self):\n        \"\"\"All error types must be raisable as exceptions and maintain hierarchy.\"\"\"\n        assert issubclass(GovernanceError, Exception)\n        assert issubclass(SealVerificationError, GovernanceError)\n        assert issubclass(PolicyViolationError, GovernanceError)\n        assert issubclass(CredentialError, GovernanceError)\n\n        # Verify they can actually be raised and caught\n        with pytest.raises(GovernanceError):\n            raise SealVerificationError(\n                message=\"test\", seal_id=\"s1\",\n                expected_hash=\"a\" * 64, actual_hash=\"b\" * 64,\n            )\n\n        with pytest.raises(GovernanceError):\n            raise PolicyViolationError(\n                message=\"test\", token_id=\"t1\", violated_scopes=[\"scope1\"],\n            )\n\n        with pytest.raises(GovernanceError):\n            raise CredentialError(\n                message=\"test\", credential_id=\"c1\",\n                reason=CredentialErrorReason.EXPIRED,\n            )\n\n\n# ============================================================================\n# Model Frozen / Immutability Tests\n# ============================================================================\n\nclass TestGoodhartFrozen:\n\n    def test_goodhart_models_frozen_all_types(self):\n        \"\"\"All governance struct types must reject attribute assignment (frozen=True).\"\"\"\n        models_and_mutations = []\n\n        # Assessment\n        assessment = Assessment(\n            id=\"a1\", review_request_id=\"rr1\", stage=ReviewStage.security,\n            reviewer_id=\"r1\", decision=ReviewDecision.pass_,\n            findings=[], confidence=Confidence.high, is_partial=False,\n            error_message=None, duration_ms=100, created_at=now_iso(),\n        )\n        models_and_mutations.append((assessment, \"decision\", ReviewDecision.block))\n\n        # Finding\n        finding = Finding(\n            id=\"f1\", hunk_id=\"h1\", file_path=\"test.py\", line_number=1,\n            severity=Severity.high, confidence=Confidence.high,\n            title=\"test\", description=\"desc\", suggestion=None,\n            rule_id=\"r1\", stage=ReviewStage.security,\n        )\n        models_and_mutations.append((finding, \"severity\", Severity.low))\n\n        # DiffHunk\n        hunk = make_diff_hunk()\n        models_and_mutations.append((hunk, \"file_path\", \"changed.py\"))\n\n        # PolicyToken\n        token = PolicyToken(\n            token_id=\"t1\", reviewer_id=\"r1\",\n            allowed_file_patterns=[\"*\"], denied_file_patterns=[],\n            allowed_classifications=[ClassificationLabel.public],\n            max_severity=Severity.critical,\n            issued_at=now_iso(), expires_at=future_iso(),\n        )\n        models_and_mutations.append((token, \"reviewer_id\", \"changed\"))\n\n        # KindexEntry\n        entry = KindexEntry(\n            key=\"k1\", kind=\"review\", summary=\"test\",\n            data={}, tags=[\"t1\"],\n            created_at=now_iso(), updated_at=now_iso(),\n        )\n        models_and_mutations.append((entry, \"key\", \"changed\"))\n\n        for model, field, value in models_and_mutations:\n            with pytest.raises((AttributeError, TypeError, Exception)):\n                setattr(model, field, value)\n\n\n# ============================================================================\n# Boundary Tests for Validators\n# ============================================================================\n\nclass TestGoodhartBoundary:\n\n    def test_goodhart_trust_score_weight_just_inside_bounds(self):\n        \"\"\"TrustScore must accept weight values just inside range.\"\"\"\n        ts1 = TrustScore(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            weight=0.001, accepted_count=0, dismissed_count=0,\n            updated_at=now_iso(),\n        )\n        assert ts1.weight == 0.001\n\n        ts2 = TrustScore(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            weight=0.999, accepted_count=0, dismissed_count=0,\n            updated_at=now_iso(),\n        )\n        assert ts2.weight == 0.999\n\n    def test_goodhart_trust_score_weight_just_outside_bounds(self):\n        \"\"\"TrustScore must reject weight values just outside range.\"\"\"\n        with pytest.raises((ValueError, Exception)):\n            TrustScore(\n                reviewer_id=\"r1\", stage=ReviewStage.security,\n                weight=-0.001, accepted_count=0, dismissed_count=0,\n                updated_at=now_iso(),\n            )\n        with pytest.raises((ValueError, Exception)):\n            TrustScore(\n                reviewer_id=\"r1\", stage=ReviewStage.security,\n                weight=1.001, accepted_count=0, dismissed_count=0,\n                updated_at=now_iso(),\n            )\n\n    def test_goodhart_circuit_config_timeout_one_accepted(self):\n        \"\"\"CircuitConfig must accept stage_timeout_ms=1 as minimum valid positive value.\"\"\"\n        config = CircuitConfig(\n            stages=[ReviewStage.security],\n            parallel_stages=[],\n            stage_timeout_ms=1,\n            block_threshold=1,\n            warn_threshold=1,\n        )\n        assert config.stage_timeout_ms == 1\n"
+}

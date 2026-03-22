@@ -1,0 +1,1428 @@
+{
+  "component_id": "reporter",
+  "name": "Report Formatter & Sealer",
+  "description": "Formats ReviewReport into three output formats: JSON (validates against schema), Markdown (human-readable with severity badges), GitHub-compatible PR comment (collapsible sections per stage). Deterministic output: injectable timestamps, sorted keys, canonical serialization. Applies Tessera seal to final report (hash-chain proof over content). Includes verify function that confirms seal integrity and detects post-seal modification. Emits report.sealed Chronicler event via injectable callback. Module constant PACT_COMPONENT = 'reporter' for Sentinel attribution.",
+  "version": 1,
+  "types": [
+    {
+      "name": "OutputFormat",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "json",
+        "md",
+        "github"
+      ],
+      "inner_types": [],
+      "description": "Supported report output formats.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "SealVerificationStatus",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "valid",
+        "invalid_content_hash",
+        "invalid_chain_hash",
+        "missing_seal",
+        "verification_error"
+      ],
+      "inner_types": [],
+      "description": "Outcome status of a seal verification check. StrEnum in implementation.",
+      "owner_component": ""
+    },
+    {
+      "name": "FormattedReport",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "content",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The fully rendered report string in the requested output format.",
+          "validators": []
+        },
+        {
+          "name": "output_format",
+          "type_ref": "OutputFormat",
+          "required": true,
+          "default": "",
+          "description": "Which format was used to render the report.",
+          "validators": []
+        },
+        {
+          "name": "report_id",
+          "type_ref": "ReportId",
+          "required": true,
+          "default": "",
+          "description": "Unique identifier of the source ReviewReport.",
+          "validators": []
+        },
+        {
+          "name": "is_sealed",
+          "type_ref": "bool",
+          "required": true,
+          "default": "",
+          "description": "Whether the source ReviewReport had a valid TesseraSeal attached at render time.",
+          "validators": []
+        },
+        {
+          "name": "character_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Length of the content string in characters.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "value >= 0",
+              "error_message": "Character count cannot be negative."
+            }
+          ]
+        },
+        {
+          "name": "truncated",
+          "type_ref": "bool",
+          "required": true,
+          "default": "",
+          "description": "True if content was truncated (only applicable to github format at 65000 char limit).",
+          "validators": []
+        },
+        {
+          "name": "rendered_at",
+          "type_ref": "Iso8601Timestamp",
+          "required": true,
+          "default": "",
+          "description": "ISO 8601 UTC timestamp of when the report was rendered.",
+          "validators": []
+        },
+        {
+          "name": "metadata",
+          "type_ref": "dict",
+          "required": true,
+          "default": "",
+          "description": "Additional metadata including pact_component attribution key and any format-specific info.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Component-local frozen Pydantic model containing the rendered report string, seal status, and metadata. Immutable (frozen=True).",
+      "owner_component": ""
+    },
+    {
+      "name": "SealVerificationResult",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "status",
+          "type_ref": "SealVerificationStatus",
+          "required": true,
+          "default": "",
+          "description": "Overall verification outcome.",
+          "validators": []
+        },
+        {
+          "name": "valid",
+          "type_ref": "bool",
+          "required": true,
+          "default": "",
+          "description": "Convenience boolean: True iff status == 'valid'.",
+          "validators": []
+        },
+        {
+          "name": "content_hash_match",
+          "type_ref": "bool",
+          "required": true,
+          "default": "",
+          "description": "Whether the recomputed content_hash matches the seal's content_hash.",
+          "validators": []
+        },
+        {
+          "name": "chain_hash_match",
+          "type_ref": "bool",
+          "required": true,
+          "default": "",
+          "description": "Whether the recomputed chain_hash matches the seal's chain_hash.",
+          "validators": []
+        },
+        {
+          "name": "expected_content_hash",
+          "type_ref": "Sha256Hex",
+          "required": true,
+          "default": "",
+          "description": "The content_hash stored in the seal. Empty string if seal is missing.",
+          "validators": []
+        },
+        {
+          "name": "actual_content_hash",
+          "type_ref": "Sha256Hex",
+          "required": true,
+          "default": "",
+          "description": "The content_hash recomputed from the report content. Empty string if computation failed.",
+          "validators": []
+        },
+        {
+          "name": "expected_chain_hash",
+          "type_ref": "Sha256Hex",
+          "required": true,
+          "default": "",
+          "description": "The chain_hash stored in the seal. Empty string if seal is missing.",
+          "validators": []
+        },
+        {
+          "name": "actual_chain_hash",
+          "type_ref": "Sha256Hex",
+          "required": true,
+          "default": "",
+          "description": "The chain_hash recomputed from content_hash and previous_hash. Empty string if computation failed.",
+          "validators": []
+        },
+        {
+          "name": "error",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable error message if verification failed. Empty string on success.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Frozen Pydantic model containing the full result of a seal integrity verification. Immutable (frozen=True).",
+      "owner_component": ""
+    },
+    {
+      "name": "ReportId",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "len(value) >= 1",
+              "error_message": "ReportId must be a non-empty string."
+            },
+            {
+              "kind": "length",
+              "expression": "len(value) <= 256",
+              "error_message": "ReportId must not exceed 256 characters."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Opaque unique identifier for a ReviewReport. Non-empty string.",
+      "owner_component": ""
+    },
+    {
+      "name": "Iso8601Timestamp",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "",
+          "validators": [
+            {
+              "kind": "regex",
+              "expression": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$",
+              "error_message": "Timestamp must be ISO 8601 UTC format ending in 'Z', e.g. '2024-01-15T10:30:00Z'."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "ISO 8601 UTC timestamp string ending in 'Z'. Used for deterministic injectable timestamps.",
+      "owner_component": ""
+    },
+    {
+      "name": "Sha256Hex",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "",
+          "validators": [
+            {
+              "kind": "regex",
+              "expression": "^([a-f0-9]{64})?$",
+              "error_message": "SHA-256 hex must be exactly 64 lowercase hex characters, or empty string."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A SHA-256 hash value represented as a 64-character lowercase hexadecimal string. May be empty string when hash is unavailable (e.g. missing seal).",
+      "owner_component": ""
+    },
+    {
+      "name": "SealerId",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "len(value) >= 1",
+              "error_message": "SealerId must be a non-empty string."
+            },
+            {
+              "kind": "length",
+              "expression": "len(value) <= 128",
+              "error_message": "SealerId must not exceed 128 characters."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Identifier of the entity (component or operator) applying the Tessera seal. Non-empty string.",
+      "owner_component": ""
+    },
+    {
+      "name": "ChroniclerCallback",
+      "kind": "primitive",
+      "fields": [],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Injectable callback type: Callable[[ChroniclerEvent], None] | None. When provided, called fire-and-forget (wrapped in try/except) after sealing to emit report.sealed events. None means no event emission.",
+      "owner_component": ""
+    },
+    {
+      "name": "SealChainStoreProtocol",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "get_previous_hash",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Async method signature: async def get_previous_hash() -> str | None. Returns the most recent chain_hash from the seal chain store, or None if the chain is empty (GENESIS case).",
+          "validators": []
+        },
+        {
+          "name": "append_seal",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Async method signature: async def append_seal(seal: TesseraSeal) -> None. Appends a completed seal record to the chain store.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Protocol (runtime_checkable) abstracting seal chain persistence. Implementations read/write seal chain data (e.g. JSON lines file). Keeps file I/O out of the formatter for pure-logic testing per SOPs.",
+      "owner_component": ""
+    },
+    {
+      "name": "GitHubTruncationNotice",
+      "kind": "primitive",
+      "fields": [],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Constant string appended when GitHub format output exceeds 65000 characters. Value: '\\n\\n---\\n⚠️ *Report truncated. Full report available in JSON format.*'",
+      "owner_component": ""
+    },
+    {
+      "name": "GithubCharLimit",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "int",
+          "required": true,
+          "default": "65000",
+          "description": "",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "value == 65000",
+              "error_message": "GitHub character limit is fixed at 65000."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Maximum character count for GitHub PR comment format. Constant value: 65000.",
+      "owner_component": ""
+    },
+    {
+      "name": "ReviewReport",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique report identifier.",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the originating ReviewRequest.",
+          "validators": []
+        },
+        {
+          "name": "decision",
+          "type_ref": "ReviewDecision",
+          "required": true,
+          "default": "",
+          "description": "Final merged decision.",
+          "validators": []
+        },
+        {
+          "name": "findings",
+          "type_ref": "list[Finding]",
+          "required": true,
+          "default": "",
+          "description": "Deduplicated, merged findings from all reviewers.",
+          "validators": []
+        },
+        {
+          "name": "assessments",
+          "type_ref": "list[Assessment]",
+          "required": true,
+          "default": "",
+          "description": "All individual reviewer assessments that contributed.",
+          "validators": []
+        },
+        {
+          "name": "confidence",
+          "type_ref": "Confidence",
+          "required": true,
+          "default": "",
+          "description": "Overall confidence of the merged report.",
+          "validators": []
+        },
+        {
+          "name": "trust_scores",
+          "type_ref": "list[TrustScore]",
+          "required": true,
+          "default": "",
+          "description": "Trust scores of all reviewers at the time of merge.",
+          "validators": []
+        },
+        {
+          "name": "conflict_notes",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Explanations of any conflicts between reviewers and how they were resolved.",
+          "validators": []
+        },
+        {
+          "name": "summary",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable summary of the review outcome.",
+          "validators": []
+        },
+        {
+          "name": "seal",
+          "type_ref": "Optional[TesseraSeal]",
+          "required": false,
+          "default": "null",
+          "description": "Tessera hash-chain seal over the report content, set after sealing.",
+          "validators": []
+        },
+        {
+          "name": "created_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of report creation.",
+          "validators": []
+        },
+        {
+          "name": "metadata",
+          "type_ref": "dict[str, str]",
+          "required": true,
+          "default": "{}",
+          "description": "Arbitrary key-value metadata carried from ReviewRequest.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "The final merged review report: all assessments combined with trust-weighted scoring and a tamper-proof seal.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "Confidence",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "inner_types": [],
+      "description": "Confidence level of a reviewer finding or merged assessment.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ReviewDecision",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "block",
+        "warn",
+        "pass"
+      ],
+      "inner_types": [],
+      "description": "Final decision on a pull request review: block merging, warn, or pass.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "Finding",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique finding identifier.",
+          "validators": []
+        },
+        {
+          "name": "hunk_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the DiffHunk this finding applies to.",
+          "validators": []
+        },
+        {
+          "name": "file_path",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "File path where the finding was detected.",
+          "validators": []
+        },
+        {
+          "name": "line_number",
+          "type_ref": "Optional[int]",
+          "required": false,
+          "default": "null",
+          "description": "Specific line number if applicable.",
+          "validators": []
+        },
+        {
+          "name": "severity",
+          "type_ref": "Severity",
+          "required": true,
+          "default": "",
+          "description": "Severity of the finding.",
+          "validators": []
+        },
+        {
+          "name": "confidence",
+          "type_ref": "Confidence",
+          "required": true,
+          "default": "",
+          "description": "Reviewer confidence in this finding.",
+          "validators": []
+        },
+        {
+          "name": "title",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Short human-readable title of the finding.",
+          "validators": []
+        },
+        {
+          "name": "description",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Detailed explanation of the issue.",
+          "validators": []
+        },
+        {
+          "name": "suggestion",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Suggested fix or remediation.",
+          "validators": []
+        },
+        {
+          "name": "rule_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the rule or pattern that triggered this finding.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "Which review stage produced this finding.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single issue found by a reviewer in a specific hunk.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "Assessment",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique assessment identifier.",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the ReviewRequest this assessment responds to.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "The review stage this assessment covers.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the reviewer agent that produced this assessment.",
+          "validators": []
+        },
+        {
+          "name": "decision",
+          "type_ref": "ReviewDecision",
+          "required": true,
+          "default": "",
+          "description": "This reviewer's overall decision.",
+          "validators": []
+        },
+        {
+          "name": "findings",
+          "type_ref": "list[Finding]",
+          "required": true,
+          "default": "[]",
+          "description": "List of findings from this reviewer.",
+          "validators": []
+        },
+        {
+          "name": "confidence",
+          "type_ref": "Confidence",
+          "required": true,
+          "default": "",
+          "description": "Overall confidence of this assessment.",
+          "validators": []
+        },
+        {
+          "name": "is_partial",
+          "type_ref": "bool",
+          "required": true,
+          "default": "false",
+          "description": "True if the reviewer failed/timed out and this is a degraded result.",
+          "validators": []
+        },
+        {
+          "name": "error_message",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Error message if the reviewer encountered an issue.",
+          "validators": []
+        },
+        {
+          "name": "duration_ms",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Time in milliseconds the reviewer took to produce this assessment.",
+          "validators": []
+        },
+        {
+          "name": "created_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of assessment creation.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single reviewer's complete assessment of the diff hunks it was given.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "TrustScore",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the reviewer this score applies to.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "Stage the reviewer operates in.",
+          "validators": []
+        },
+        {
+          "name": "weight",
+          "type_ref": "float",
+          "required": true,
+          "default": "",
+          "description": "Trust weight in range [0.0, 1.0].",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "0.0 <= value <= 1.0",
+              "error_message": "Trust weight must be between 0.0 and 1.0"
+            }
+          ]
+        },
+        {
+          "name": "accepted_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "0",
+          "description": "Number of findings from this reviewer that humans accepted.",
+          "validators": []
+        },
+        {
+          "name": "dismissed_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "0",
+          "description": "Number of findings from this reviewer that humans dismissed.",
+          "validators": []
+        },
+        {
+          "name": "updated_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of last trust score update.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Arbiter trust weight for a reviewer agent, used in weighted assessment merging.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "TesseraSeal",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "content_hash",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "SHA-256 hash of the canonical JSON content that was sealed.",
+          "validators": []
+        },
+        {
+          "name": "previous_hash",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Hash of the previous seal in the chain (null for first seal).",
+          "validators": []
+        },
+        {
+          "name": "chain_hash",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "SHA-256 hash of (content_hash + previous_hash), forming the chain link.",
+          "validators": []
+        },
+        {
+          "name": "sealed_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of when the seal was created.",
+          "validators": []
+        },
+        {
+          "name": "sealer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the entity that created this seal.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A hash-chain tamper-proof seal over serialized content, verifiable independently.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "Severity",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ],
+      "inner_types": [],
+      "description": "Severity level of a review finding, ordered from most to least critical.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ReviewStage",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "security",
+        "correctness",
+        "style",
+        "architecture"
+      ],
+      "inner_types": [],
+      "description": "Named stage in the review circuit pipeline.",
+      "owner_component": "schemas"
+    }
+  ],
+  "functions": [
+    {
+      "name": "canonicalize",
+      "description": "Pure function: produces the canonical byte representation of a ReviewReport for hashing. Creates a seal-excluded copy of the report (seal=None), calls model_dump(mode='json'), then serializes with json.dumps(sort_keys=True, separators=(',',':'), ensure_ascii=False).encode('utf-8'). This is the single source of truth for content hashing — both seal_report and verify_seal must use this function. No side effects.",
+      "inputs": [
+        {
+          "name": "report",
+          "type_ref": "ReviewReport",
+          "required": true,
+          "default": "",
+          "description": "The ReviewReport to canonicalize. If it has a seal attached, the seal field is set to None before serialization.",
+          "validators": []
+        }
+      ],
+      "output_type": "bytes",
+      "error_cases": [
+        {
+          "name": "serialization_failure",
+          "condition": "The report contains data that cannot be serialized to JSON via model_dump(mode='json')",
+          "error_type": "ReporterSerializationError",
+          "error_data": {
+            "report_id": "The report_id of the failing report",
+            "detail": "Description of the serialization failure"
+          }
+        }
+      ],
+      "preconditions": [
+        "report is a valid ReviewReport instance (Pydantic-validated)",
+        "report has a non-empty report_id"
+      ],
+      "postconditions": [
+        "Return value is valid UTF-8 encoded JSON bytes",
+        "Return value is deterministic: same report content always produces identical bytes",
+        "Seal field is excluded from canonical representation (set to None before dump)",
+        "JSON keys are sorted lexicographically at all nesting levels",
+        "No whitespace padding in output (compact separators (',', ':'))",
+        "Calling canonicalize twice on the same report yields byte-identical output"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure function with no side effects."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 50,
+        "max_memory_mb": null,
+        "complexity": "O(n) where n is the total size of the report model graph"
+      }
+    },
+    {
+      "name": "seal_report",
+      "description": "Applies a Tessera seal to a ReviewReport. Computes content_hash as SHA-256 of canonicalize(report), retrieves previous_hash from the SealChainStoreProtocol (or uses the explicit previous_hash override), computes chain_hash as SHA-256 of (content_hash + '|' + (previous_hash or 'GENESIS')). Returns a new ReviewReport (via model_copy) with the TesseraSeal attached. Appends the seal to the chain store. Emits report.sealed ChroniclerEvent via the injectable callback if provided (fire-and-forget). Timestamp is injectable for deterministic testing.",
+      "inputs": [
+        {
+          "name": "report",
+          "type_ref": "ReviewReport",
+          "required": true,
+          "default": "",
+          "description": "The ReviewReport to seal. Must not already have a seal attached.",
+          "validators": []
+        },
+        {
+          "name": "chain_store",
+          "type_ref": "SealChainStoreProtocol",
+          "required": true,
+          "default": "",
+          "description": "Seal chain store for retrieving previous_hash and persisting the new seal.",
+          "validators": []
+        },
+        {
+          "name": "sealer_id",
+          "type_ref": "SealerId",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the entity applying the seal. Included in the TesseraSeal.",
+          "validators": []
+        },
+        {
+          "name": "timestamp",
+          "type_ref": "Iso8601Timestamp",
+          "required": false,
+          "default": "None",
+          "description": "Optional injectable timestamp. If not provided (None), uses datetime.utcnow().isoformat() + 'Z'.",
+          "validators": []
+        },
+        {
+          "name": "chronicler_callback",
+          "type_ref": "ChroniclerCallback",
+          "required": false,
+          "default": "None",
+          "description": "Optional callback for emitting report.sealed ChroniclerEvent. If None, no event is emitted. Errors in callback are caught and suppressed (fire-and-forget).",
+          "validators": []
+        }
+      ],
+      "output_type": "ReviewReport",
+      "error_cases": [
+        {
+          "name": "already_sealed",
+          "condition": "report.seal is not None — the report already has a seal attached",
+          "error_type": "ReporterSealError",
+          "error_data": {
+            "report_id": "The report_id",
+            "detail": "Report is already sealed"
+          }
+        },
+        {
+          "name": "chain_store_read_failure",
+          "condition": "chain_store.get_previous_hash() raises an exception (e.g. file not found, permission denied)",
+          "error_type": "ReporterChainStoreError",
+          "error_data": {
+            "report_id": "The report_id",
+            "operation": "get_previous_hash",
+            "detail": "Underlying error message"
+          }
+        },
+        {
+          "name": "chain_store_write_failure",
+          "condition": "chain_store.append_seal() raises an exception (e.g. disk full, permission denied)",
+          "error_type": "ReporterChainStoreError",
+          "error_data": {
+            "report_id": "The report_id",
+            "operation": "append_seal",
+            "detail": "Underlying error message"
+          }
+        },
+        {
+          "name": "canonicalization_failure",
+          "condition": "canonicalize(report) raises ReporterSerializationError",
+          "error_type": "ReporterSerializationError",
+          "error_data": {
+            "report_id": "The report_id",
+            "detail": "Canonicalization failed"
+          }
+        }
+      ],
+      "preconditions": [
+        "report is a valid ReviewReport instance",
+        "report.seal is None (report is not already sealed)",
+        "sealer_id is a non-empty string",
+        "chain_store conforms to SealChainStoreProtocol"
+      ],
+      "postconditions": [
+        "Returned ReviewReport is a new instance (original is not mutated, frozen model)",
+        "Returned report.seal is a valid TesseraSeal with non-empty content_hash, chain_hash, sealed_at, and sealer_id",
+        "content_hash == SHA-256(canonicalize(original_report))",
+        "chain_hash == SHA-256(content_hash + '|' + (previous_hash or 'GENESIS'))",
+        "Seal has been appended to chain_store via append_seal",
+        "All fields of the returned report except seal are identical to the input report",
+        "If chronicler_callback was provided, report.sealed event was attempted (failure does not affect return value)"
+      ],
+      "idempotent": false,
+      "is_async": true,
+      "side_effects": [
+        "Appends seal record to SealChainStoreProtocol (file I/O via chain store)",
+        "Optionally emits report.sealed ChroniclerEvent via callback (fire-and-forget)"
+      ],
+      "structured_side_effects": [
+        {
+          "kind": "writes_file",
+          "target": "SealChainStoreProtocol",
+          "description": "Appends the completed TesseraSeal to the chain store via append_seal(). Actual I/O is delegated to the chain store implementation."
+        },
+        {
+          "kind": "logging",
+          "target": "ChroniclerCallback",
+          "description": "Emits report.sealed ChroniclerEvent via injectable callback. Fire-and-forget: exceptions are caught and suppressed."
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "verify_seal",
+      "description": "Pure verification function: recomputes content_hash from the report via canonicalize(), recomputes chain_hash from content_hash and the seal's previous_hash, and compares both against the values stored in the seal. Returns a SealVerificationResult with match booleans and expected/actual hash values. Does not perform any I/O or mutate state. Does not access the chain store — verification is self-contained using only the report and its embedded seal.",
+      "inputs": [
+        {
+          "name": "report",
+          "type_ref": "ReviewReport",
+          "required": true,
+          "default": "",
+          "description": "The ReviewReport with TesseraSeal to verify.",
+          "validators": []
+        }
+      ],
+      "output_type": "SealVerificationResult",
+      "error_cases": [
+        {
+          "name": "missing_seal",
+          "condition": "report.seal is None — no seal is attached to verify",
+          "error_type": "SealVerificationResult",
+          "error_data": {
+            "status": "missing_seal",
+            "valid": "False",
+            "error": "Report has no seal attached"
+          }
+        },
+        {
+          "name": "canonicalization_failure_during_verify",
+          "condition": "canonicalize(report) fails during hash recomputation",
+          "error_type": "SealVerificationResult",
+          "error_data": {
+            "status": "verification_error",
+            "valid": "False",
+            "error": "Failed to canonicalize report for verification"
+          }
+        }
+      ],
+      "preconditions": [
+        "report is a valid ReviewReport instance"
+      ],
+      "postconditions": [
+        "If report.seal is None, returns SealVerificationResult with status='missing_seal', valid=False",
+        "If content_hash matches and chain_hash matches, returns status='valid', valid=True",
+        "If content_hash does not match, returns status='invalid_content_hash', valid=False",
+        "If content_hash matches but chain_hash does not match, returns status='invalid_chain_hash', valid=False",
+        "expected_content_hash and expected_chain_hash are taken from the seal",
+        "actual_content_hash and actual_chain_hash are freshly recomputed",
+        "Function never raises exceptions — all errors are captured in the error field with status='verification_error'"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure function with no side effects. Returns errors as data, never raises."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 50,
+        "max_memory_mb": null,
+        "complexity": "O(n) where n is the total size of the report model graph"
+      }
+    },
+    {
+      "name": "format_report",
+      "description": "Renders a ReviewReport into the specified OutputFormat. For JSON: canonical serialization with 2-space indent for readability (distinct from the compact canonical form used for hashing). For Markdown: severity emoji badges (🔴 critical, 🟠 high, 🟡 medium, 🔵 low, ⚪ info), findings grouped by ReviewStage, summary stats table. For GitHub: collapsible <details> sections per stage, truncation at 65000 characters with truncation notice appended. Timestamp is injectable for deterministic output. Returns a FormattedReport frozen model.",
+      "inputs": [
+        {
+          "name": "report",
+          "type_ref": "ReviewReport",
+          "required": true,
+          "default": "",
+          "description": "The ReviewReport to format. May or may not have a seal attached.",
+          "validators": []
+        },
+        {
+          "name": "output_format",
+          "type_ref": "OutputFormat",
+          "required": true,
+          "default": "",
+          "description": "The desired output format: json, markdown, or github.",
+          "validators": []
+        },
+        {
+          "name": "timestamp",
+          "type_ref": "Iso8601Timestamp",
+          "required": false,
+          "default": "None",
+          "description": "Optional injectable timestamp for the rendered_at field. If not provided (None), uses datetime.utcnow().isoformat() + 'Z'.",
+          "validators": []
+        }
+      ],
+      "output_type": "FormattedReport",
+      "error_cases": [
+        {
+          "name": "unsupported_format",
+          "condition": "output_format is not one of the supported OutputFormat variants",
+          "error_type": "ReporterFormatError",
+          "error_data": {
+            "output_format": "The unsupported format string",
+            "supported_formats": "json, markdown, github"
+          }
+        },
+        {
+          "name": "rendering_failure",
+          "condition": "An unexpected error occurs during rendering (e.g. malformed report data that passes validation but causes template errors)",
+          "error_type": "ReporterRenderError",
+          "error_data": {
+            "report_id": "The report_id",
+            "output_format": "The requested format",
+            "detail": "Description of the rendering failure"
+          }
+        }
+      ],
+      "preconditions": [
+        "report is a valid ReviewReport instance",
+        "output_format is a valid OutputFormat variant"
+      ],
+      "postconditions": [
+        "Returned FormattedReport.content is a non-empty string in the requested format",
+        "Returned FormattedReport.output_format matches the requested output_format",
+        "Returned FormattedReport.report_id matches report.report_id",
+        "Returned FormattedReport.is_sealed reflects whether report.seal is not None",
+        "Returned FormattedReport.character_count == len(FormattedReport.content)",
+        "For github format: if character_count > 65000, content is truncated and truncated=True",
+        "For json and markdown formats: truncated is always False",
+        "Returned FormattedReport.metadata contains key 'pact_component' with value 'reporter'",
+        "Output is deterministic: same inputs with same timestamp produce identical output",
+        "For json format: output is valid JSON parseable by json.loads()",
+        "For markdown format: output contains severity emoji badges for each finding",
+        "For github format: output contains <details> sections for each stage with findings"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure rendering function with no side effects."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 200,
+        "max_memory_mb": 64,
+        "complexity": "O(n) where n is the number of findings in the report"
+      }
+    },
+    {
+      "name": "render_json",
+      "description": "Internal renderer: serializes the ReviewReport to a human-readable JSON string with 2-space indentation, sorted keys, and ensure_ascii=False. This is the readable format (distinct from the compact canonical form used by canonicalize for hashing). Includes the seal in the output if present.",
+      "inputs": [
+        {
+          "name": "report",
+          "type_ref": "ReviewReport",
+          "required": true,
+          "default": "",
+          "description": "The ReviewReport to render as JSON.",
+          "validators": []
+        }
+      ],
+      "output_type": "str",
+      "error_cases": [
+        {
+          "name": "json_serialization_failure",
+          "condition": "Report data cannot be serialized to JSON",
+          "error_type": "ReporterSerializationError",
+          "error_data": {
+            "report_id": "The report_id",
+            "detail": "JSON serialization failed"
+          }
+        }
+      ],
+      "preconditions": [
+        "report is a valid ReviewReport instance"
+      ],
+      "postconditions": [
+        "Output is valid JSON parseable by json.loads()",
+        "Output uses 2-space indentation",
+        "JSON keys are sorted lexicographically at all nesting levels",
+        "Output includes seal data if report.seal is not None"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure rendering function."
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "render_markdown",
+      "description": "Internal renderer: produces a Markdown string with severity emoji badges (🔴 critical, 🟠 high, 🟡 medium, 🔵 low, ⚪ info), findings grouped by ReviewStage, a summary statistics table with counts per severity, and seal status section if sealed. Deterministic ordering: stages sorted by enum order, findings within stage sorted by severity descending then by file path ascending.",
+      "inputs": [
+        {
+          "name": "report",
+          "type_ref": "ReviewReport",
+          "required": true,
+          "default": "",
+          "description": "The ReviewReport to render as Markdown.",
+          "validators": []
+        },
+        {
+          "name": "timestamp",
+          "type_ref": "Iso8601Timestamp",
+          "required": true,
+          "default": "",
+          "description": "Timestamp to include in the report header.",
+          "validators": []
+        }
+      ],
+      "output_type": "str",
+      "error_cases": [
+        {
+          "name": "markdown_rendering_failure",
+          "condition": "Unexpected error during Markdown template rendering",
+          "error_type": "ReporterRenderError",
+          "error_data": {
+            "report_id": "The report_id",
+            "detail": "Markdown rendering failed"
+          }
+        }
+      ],
+      "preconditions": [
+        "report is a valid ReviewReport instance"
+      ],
+      "postconditions": [
+        "Output contains a top-level heading with report_id",
+        "Each finding has its severity emoji badge prefixed",
+        "Findings are grouped under stage-level headings",
+        "A summary table lists finding counts per severity level",
+        "If report.seal is not None, a seal status section is included"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure rendering function."
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "render_github",
+      "description": "Internal renderer: produces a GitHub-compatible PR comment with collapsible <details> sections per ReviewStage, severity emoji badges, finding details, and a summary header. Truncates to 65000 characters if the output exceeds the GitHub comment size limit, appending a truncation notice. Deterministic ordering: same as render_markdown.",
+      "inputs": [
+        {
+          "name": "report",
+          "type_ref": "ReviewReport",
+          "required": true,
+          "default": "",
+          "description": "The ReviewReport to render as a GitHub PR comment.",
+          "validators": []
+        },
+        {
+          "name": "timestamp",
+          "type_ref": "Iso8601Timestamp",
+          "required": true,
+          "default": "",
+          "description": "Timestamp to include in the report header.",
+          "validators": []
+        }
+      ],
+      "output_type": "str",
+      "error_cases": [
+        {
+          "name": "github_rendering_failure",
+          "condition": "Unexpected error during GitHub format rendering",
+          "error_type": "ReporterRenderError",
+          "error_data": {
+            "report_id": "The report_id",
+            "detail": "GitHub rendering failed"
+          }
+        }
+      ],
+      "preconditions": [
+        "report is a valid ReviewReport instance"
+      ],
+      "postconditions": [
+        "Output contains <details> and <summary> tags for each stage with findings",
+        "Each finding has its severity emoji badge",
+        "If len(output) > 65000, output is truncated to 65000 chars and truncation notice is appended",
+        "If report has no findings for a stage, that stage section is omitted",
+        "Output is valid GitHub-flavored Markdown"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure rendering function."
+        }
+      ],
+      "performance_budget": null
+    }
+  ],
+  "dependencies": [
+    "schemas",
+    "chronicle"
+  ],
+  "dependency_contracts": {
+    "schemas": [
+      "ReviewReport",
+      "TesseraSeal",
+      "FindingSeverity",
+      "ReviewStage",
+      "ReviewFinding"
+    ],
+    "chronicle": [
+      "ChroniclerEvent",
+      "ChroniclerEventType"
+    ]
+  },
+  "invariants": [
+    "PACT_COMPONENT module constant is always 'reporter' and is included in all ChroniclerEvent payloads and FormattedReport.metadata",
+    "canonicalize is the single source of truth for content hashing: both seal_report and verify_seal use canonicalize to compute content_hash",
+    "Seal content_hash is always SHA-256 of canonicalize(report_with_seal_set_to_None)",
+    "Seal chain_hash is always SHA-256 of (content_hash + '|' + (previous_hash or 'GENESIS'))",
+    "All hash values are lowercase hex-encoded 64-character strings",
+    "All ReviewReport instances are frozen (immutable): seal_report returns a new instance via model_copy, never mutates the input",
+    "FormattedReport instances are frozen (immutable)",
+    "SealVerificationResult instances are frozen (immutable)",
+    "verify_seal never raises exceptions: all error states are captured in the return value",
+    "Injectable timestamps: all functions that produce timestamps accept an optional timestamp parameter; if None, use datetime.utcnow().isoformat() + 'Z'",
+    "GitHub format output never exceeds 65000 characters (truncation with notice is applied)",
+    "JSON format output from format_report uses 2-space indent (readable), while canonicalize uses compact separators (for hashing)",
+    "ChroniclerCallback errors are always caught and suppressed (fire-and-forget pattern)",
+    "Determinism: identical inputs with identical injectable timestamps produce byte-identical outputs across all format_report and canonicalize calls",
+    "Severity badge mapping is fixed: 🔴=critical, 🟠=high, 🟡=medium, 🔵=low, ⚪=info"
+  ],
+  "requires": [
+    "schemas",
+    "chronicle"
+  ],
+  "processing_register": "rigorous-analytical",
+  "data_access": {
+    "reads": [
+      "INTERNAL"
+    ],
+    "writes": [
+      "INTERNAL"
+    ],
+    "rationale": "Reads ReviewReport objects which contain code review findings including file paths, line numbers, code snippets, and reviewer assessments (INTERNAL classification — no PII, but proprietary source code context). Writes seal chain records (content hashes and chain hashes) to the SealChainStoreProtocol which persists to a local JSON lines file. Emits ChroniclerEvent payloads containing report metadata (report_id, seal hashes, sealer_id) but no source code content.",
+    "side_effects": [
+      {
+        "type": "file_write",
+        "classification": "INTERNAL",
+        "fields": [
+          "TesseraSeal.content_hash",
+          "TesseraSeal.chain_hash",
+          "TesseraSeal.previous_hash",
+          "TesseraSeal.sealed_at",
+          "TesseraSeal.sealer_id"
+        ],
+        "rationale": "Appends completed TesseraSeal records to the seal chain store (JSON lines file) for hash-chain integrity verification. Contains only cryptographic hashes and metadata, no source code."
+      },
+      {
+        "type": "event_emission",
+        "classification": "INTERNAL",
+        "fields": [
+          "report_id",
+          "content_hash",
+          "chain_hash",
+          "sealer_id",
+          "sealed_at",
+          "pact_component"
+        ],
+        "rationale": "Emits report.sealed ChroniclerEvent via injectable callback after sealing. Contains report metadata and seal hashes for audit trail. Fire-and-forget: callback errors are suppressed."
+      }
+    ]
+  },
+  "authority": {
+    "domains": [
+      "report.formatting",
+      "report.sealing",
+      "report.seal_verification"
+    ],
+    "rationale": "This component is the sole authority for: (1) report.formatting — canonical serialization and all three output format renderings of ReviewReport; (2) report.sealing — Tessera seal computation (content_hash and chain_hash) and seal chain management; (3) report.seal_verification — seal integrity verification logic. No other component may independently format reports, compute seals, or verify seal integrity."
+  }
+}

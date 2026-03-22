@@ -1,0 +1,2564 @@
+{
+  "component_id": "governance",
+  "name": "Governance Primitives",
+  "description": "Inline implementations of governance stack patterns used across modules. Includes: TesseraSealer (SHA-256 hash-chain seal creation and verification over canonical JSON), ChronicleEmitter (emit structured events to JSON-lines log file, queryable), AgentSafeEnforcer (filter hunks by PolicyToken scope, log violations), SignetManager (create/verify reviewer credentials), ArbiterScorer (weighted trust score calculation and conflict resolution), LedgerClassifier (classify diff content against field rules for secrets/PII/internal APIs), StigmergyTracker (record and query recurring pattern signals to JSON storage), KindexStore (persistent JSON-file key-value store for review history and codebase context). Each is a focused class with a clean Protocol-based interface, fire-and-forget for optional integrations. Sync methods for pure computation, async for file I/O. Canonical JSON via json.dumps(data, sort_keys=True, separators=(',',':')) for deterministic hashing. Atomic file writes (write-to-temp + os.replace) for JSON stores. PACT keys as class-level constants included in ChroniclerEvent payloads.",
+  "version": 1,
+  "types": [
+    {
+      "name": "GovernanceError",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable error description.",
+          "validators": []
+        },
+        {
+          "name": "context",
+          "type_ref": "dict",
+          "required": false,
+          "default": "{}",
+          "description": "Optional structured context for debugging.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Base exception for all governance primitive errors. Contains a human-readable message and optional context dict.",
+      "owner_component": ""
+    },
+    {
+      "name": "SealVerificationError",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Describes the verification failure.",
+          "validators": []
+        },
+        {
+          "name": "seal_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The seal_id that failed verification.",
+          "validators": []
+        },
+        {
+          "name": "expected_hash",
+          "type_ref": "str",
+          "required": false,
+          "default": "",
+          "description": "Expected content hash if available.",
+          "validators": []
+        },
+        {
+          "name": "actual_hash",
+          "type_ref": "str",
+          "required": false,
+          "default": "",
+          "description": "Actual computed content hash.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Raised when a TesseraSeal fails verification against provided content. Subtype of GovernanceError.",
+      "owner_component": ""
+    },
+    {
+      "name": "PolicyViolationError",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Describes the policy violation.",
+          "validators": []
+        },
+        {
+          "name": "token_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The PolicyToken id that was violated.",
+          "validators": []
+        },
+        {
+          "name": "violated_scopes",
+          "type_ref": "list[str]",
+          "required": false,
+          "default": "[]",
+          "description": "List of scope strings that were violated.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Raised when a PolicyToken scope check fails or a hunk violates policy. Subtype of GovernanceError.",
+      "owner_component": ""
+    },
+    {
+      "name": "CredentialError",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Describes the credential failure.",
+          "validators": []
+        },
+        {
+          "name": "credential_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The credential_id that failed.",
+          "validators": []
+        },
+        {
+          "name": "reason",
+          "type_ref": "CredentialErrorReason",
+          "required": true,
+          "default": "",
+          "description": "Categorized reason for failure.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Raised when a ReviewerCredential fails verification. Subtype of GovernanceError.",
+      "owner_component": ""
+    },
+    {
+      "name": "CredentialErrorReason",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "EXPIRED",
+        "INVALID_SIGNATURE",
+        "UNKNOWN_REVIEWER",
+        "STAGE_MISMATCH",
+        "MALFORMED"
+      ],
+      "inner_types": [],
+      "description": "Categorized reasons for credential verification failure.",
+      "owner_component": ""
+    },
+    {
+      "name": "ReviewStage",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "security",
+        "correctness",
+        "style",
+        "architecture"
+      ],
+      "inner_types": [],
+      "description": "Named stage in the review circuit pipeline.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ChroniclerEventType",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "review.started",
+        "stage.started",
+        "stage.complete",
+        "assessment.merged",
+        "report.sealed",
+        "review.complete",
+        "policy.violation",
+        "pattern.detected",
+        "learning.recorded"
+      ],
+      "inner_types": [],
+      "description": "Well-known Chronicler event types emitted throughout the review lifecycle.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ReviewDecision",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "block",
+        "warn",
+        "pass"
+      ],
+      "inner_types": [],
+      "description": "Final decision on a pull request review: block merging, warn, or pass.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ClassificationLabel",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "secret",
+        "pii",
+        "internal_api",
+        "public"
+      ],
+      "inner_types": [],
+      "description": "Ledger data classification label for diff content.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "Confidence",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "inner_types": [],
+      "description": "Confidence level of a reviewer finding or merged assessment.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "TesseraSeal",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "content_hash",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "SHA-256 hash of the canonical JSON content that was sealed.",
+          "validators": []
+        },
+        {
+          "name": "previous_hash",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Hash of the previous seal in the chain (null for first seal).",
+          "validators": []
+        },
+        {
+          "name": "chain_hash",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "SHA-256 hash of (content_hash + previous_hash), forming the chain link.",
+          "validators": []
+        },
+        {
+          "name": "sealed_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of when the seal was created.",
+          "validators": []
+        },
+        {
+          "name": "sealer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the entity that created this seal.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A hash-chain tamper-proof seal over serialized content, verifiable independently.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ChroniclerEvent",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "event_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique event identifier.",
+          "validators": []
+        },
+        {
+          "name": "event_type",
+          "type_ref": "ChroniclerEventType",
+          "required": true,
+          "default": "",
+          "description": "Well-known event type.",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the ReviewRequest this event relates to.",
+          "validators": []
+        },
+        {
+          "name": "timestamp",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of when the event occurred.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "Optional[ReviewStage]",
+          "required": false,
+          "default": "null",
+          "description": "Review stage this event relates to, if applicable.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Reviewer agent ID if this event is reviewer-specific.",
+          "validators": []
+        },
+        {
+          "name": "payload",
+          "type_ref": "dict[str, str]",
+          "required": true,
+          "default": "{}",
+          "description": "Arbitrary structured data associated with the event.",
+          "validators": []
+        },
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable description of the event.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A structured event emitted at review lifecycle boundaries for audit trail and story assembly.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "DiffHunk",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique identifier for this hunk (deterministic from content).",
+          "validators": []
+        },
+        {
+          "name": "file_path",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Relative file path the hunk belongs to.",
+          "validators": []
+        },
+        {
+          "name": "start_line_old",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Starting line number in the old file.",
+          "validators": []
+        },
+        {
+          "name": "count_old",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of lines in the old file span.",
+          "validators": []
+        },
+        {
+          "name": "start_line_new",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Starting line number in the new file.",
+          "validators": []
+        },
+        {
+          "name": "count_new",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of lines in the new file span.",
+          "validators": []
+        },
+        {
+          "name": "context_before",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Context lines before the change.",
+          "validators": []
+        },
+        {
+          "name": "added_lines",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Lines added in this hunk.",
+          "validators": []
+        },
+        {
+          "name": "removed_lines",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Lines removed in this hunk.",
+          "validators": []
+        },
+        {
+          "name": "context_after",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Context lines after the change.",
+          "validators": []
+        },
+        {
+          "name": "raw_header",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Original @@ header line from the diff.",
+          "validators": []
+        },
+        {
+          "name": "classifications",
+          "type_ref": "list[ClassificationLabel]",
+          "required": true,
+          "default": "[]",
+          "description": "Ledger classification labels applied to this hunk.",
+          "validators": []
+        },
+        {
+          "name": "language",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Detected programming language of the file, if known.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single parsed hunk from a unified diff, with metadata and classification labels.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "PolicyToken",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "token_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique token identifier.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Reviewer agent this token is issued to.",
+          "validators": []
+        },
+        {
+          "name": "allowed_file_patterns",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "['**/*']",
+          "description": "Glob patterns for files the reviewer may inspect.",
+          "validators": []
+        },
+        {
+          "name": "denied_file_patterns",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Glob patterns for files the reviewer must NOT inspect.",
+          "validators": []
+        },
+        {
+          "name": "allowed_classifications",
+          "type_ref": "list[ClassificationLabel]",
+          "required": true,
+          "default": "['public']",
+          "description": "Classification labels the reviewer is permitted to see.",
+          "validators": []
+        },
+        {
+          "name": "max_severity",
+          "type_ref": "Severity",
+          "required": true,
+          "default": "critical",
+          "description": "Maximum severity level the reviewer is allowed to emit.",
+          "validators": []
+        },
+        {
+          "name": "issued_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of token issuance.",
+          "validators": []
+        },
+        {
+          "name": "expires_at",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "ISO-8601 expiry timestamp, null if non-expiring.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Agent-Safe policy token defining what a reviewer agent is permitted to access and do.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ReviewerCredential",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique identifier for this reviewer agent.",
+          "validators": []
+        },
+        {
+          "name": "display_name",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable name of the reviewer.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "Primary stage this reviewer operates in.",
+          "validators": []
+        },
+        {
+          "name": "public_key_hex",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Hex-encoded public key for signature verification.",
+          "validators": []
+        },
+        {
+          "name": "created_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of credential creation.",
+          "validators": []
+        },
+        {
+          "name": "is_active",
+          "type_ref": "bool",
+          "required": true,
+          "default": "true",
+          "description": "Whether this credential is currently active.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Signet identity credential for a reviewer agent, used for authentication and attribution.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "Assessment",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique assessment identifier.",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the ReviewRequest this assessment responds to.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "The review stage this assessment covers.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the reviewer agent that produced this assessment.",
+          "validators": []
+        },
+        {
+          "name": "decision",
+          "type_ref": "ReviewDecision",
+          "required": true,
+          "default": "",
+          "description": "This reviewer's overall decision.",
+          "validators": []
+        },
+        {
+          "name": "findings",
+          "type_ref": "list[Finding]",
+          "required": true,
+          "default": "[]",
+          "description": "List of findings from this reviewer.",
+          "validators": []
+        },
+        {
+          "name": "confidence",
+          "type_ref": "Confidence",
+          "required": true,
+          "default": "",
+          "description": "Overall confidence of this assessment.",
+          "validators": []
+        },
+        {
+          "name": "is_partial",
+          "type_ref": "bool",
+          "required": true,
+          "default": "false",
+          "description": "True if the reviewer failed/timed out and this is a degraded result.",
+          "validators": []
+        },
+        {
+          "name": "error_message",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Error message if the reviewer encountered an issue.",
+          "validators": []
+        },
+        {
+          "name": "duration_ms",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Time in milliseconds the reviewer took to produce this assessment.",
+          "validators": []
+        },
+        {
+          "name": "created_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of assessment creation.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single reviewer's complete assessment of the diff hunks it was given.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "Finding",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique finding identifier.",
+          "validators": []
+        },
+        {
+          "name": "hunk_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the DiffHunk this finding applies to.",
+          "validators": []
+        },
+        {
+          "name": "file_path",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "File path where the finding was detected.",
+          "validators": []
+        },
+        {
+          "name": "line_number",
+          "type_ref": "Optional[int]",
+          "required": false,
+          "default": "null",
+          "description": "Specific line number if applicable.",
+          "validators": []
+        },
+        {
+          "name": "severity",
+          "type_ref": "Severity",
+          "required": true,
+          "default": "",
+          "description": "Severity of the finding.",
+          "validators": []
+        },
+        {
+          "name": "confidence",
+          "type_ref": "Confidence",
+          "required": true,
+          "default": "",
+          "description": "Reviewer confidence in this finding.",
+          "validators": []
+        },
+        {
+          "name": "title",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Short human-readable title of the finding.",
+          "validators": []
+        },
+        {
+          "name": "description",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Detailed explanation of the issue.",
+          "validators": []
+        },
+        {
+          "name": "suggestion",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Suggested fix or remediation.",
+          "validators": []
+        },
+        {
+          "name": "rule_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the rule or pattern that triggered this finding.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "Which review stage produced this finding.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single issue found by a reviewer in a specific hunk.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "TrustScore",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the reviewer this score applies to.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "Stage the reviewer operates in.",
+          "validators": []
+        },
+        {
+          "name": "weight",
+          "type_ref": "float",
+          "required": true,
+          "default": "",
+          "description": "Trust weight in range [0.0, 1.0].",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "0.0 <= value <= 1.0",
+              "error_message": "Trust weight must be between 0.0 and 1.0"
+            }
+          ]
+        },
+        {
+          "name": "accepted_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "0",
+          "description": "Number of findings from this reviewer that humans accepted.",
+          "validators": []
+        },
+        {
+          "name": "dismissed_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "0",
+          "description": "Number of findings from this reviewer that humans dismissed.",
+          "validators": []
+        },
+        {
+          "name": "updated_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of last trust score update.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Arbiter trust weight for a reviewer agent, used in weighted assessment merging.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "LearningRecord",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "record_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique record identifier.",
+          "validators": []
+        },
+        {
+          "name": "finding_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the Finding this record is about.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Reviewer that produced the finding.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "Stage the finding belongs to.",
+          "validators": []
+        },
+        {
+          "name": "rule_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Rule ID of the finding.",
+          "validators": []
+        },
+        {
+          "name": "severity",
+          "type_ref": "Severity",
+          "required": true,
+          "default": "",
+          "description": "Severity of the original finding.",
+          "validators": []
+        },
+        {
+          "name": "accepted",
+          "type_ref": "bool",
+          "required": true,
+          "default": "",
+          "description": "True if the human accepted/agreed with the finding, false if dismissed.",
+          "validators": []
+        },
+        {
+          "name": "human_comment",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Optional comment from the human reviewer.",
+          "validators": []
+        },
+        {
+          "name": "recorded_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of when this learning was recorded.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single learning observation: an AI finding paired with human decision (accepted or dismissed).",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "LearningOutcome",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "CORRECT_ACCEPT",
+        "CORRECT_REJECT",
+        "FALSE_POSITIVE",
+        "FALSE_NEGATIVE",
+        "PARTIAL_MATCH"
+      ],
+      "inner_types": [],
+      "description": "Categories of learning outcomes for trust score updates.",
+      "owner_component": ""
+    },
+    {
+      "name": "LedgerFieldRule",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "pattern",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Regex pattern to match against diff hunk content.",
+          "validators": []
+        },
+        {
+          "name": "label",
+          "type_ref": "ClassificationLabel",
+          "required": true,
+          "default": "",
+          "description": "Classification label to apply when pattern matches.",
+          "validators": []
+        },
+        {
+          "name": "description",
+          "type_ref": "str",
+          "required": false,
+          "default": "",
+          "description": "Human-readable description of what this rule detects.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single Ledger classification rule: a regex pattern mapped to a classification label.",
+      "owner_component": "config"
+    },
+    {
+      "name": "LedgerConfig",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "rules",
+          "type_ref": "list[LedgerFieldRule]",
+          "required": true,
+          "default": "",
+          "description": "Ordered list of classification rules. First match wins per label category.",
+          "validators": []
+        },
+        {
+          "name": "default_label",
+          "type_ref": "ClassificationLabel",
+          "required": true,
+          "default": "public",
+          "description": "Default label when no rule matches.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Configuration for Ledger field classification: rules for detecting secrets, PII, and internal APIs.",
+      "owner_component": "config"
+    },
+    {
+      "name": "StigmergySignal",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "signal_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique signal identifier.",
+          "validators": []
+        },
+        {
+          "name": "pattern_key",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Machine-readable key identifying the pattern (e.g., 'security.false_positive.test_files').",
+          "validators": []
+        },
+        {
+          "name": "description",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable description of the detected pattern.",
+          "validators": []
+        },
+        {
+          "name": "occurrences",
+          "type_ref": "int",
+          "required": true,
+          "default": "1",
+          "description": "Number of times this pattern has been observed.",
+          "validators": []
+        },
+        {
+          "name": "first_seen_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of first observation.",
+          "validators": []
+        },
+        {
+          "name": "last_seen_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of most recent observation.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Reviewer associated with the pattern, if applicable.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "Optional[ReviewStage]",
+          "required": false,
+          "default": "null",
+          "description": "Stage associated with the pattern, if applicable.",
+          "validators": []
+        },
+        {
+          "name": "metadata",
+          "type_ref": "dict[str, str]",
+          "required": true,
+          "default": "{}",
+          "description": "Additional context about the pattern.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A recurring pattern signal detected by Stigmergy, recorded for cross-review pattern discovery.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "KindexEntry",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "key",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique key for retrieval (e.g., review request ID or context topic).",
+          "validators": []
+        },
+        {
+          "name": "kind",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Entry kind: 'review', 'context', 'pattern'.",
+          "validators": []
+        },
+        {
+          "name": "summary",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable summary for search and display.",
+          "validators": []
+        },
+        {
+          "name": "data",
+          "type_ref": "dict[str, str]",
+          "required": true,
+          "default": "",
+          "description": "Structured data payload of the entry.",
+          "validators": []
+        },
+        {
+          "name": "tags",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Tags for query filtering.",
+          "validators": []
+        },
+        {
+          "name": "created_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of entry creation.",
+          "validators": []
+        },
+        {
+          "name": "updated_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of last update.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A Kindex knowledge store entry representing a past review or codebase context artifact.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "CircuitConfig",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "stages",
+          "type_ref": "list[ReviewStage]",
+          "required": true,
+          "default": "['security', 'correctness', 'style', 'architecture']",
+          "description": "Ordered list of review stages to execute.",
+          "validators": []
+        },
+        {
+          "name": "parallel_stages",
+          "type_ref": "list[list[ReviewStage]]",
+          "required": true,
+          "default": "[['security', 'correctness'], ['style', 'architecture']]",
+          "description": "Groups of stages that can run in parallel. Each inner list runs concurrently.",
+          "validators": []
+        },
+        {
+          "name": "stage_timeout_ms",
+          "type_ref": "int",
+          "required": true,
+          "default": "30000",
+          "description": "Default timeout per stage in milliseconds.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "value > 0",
+              "error_message": "Stage timeout must be positive."
+            }
+          ]
+        },
+        {
+          "name": "block_threshold",
+          "type_ref": "int",
+          "required": true,
+          "default": "1",
+          "description": "Minimum number of critical/high findings to trigger a block decision.",
+          "validators": []
+        },
+        {
+          "name": "warn_threshold",
+          "type_ref": "int",
+          "required": true,
+          "default": "3",
+          "description": "Minimum number of medium findings to trigger a warn decision.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Configuration for Baton circuit routing: stage ordering, parallelism, and timeouts.",
+      "owner_component": "config"
+    },
+    {
+      "name": "FilterResult",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "allowed_hunks",
+          "type_ref": "list[DiffHunk]",
+          "required": true,
+          "default": "",
+          "description": "Hunks that passed policy filtering.",
+          "validators": []
+        },
+        {
+          "name": "denied_hunk_ids",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "",
+          "description": "Hunk IDs that were filtered out due to policy violations.",
+          "validators": []
+        },
+        {
+          "name": "violations",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "",
+          "description": "Human-readable descriptions of each policy violation.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Result of hunk filtering by AgentSafeEnforcer, including allowed hunks and violation details.",
+      "owner_component": ""
+    },
+    {
+      "name": "Severity",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ],
+      "inner_types": [],
+      "description": "Severity level of a review finding, ordered from most to least critical.",
+      "owner_component": "schemas"
+    }
+  ],
+  "functions": [
+    {
+      "name": "seal",
+      "description": "Create a SHA-256 hash-chain seal over canonical JSON content. The seal chains to the previous seal in the sealer's chain (or genesis if first). Content is serialized via json.dumps(data, sort_keys=True, separators=(',',':')) for deterministic hashing. The chain_hash is SHA-256(content_hash + previous_hash + sealer_id + timestamp_iso). The sealer maintains internal chain state (previous_hash, sequence_number) which advances with each seal.",
+      "inputs": [
+        {
+          "name": "content",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The canonical JSON string to seal. Must be valid JSON.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "1 <= len <= 10485760",
+              "error_message": "content must be 1 to 10MB."
+            }
+          ]
+        },
+        {
+          "name": "sealer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the entity creating this seal.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "1 <= len <= 256",
+              "error_message": "sealer_id must be 1-256 characters."
+            }
+          ]
+        }
+      ],
+      "output_type": "TesseraSeal",
+      "error_cases": [
+        {
+          "name": "invalid_json",
+          "condition": "content is not valid JSON",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Content must be valid JSON for canonical serialization."
+          }
+        },
+        {
+          "name": "empty_sealer_id",
+          "condition": "sealer_id is empty or whitespace-only",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "sealer_id must not be empty."
+          }
+        }
+      ],
+      "preconditions": [
+        "content must be valid JSON",
+        "sealer_id must be non-empty"
+      ],
+      "postconditions": [
+        "Returned seal.content_hash == SHA-256 of canonical JSON re-serialization of content",
+        "Returned seal.chain_hash == SHA-256(content_hash + previous_hash + sealer_id + timestamp_iso)",
+        "Returned seal.sequence_number == previous sequence_number + 1 (or 0 for genesis)",
+        "Returned seal.previous_hash == chain_hash of the last seal produced by this sealer (or 64 zeros for genesis)",
+        "Internal chain state is advanced: previous_hash and sequence_number are updated"
+      ],
+      "idempotent": false,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "mutates_state",
+          "target": "TesseraSealer internal chain state (previous_hash, sequence_number)",
+          "description": "Advances the hash chain by updating the previous_hash and sequence_number for the next seal."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 5,
+        "max_memory_mb": null,
+        "complexity": "O(n) where n is content length for hashing"
+      }
+    },
+    {
+      "name": "verify_seal",
+      "description": "Verify that a TesseraSeal is valid for the given content. Checks: (1) content_hash matches SHA-256 of canonical JSON re-serialization of content, (2) chain_hash matches SHA-256(content_hash + previous_hash + sealer_id + timestamp_iso). Raises SealVerificationError on any mismatch. Does NOT verify chain continuity (previous_hash linkage) — that requires the full chain.",
+      "inputs": [
+        {
+          "name": "seal",
+          "type_ref": "TesseraSeal",
+          "required": true,
+          "default": "",
+          "description": "The seal to verify.",
+          "validators": []
+        },
+        {
+          "name": "content",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The original canonical JSON content to verify against.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "1 <= len <= 10485760",
+              "error_message": "content must be 1 to 10MB."
+            }
+          ]
+        }
+      ],
+      "output_type": "bool",
+      "error_cases": [
+        {
+          "name": "content_hash_mismatch",
+          "condition": "SHA-256 of canonical content does not match seal.content_hash",
+          "error_type": "SealVerificationError",
+          "error_data": {
+            "message": "Content hash does not match seal.",
+            "seal_id": "seal.seal_id"
+          }
+        },
+        {
+          "name": "chain_hash_mismatch",
+          "condition": "Computed chain_hash does not match seal.chain_hash",
+          "error_type": "SealVerificationError",
+          "error_data": {
+            "message": "Chain hash does not match seal.",
+            "seal_id": "seal.seal_id"
+          }
+        },
+        {
+          "name": "invalid_content_json",
+          "condition": "content is not valid JSON",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Content must be valid JSON for canonical verification."
+          }
+        }
+      ],
+      "preconditions": [
+        "content must be valid JSON"
+      ],
+      "postconditions": [
+        "Returns True only if both content_hash and chain_hash verifications pass"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 5,
+        "max_memory_mb": null,
+        "complexity": "O(n) where n is content length for hashing"
+      }
+    },
+    {
+      "name": "emit",
+      "description": "Emit a structured ChroniclerEvent to the JSON-lines log file. Appends one JSON line per event. Fire-and-forget: catches all exceptions internally, logs via stdlib logging, returns False on failure. Uses atomic write (append mode with flush).",
+      "inputs": [
+        {
+          "name": "event",
+          "type_ref": "ChroniclerEvent",
+          "required": true,
+          "default": "",
+          "description": "The event to emit.",
+          "validators": []
+        }
+      ],
+      "output_type": "bool",
+      "error_cases": [
+        {
+          "name": "file_write_failure",
+          "condition": "Unable to write to the chronicle log file (permissions, disk full, etc.)",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Failed to write chronicle event to log file."
+          }
+        },
+        {
+          "name": "serialization_failure",
+          "condition": "Event payload contains non-JSON-serializable data",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Event payload is not JSON-serializable."
+          }
+        }
+      ],
+      "preconditions": [
+        "event.payload must be JSON-serializable"
+      ],
+      "postconditions": [
+        "On True return: event is durably appended to the JSON-lines log file",
+        "On False return: failure is logged via stdlib logging, no event persisted"
+      ],
+      "idempotent": false,
+      "is_async": true,
+      "side_effects": [
+        "Appends JSON line to chronicle log file"
+      ],
+      "structured_side_effects": [
+        {
+          "kind": "writes_file",
+          "target": "chronicle_log_path",
+          "description": "Appends a single JSON line representing the ChroniclerEvent to the configured log file."
+        },
+        {
+          "kind": "logging",
+          "target": "stdlib logging",
+          "description": "Logs errors on write failure via stdlib logging."
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "query_events",
+      "description": "Query chronicle events from the JSON-lines log file, filtered by review_request_id and optionally by event_type. Reads the entire log file and filters in memory. Returns empty list if the log file does not exist.",
+      "inputs": [
+        {
+          "name": "review_request_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The review request ID to filter by.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "1 <= len <= 256",
+              "error_message": "review_request_id must be 1-256 characters."
+            }
+          ]
+        },
+        {
+          "name": "event_type",
+          "type_ref": "ChroniclerEventType",
+          "required": false,
+          "default": "",
+          "description": "Optional event type to further filter. If not provided, all events for the review_request_id are returned.",
+          "validators": []
+        }
+      ],
+      "output_type": "list[ChroniclerEvent]",
+      "error_cases": [
+        {
+          "name": "file_read_failure",
+          "condition": "Unable to read the chronicle log file (permissions, corrupt)",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Failed to read chronicle log file."
+          }
+        },
+        {
+          "name": "corrupt_line",
+          "condition": "A line in the log file is not valid JSON — skipped with warning",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Corrupt line encountered in chronicle log."
+          }
+        }
+      ],
+      "preconditions": [],
+      "postconditions": [
+        "Returned events all have review_request_id matching the input",
+        "If event_type is provided, returned events all have matching event_type",
+        "Events are returned in chronological order (file order)"
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": "chronicle_log_path",
+          "description": "Reads the entire JSON-lines chronicle log file to filter events."
+        },
+        {
+          "kind": "logging",
+          "target": "stdlib logging",
+          "description": "Logs warnings for corrupt lines encountered during parsing."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": null,
+        "max_memory_mb": null,
+        "complexity": "O(n) where n is total number of events in log file"
+      }
+    },
+    {
+      "name": "filter_hunks",
+      "description": "Filter a list of DiffHunks by PolicyToken scope. Checks each hunk against: (1) allowed_file_patterns (glob matching), (2) max_classification (hunk classification_labels must not exceed token's max), (3) allowed_stages (caller must verify stage separately). Returns a FilterResult with allowed hunks, denied hunk IDs, and violation descriptions. Does NOT raise on violation — violations are informational. Logs all violations via ChronicleEmitter if available.",
+      "inputs": [
+        {
+          "name": "hunks",
+          "type_ref": "list[DiffHunk]",
+          "required": true,
+          "default": "",
+          "description": "The hunks to filter.",
+          "validators": []
+        },
+        {
+          "name": "token",
+          "type_ref": "PolicyToken",
+          "required": true,
+          "default": "",
+          "description": "The policy token defining allowed scope.",
+          "validators": []
+        }
+      ],
+      "output_type": "FilterResult",
+      "error_cases": [
+        {
+          "name": "expired_token",
+          "condition": "token.expires_iso is in the past",
+          "error_type": "PolicyViolationError",
+          "error_data": {
+            "message": "PolicyToken has expired.",
+            "token_id": "token.token_id"
+          }
+        },
+        {
+          "name": "invalid_glob_pattern",
+          "condition": "A pattern in token.allowed_file_patterns is not a valid glob",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Invalid glob pattern in PolicyToken."
+          }
+        }
+      ],
+      "preconditions": [
+        "token must not be expired (expires_iso in the future)"
+      ],
+      "postconditions": [
+        "len(allowed_hunks) + len(denied_hunk_ids) == len(hunks)",
+        "All allowed_hunks have file_path matching at least one allowed_file_pattern (or patterns list is empty)",
+        "No allowed_hunk has a classification_label exceeding token.max_classification",
+        "Each denied hunk_id appears in denied_hunk_ids exactly once",
+        "Each violation has a corresponding human-readable description in violations list"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": null,
+        "max_memory_mb": null,
+        "complexity": "O(h * p) where h is number of hunks and p is number of file patterns"
+      }
+    },
+    {
+      "name": "check_token",
+      "description": "Check whether a PolicyToken is valid: not expired, has at least one allowed stage, and has a non-empty reviewer_id. Returns True if valid. Raises PolicyViolationError if the token is expired.",
+      "inputs": [
+        {
+          "name": "token",
+          "type_ref": "PolicyToken",
+          "required": true,
+          "default": "",
+          "description": "The policy token to check.",
+          "validators": []
+        }
+      ],
+      "output_type": "bool",
+      "error_cases": [
+        {
+          "name": "expired_token",
+          "condition": "token.expires_iso is in the past",
+          "error_type": "PolicyViolationError",
+          "error_data": {
+            "message": "PolicyToken has expired.",
+            "token_id": "token.token_id"
+          }
+        }
+      ],
+      "preconditions": [],
+      "postconditions": [
+        "Returns True only if token is not expired, has >=1 allowed_stages, and reviewer_id is non-empty"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 1,
+        "max_memory_mb": null,
+        "complexity": null
+      }
+    },
+    {
+      "name": "create_credential",
+      "description": "Create a ReviewerCredential for a reviewer scoped to a specific review stage. Generates a UUID4 credential_id, computes an HMAC-SHA256 signature over (credential_id + reviewer_id + stage) using the SignetManager's secret key, and sets expiration to configured TTL from now.",
+      "inputs": [
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The reviewer to create a credential for.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "1 <= len <= 256",
+              "error_message": "reviewer_id must be 1-256 characters."
+            }
+          ]
+        },
+        {
+          "name": "display_name",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable display name.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "1 <= len <= 512",
+              "error_message": "display_name must be 1-512 characters."
+            }
+          ]
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "The review stage this credential authorizes.",
+          "validators": []
+        }
+      ],
+      "output_type": "ReviewerCredential",
+      "error_cases": [
+        {
+          "name": "empty_reviewer_id",
+          "condition": "reviewer_id is empty or whitespace-only",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "reviewer_id must not be empty."
+          }
+        },
+        {
+          "name": "empty_display_name",
+          "condition": "display_name is empty or whitespace-only",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "display_name must not be empty."
+          }
+        }
+      ],
+      "preconditions": [
+        "reviewer_id must be non-empty",
+        "display_name must be non-empty"
+      ],
+      "postconditions": [
+        "Returned credential.reviewer_id == reviewer_id",
+        "Returned credential.stage == stage",
+        "Returned credential.signature_hash == HMAC-SHA256(secret, credential_id + reviewer_id + stage)",
+        "Returned credential.expires_iso is in the future"
+      ],
+      "idempotent": false,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 2,
+        "max_memory_mb": null,
+        "complexity": null
+      }
+    },
+    {
+      "name": "verify_credential",
+      "description": "Verify a ReviewerCredential's HMAC signature and expiration. Raises CredentialError with a specific reason on failure. Checks: (1) credential is not expired, (2) signature_hash matches HMAC-SHA256(secret, credential_id + reviewer_id + stage), (3) credential_id is well-formed.",
+      "inputs": [
+        {
+          "name": "credential",
+          "type_ref": "ReviewerCredential",
+          "required": true,
+          "default": "",
+          "description": "The credential to verify.",
+          "validators": []
+        }
+      ],
+      "output_type": "bool",
+      "error_cases": [
+        {
+          "name": "expired",
+          "condition": "credential.expires_iso is in the past",
+          "error_type": "CredentialError",
+          "error_data": {
+            "message": "Credential has expired.",
+            "credential_id": "credential.credential_id",
+            "reason": "EXPIRED"
+          }
+        },
+        {
+          "name": "invalid_signature",
+          "condition": "Computed HMAC does not match credential.signature_hash",
+          "error_type": "CredentialError",
+          "error_data": {
+            "message": "Credential signature is invalid.",
+            "credential_id": "credential.credential_id",
+            "reason": "INVALID_SIGNATURE"
+          }
+        },
+        {
+          "name": "malformed",
+          "condition": "credential_id does not match expected UUID4 hex format",
+          "error_type": "CredentialError",
+          "error_data": {
+            "message": "Credential is malformed.",
+            "credential_id": "credential.credential_id",
+            "reason": "MALFORMED"
+          }
+        }
+      ],
+      "preconditions": [],
+      "postconditions": [
+        "Returns True only if signature is valid and credential is not expired"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 2,
+        "max_memory_mb": null,
+        "complexity": null
+      }
+    },
+    {
+      "name": "score",
+      "description": "Compute a weighted trust score and final ReviewDecision from multiple reviewer assessments. Each assessment is weighted by: (1) its stage's weight from circuit_config.stage_weights, (2) the reviewer's trust_score for that stage, (3) the assessment's own confidence. Assessments below circuit_config.min_confidence are excluded. If fewer than circuit_config.quorum assessments qualify, returns ABSTAIN. Conflict detection: if the ratio of disagreeing assessments exceeds circuit_config.conflict_threshold, escalates to BLOCK. Returns (decision, aggregate_confidence, reasoning_trace).",
+      "inputs": [
+        {
+          "name": "assessments",
+          "type_ref": "list[Assessment]",
+          "required": true,
+          "default": "",
+          "description": "The assessments to score.",
+          "validators": []
+        },
+        {
+          "name": "trust_scores",
+          "type_ref": "list[TrustScore]",
+          "required": true,
+          "default": "",
+          "description": "Trust scores for each reviewer. Must include an entry for each reviewer_id+stage pair in assessments.",
+          "validators": []
+        },
+        {
+          "name": "circuit_config",
+          "type_ref": "CircuitConfig",
+          "required": true,
+          "default": "",
+          "description": "Configuration for stage weights, conflict threshold, min confidence, and quorum.",
+          "validators": []
+        }
+      ],
+      "output_type": "list",
+      "error_cases": [
+        {
+          "name": "missing_trust_score",
+          "condition": "An assessment references a reviewer_id+stage pair with no corresponding TrustScore",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Missing trust score for reviewer+stage pair."
+          }
+        },
+        {
+          "name": "empty_assessments",
+          "condition": "assessments list is empty",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Cannot score an empty assessments list."
+          }
+        }
+      ],
+      "preconditions": [
+        "assessments must not be empty",
+        "trust_scores must contain an entry for every unique (reviewer_id, stage) pair in assessments"
+      ],
+      "postconditions": [
+        "Return list has exactly 3 elements: [ReviewDecision, Confidence, list[str]]",
+        "If fewer than quorum assessments qualify, decision is ABSTAIN",
+        "If conflict ratio exceeds conflict_threshold, decision is BLOCK",
+        "reasoning_trace contains one entry per assessment explaining its weight contribution",
+        "Confidence.value is the weighted average of qualifying assessment confidences"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 10,
+        "max_memory_mb": null,
+        "complexity": "O(a * t) where a is number of assessments and t is number of trust scores"
+      }
+    },
+    {
+      "name": "update_trust",
+      "description": "Update a TrustScore based on a LearningRecord. Applies the learning record's delta to the trust score, clamped to [0.0, 1.0], increments review_count, and updates last_updated_iso. Returns a new TrustScore (frozen model, not mutated in-place).",
+      "inputs": [
+        {
+          "name": "trust_score",
+          "type_ref": "TrustScore",
+          "required": true,
+          "default": "",
+          "description": "The current trust score to update.",
+          "validators": []
+        },
+        {
+          "name": "record",
+          "type_ref": "LearningRecord",
+          "required": true,
+          "default": "",
+          "description": "The learning record to apply.",
+          "validators": []
+        }
+      ],
+      "output_type": "TrustScore",
+      "error_cases": [
+        {
+          "name": "reviewer_mismatch",
+          "condition": "record.reviewer_id does not match trust_score.reviewer_id",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "LearningRecord reviewer_id does not match TrustScore reviewer_id."
+          }
+        }
+      ],
+      "preconditions": [
+        "record.reviewer_id must match trust_score.reviewer_id"
+      ],
+      "postconditions": [
+        "Returned trust_score.score == clamp(old_score + record.delta, 0.0, 1.0)",
+        "Returned trust_score.review_count == old_review_count + 1",
+        "Returned trust_score.last_updated_iso is current UTC time",
+        "Returned trust_score.reviewer_id == input trust_score.reviewer_id",
+        "Returned trust_score.stage == input trust_score.stage"
+      ],
+      "idempotent": false,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 1,
+        "max_memory_mb": null,
+        "complexity": null
+      }
+    },
+    {
+      "name": "classify",
+      "description": "Classify a single DiffHunk by applying a list of LedgerFieldRules against its added_lines and removed_lines. Each line is tested against each rule's compiled regex pattern. Returns the union of all matching ClassificationLabels, deduplicated. If no rules match and fail_open is not applicable (single-hunk method), returns [UNKNOWN].",
+      "inputs": [
+        {
+          "name": "hunk",
+          "type_ref": "DiffHunk",
+          "required": true,
+          "default": "",
+          "description": "The hunk to classify.",
+          "validators": []
+        },
+        {
+          "name": "rules",
+          "type_ref": "list[LedgerFieldRule]",
+          "required": true,
+          "default": "",
+          "description": "Classification rules to apply.",
+          "validators": []
+        }
+      ],
+      "output_type": "list[ClassificationLabel]",
+      "error_cases": [
+        {
+          "name": "invalid_regex",
+          "condition": "A rule's pattern is not a valid regex",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Invalid regex pattern in LedgerFieldRule."
+          }
+        },
+        {
+          "name": "empty_rules",
+          "condition": "rules list is empty",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Cannot classify with empty rules list."
+          }
+        }
+      ],
+      "preconditions": [
+        "rules must not be empty",
+        "All rule patterns must be valid regex"
+      ],
+      "postconditions": [
+        "Returned labels are deduplicated",
+        "If no rule matches, returns [UNKNOWN]",
+        "Lines exceeding internal max length are truncated before matching"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": null,
+        "max_memory_mb": null,
+        "complexity": "O(l * r) where l is total lines in hunk and r is number of rules"
+      }
+    },
+    {
+      "name": "classify_all",
+      "description": "Classify all DiffHunks using a LedgerConfig. Applies LedgerConfig.rules to each hunk, sets classification_labels on each hunk, and returns the updated list. Uses LedgerConfig.fail_open to determine default label for unmatched hunks (SAFE if true, UNKNOWN if false). Returns new DiffHunk instances (frozen models, not mutated in-place).",
+      "inputs": [
+        {
+          "name": "hunks",
+          "type_ref": "list[DiffHunk]",
+          "required": true,
+          "default": "",
+          "description": "The hunks to classify.",
+          "validators": []
+        },
+        {
+          "name": "config",
+          "type_ref": "LedgerConfig",
+          "required": true,
+          "default": "",
+          "description": "Classification configuration including rules and options.",
+          "validators": []
+        }
+      ],
+      "output_type": "list[DiffHunk]",
+      "error_cases": [
+        {
+          "name": "invalid_regex",
+          "condition": "A rule's pattern in config.rules is not a valid regex",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Invalid regex pattern in LedgerConfig rules."
+          }
+        },
+        {
+          "name": "empty_rules",
+          "condition": "config.rules is empty",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Cannot classify with empty rules in LedgerConfig."
+          }
+        }
+      ],
+      "preconditions": [
+        "config.rules must not be empty",
+        "All rule patterns must be valid regex"
+      ],
+      "postconditions": [
+        "Returned list has same length as input hunks",
+        "Each returned hunk has classification_labels populated",
+        "Unmatched hunks get [SAFE] if config.fail_open else [UNKNOWN]",
+        "Returned hunks are new instances with all other fields preserved"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": null,
+        "max_memory_mb": null,
+        "complexity": "O(h * l * r) where h is hunks, l is max lines per hunk, r is rules"
+      }
+    },
+    {
+      "name": "record_signal",
+      "description": "Record a StigmergySignal to the JSON storage file. Fire-and-forget: catches all exceptions internally, logs via stdlib logging, returns False on failure. Uses atomic file write (read-modify-write with temp file + os.replace).",
+      "inputs": [
+        {
+          "name": "signal",
+          "type_ref": "StigmergySignal",
+          "required": true,
+          "default": "",
+          "description": "The signal to record.",
+          "validators": []
+        }
+      ],
+      "output_type": "bool",
+      "error_cases": [
+        {
+          "name": "file_write_failure",
+          "condition": "Unable to write to the stigmergy JSON file",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Failed to write stigmergy signal to storage."
+          }
+        },
+        {
+          "name": "serialization_failure",
+          "condition": "Signal metadata is not JSON-serializable",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Signal metadata is not JSON-serializable."
+          }
+        }
+      ],
+      "preconditions": [
+        "signal.metadata must be JSON-serializable"
+      ],
+      "postconditions": [
+        "On True return: signal is durably persisted to the JSON storage file",
+        "On False return: failure is logged via stdlib logging"
+      ],
+      "idempotent": false,
+      "is_async": true,
+      "side_effects": [
+        "Writes to stigmergy JSON storage file"
+      ],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": "stigmergy_store_path",
+          "description": "Reads existing signals from JSON storage for append."
+        },
+        {
+          "kind": "writes_file",
+          "target": "stigmergy_store_path",
+          "description": "Atomically writes updated signal list to JSON storage via temp file + os.replace."
+        },
+        {
+          "kind": "logging",
+          "target": "stdlib logging",
+          "description": "Logs errors on write failure."
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "query_signals",
+      "description": "Query StigmergySignals from JSON storage by pattern_key. Returns all signals matching the given pattern_key in chronological order. Returns empty list if storage file does not exist.",
+      "inputs": [
+        {
+          "name": "pattern_key",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The pattern key to query signals for.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "1 <= len <= 512",
+              "error_message": "pattern_key must be 1-512 characters."
+            }
+          ]
+        }
+      ],
+      "output_type": "list[StigmergySignal]",
+      "error_cases": [
+        {
+          "name": "file_read_failure",
+          "condition": "Unable to read the stigmergy JSON file",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Failed to read stigmergy storage file."
+          }
+        },
+        {
+          "name": "corrupt_storage",
+          "condition": "Storage file contains invalid JSON",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Stigmergy storage file is corrupt."
+          }
+        }
+      ],
+      "preconditions": [],
+      "postconditions": [
+        "All returned signals have pattern_key matching the input",
+        "Signals are in chronological order by timestamp_iso"
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": "stigmergy_store_path",
+          "description": "Reads the stigmergy JSON storage file to filter signals by pattern_key."
+        },
+        {
+          "kind": "logging",
+          "target": "stdlib logging",
+          "description": "Logs errors on read failure."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": null,
+        "max_memory_mb": null,
+        "complexity": "O(n) where n is total signals in storage"
+      }
+    },
+    {
+      "name": "kindex_get",
+      "description": "Retrieve a KindexEntry by key from the JSON-file key-value store. Returns None if the key does not exist or the store file does not exist. Entries with ttl_seconds > 0 that have expired (created_iso + ttl_seconds < now) are treated as non-existent.",
+      "inputs": [
+        {
+          "name": "key",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The key to look up.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "1 <= len <= 512",
+              "error_message": "key must be 1-512 characters."
+            }
+          ]
+        }
+      ],
+      "output_type": "KindexEntry",
+      "error_cases": [
+        {
+          "name": "file_read_failure",
+          "condition": "Unable to read the kindex JSON file",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Failed to read kindex storage file."
+          }
+        },
+        {
+          "name": "corrupt_storage",
+          "condition": "Storage file contains invalid JSON",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Kindex storage file is corrupt."
+          }
+        }
+      ],
+      "preconditions": [],
+      "postconditions": [
+        "If returned, entry.key == key",
+        "Expired entries are not returned (treated as None)"
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": "kindex_store_path",
+          "description": "Reads the kindex JSON storage file to look up the entry by key."
+        },
+        {
+          "kind": "logging",
+          "target": "stdlib logging",
+          "description": "Logs errors on read failure."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": null,
+        "max_memory_mb": null,
+        "complexity": "O(n) where n is total entries in store"
+      }
+    },
+    {
+      "name": "kindex_put",
+      "description": "Store or update a KindexEntry in the JSON-file key-value store. If an entry with the same key exists, it is replaced. Fire-and-forget: catches all exceptions internally, logs via stdlib logging, returns False on failure. Uses atomic file write (read-modify-write with temp file + os.replace).",
+      "inputs": [
+        {
+          "name": "entry",
+          "type_ref": "KindexEntry",
+          "required": true,
+          "default": "",
+          "description": "The entry to store.",
+          "validators": []
+        }
+      ],
+      "output_type": "bool",
+      "error_cases": [
+        {
+          "name": "file_write_failure",
+          "condition": "Unable to write to the kindex JSON file",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Failed to write kindex entry to storage."
+          }
+        },
+        {
+          "name": "serialization_failure",
+          "condition": "Entry value is not JSON-serializable",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Entry value is not JSON-serializable."
+          }
+        }
+      ],
+      "preconditions": [
+        "entry.value must be JSON-serializable"
+      ],
+      "postconditions": [
+        "On True return: entry is durably persisted (upserted) in the JSON store",
+        "On False return: failure is logged via stdlib logging"
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [
+        "Writes to kindex JSON storage file"
+      ],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": "kindex_store_path",
+          "description": "Reads existing entries from JSON storage for upsert."
+        },
+        {
+          "kind": "writes_file",
+          "target": "kindex_store_path",
+          "description": "Atomically writes updated entry map to JSON storage via temp file + os.replace."
+        },
+        {
+          "kind": "logging",
+          "target": "stdlib logging",
+          "description": "Logs errors on write failure."
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "kindex_query_by_tags",
+      "description": "Query KindexEntries from the JSON store by tags. Returns all entries where the entry's tags set intersects with the query tags set. Expired entries (ttl_seconds > 0 and created_iso + ttl_seconds < now) are excluded. Returns empty list if storage file does not exist.",
+      "inputs": [
+        {
+          "name": "tags",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "",
+          "description": "Tags to query by. Entries matching ANY of these tags are returned.",
+          "validators": []
+        }
+      ],
+      "output_type": "list[KindexEntry]",
+      "error_cases": [
+        {
+          "name": "file_read_failure",
+          "condition": "Unable to read the kindex JSON file",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Failed to read kindex storage file."
+          }
+        },
+        {
+          "name": "corrupt_storage",
+          "condition": "Storage file contains invalid JSON",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Kindex storage file is corrupt."
+          }
+        },
+        {
+          "name": "empty_tags",
+          "condition": "tags list is empty",
+          "error_type": "GovernanceError",
+          "error_data": {
+            "message": "Cannot query with empty tags list."
+          }
+        }
+      ],
+      "preconditions": [
+        "tags must not be empty"
+      ],
+      "postconditions": [
+        "Each returned entry has at least one tag in common with the query tags",
+        "Expired entries are excluded"
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": "kindex_store_path",
+          "description": "Reads the kindex JSON storage file to filter entries by tags."
+        },
+        {
+          "kind": "logging",
+          "target": "stdlib logging",
+          "description": "Logs errors on read failure."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": null,
+        "max_memory_mb": null,
+        "complexity": "O(n * t) where n is total entries and t is number of query tags"
+      }
+    }
+  ],
+  "dependencies": [],
+  "dependency_contracts": {},
+  "invariants": [
+    "All TesseraSeal instances produced by a single TesseraSealer form a valid hash chain: each seal's previous_hash equals the prior seal's chain_hash, and sequence_numbers are monotonically increasing from 0.",
+    "Canonical JSON serialization is always json.dumps(data, sort_keys=True, separators=(',',':')) — no other serialization format is used for hashing.",
+    "All governance types are Pydantic v2 frozen=True models — no in-place mutation. Functions return new instances.",
+    "Fire-and-forget methods (emit, record_signal, kindex_put) never raise exceptions to callers. They return bool and log failures via stdlib logging.",
+    "Verification methods (verify_seal, verify_credential) raise domain-specific exceptions (SealVerificationError, CredentialError) on failure — they do NOT return False silently.",
+    "All async methods perform file I/O only. No network calls, no GPU, no API keys required.",
+    "Atomic file writes use write-to-temp + os.replace pattern to prevent partial writes and corruption.",
+    "PACT keys are class-level str constants on each concrete implementation and are included in all ChroniclerEvent payloads emitted by that class.",
+    "PolicyToken expiration is checked against UTC now at call time. Clock skew tolerance is not provided — callers must ensure clocks are synchronized.",
+    "LedgerClassifier pre-compiles all regex patterns in __init__. Invalid patterns cause GovernanceError at construction time, not at classify() call time.",
+    "KindexStore TTL expiration is checked at read time (get, query_by_tags). Expired entries remain in storage until overwritten or compacted externally.",
+    "All UUID4 identifiers are generated as 32-character lowercase hex strings (no hyphens).",
+    "SignetManager secret key is injected at construction time and never logged or serialized."
+  ],
+  "requires": [],
+  "processing_register": "rigorous-analytical",
+  "data_access": {
+    "reads": [
+      "INTERNAL",
+      "PII",
+      "SECRETS"
+    ],
+    "writes": [
+      "INTERNAL",
+      "PII"
+    ],
+    "rationale": "Reads diff hunks that may contain PII fields or embedded secrets (SECRETS tier) for classification by LedgerClassifier. Reads and writes INTERNAL-tier data including chronicle event logs, seal chain state, stigmergy signal storage, kindex key-value entries, and reviewer credentials. Writes PII-tier data when chronicle events or kindex entries reference author identities or reviewer display names. Never persists raw secret values—only classification labels.",
+    "side_effects": [
+      {
+        "type": "file_write",
+        "classification": "INTERNAL",
+        "fields": [
+          "chronicle_log_path",
+          "event_type",
+          "event_payload",
+          "timestamp",
+          "review_request_id"
+        ],
+        "rationale": "ChronicleEmitter appends structured JSON-lines events to a log file for audit trail and queryability."
+      },
+      {
+        "type": "file_write",
+        "classification": "INTERNAL",
+        "fields": [
+          "stigmergy_store_path",
+          "pattern_key",
+          "signal_value",
+          "timestamp"
+        ],
+        "rationale": "StigmergyTracker persists recurring pattern signals to a JSON file for cross-review learning."
+      },
+      {
+        "type": "file_write",
+        "classification": "INTERNAL",
+        "fields": [
+          "kindex_store_path",
+          "key",
+          "value",
+          "tags",
+          "timestamp"
+        ],
+        "rationale": "KindexStore persists key-value entries for review history and codebase context to a JSON file."
+      },
+      {
+        "type": "file_read",
+        "classification": "INTERNAL",
+        "fields": [
+          "chronicle_log_path"
+        ],
+        "rationale": "ChronicleEmitter reads the JSON-lines log file to query events by review_request_id and event_type."
+      },
+      {
+        "type": "file_read",
+        "classification": "INTERNAL",
+        "fields": [
+          "stigmergy_store_path"
+        ],
+        "rationale": "StigmergyTracker reads JSON storage to query signals by pattern_key."
+      },
+      {
+        "type": "file_read",
+        "classification": "INTERNAL",
+        "fields": [
+          "kindex_store_path"
+        ],
+        "rationale": "KindexStore reads JSON storage to retrieve entries by key or tag query."
+      },
+      {
+        "type": "computation",
+        "classification": "SECRETS",
+        "fields": [
+          "hunk_content",
+          "added_lines",
+          "removed_lines"
+        ],
+        "rationale": "LedgerClassifier scans diff hunk content with regex rules to detect embedded secrets and PII. Secret values are never stored—only classification labels are emitted."
+      },
+      {
+        "type": "computation",
+        "classification": "PII",
+        "fields": [
+          "reviewer_id",
+          "display_name",
+          "sealer_id"
+        ],
+        "rationale": "SignetManager and TesseraSealer process reviewer/sealer identity strings which may constitute PII. These are hashed or embedded in credentials but not logged in cleartext beyond the credential structure itself."
+      }
+    ]
+  },
+  "authority": {
+    "domains": [
+      "governance.seals",
+      "governance.chronicle",
+      "governance.policy",
+      "governance.credentials",
+      "governance.trust",
+      "governance.classification",
+      "governance.stigmergy",
+      "governance.kindex"
+    ],
+    "rationale": "This component is the single authoritative source for all governance stack primitives in the Exemplar system. It owns the creation, verification, and storage of seals, chronicle events, policy enforcement decisions, reviewer credentials, trust scores, content classifications, stigmergy signals, and key-value review history. No other component may define or redefine these governance domain concepts."
+  }
+}

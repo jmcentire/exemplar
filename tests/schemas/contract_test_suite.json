@@ -1,0 +1,1046 @@
+{
+  "component_id": "schemas",
+  "contract_version": 1,
+  "test_cases": [
+    {
+      "id": "enum_severity_members",
+      "description": "Severity enum has all expected members with correct values",
+      "function": "Severity",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All five members exist: critical, high, medium, low, info",
+        "Each member's value equals its name string"
+      ]
+    },
+    {
+      "id": "enum_severity_is_str",
+      "description": "Severity members are str instances (StrEnum)",
+      "function": "Severity",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "isinstance(member, str) is True for all members"
+      ]
+    },
+    {
+      "id": "enum_severity_invalid",
+      "description": "Severity raises error for invalid value lookup",
+      "function": "Severity",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValueError or KeyError",
+      "assertions": [
+        "Severity('nonexistent') raises ValueError"
+      ]
+    },
+    {
+      "id": "enum_confidence_members",
+      "description": "Confidence enum has all expected members",
+      "function": "Confidence",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Members: high, medium, low"
+      ]
+    },
+    {
+      "id": "enum_confidence_is_str",
+      "description": "Confidence members are str instances (StrEnum)",
+      "function": "Confidence",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "isinstance(member, str) is True"
+      ]
+    },
+    {
+      "id": "enum_confidence_invalid",
+      "description": "Confidence raises error for invalid value",
+      "function": "Confidence",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValueError",
+      "assertions": [
+        "Confidence('invalid') raises ValueError"
+      ]
+    },
+    {
+      "id": "enum_review_stage_members",
+      "description": "ReviewStage has all expected members",
+      "function": "ReviewStage",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Members: security, correctness, style, architecture"
+      ]
+    },
+    {
+      "id": "enum_review_decision_members",
+      "description": "ReviewDecision has all expected members",
+      "function": "ReviewDecision",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Members: block, warn, pass"
+      ]
+    },
+    {
+      "id": "enum_classification_label_members",
+      "description": "ClassificationLabel has all expected members",
+      "function": "ClassificationLabel",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Members: secret, pii, internal_api, public"
+      ]
+    },
+    {
+      "id": "enum_chronicler_event_type_members",
+      "description": "ChroniclerEventType has all expected members",
+      "function": "ChroniclerEventType",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All 10 event type members exist"
+      ]
+    },
+    {
+      "id": "enum_learner_phase_members",
+      "description": "LearnerPhase has all expected members",
+      "function": "LearnerPhase",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Members: shadow, canary, primary"
+      ]
+    },
+    {
+      "id": "enum_stigmergy_verb_members",
+      "description": "StigmergyVerb has all expected members",
+      "function": "StigmergyVerb",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Members: deposit, reinforce, decay, query"
+      ]
+    },
+    {
+      "id": "enum_cli_exit_code_members",
+      "description": "CliExitCode has all expected members with int values 0-3",
+      "function": "CliExitCode",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Values are integers 0, 1, 2, 3"
+      ]
+    },
+    {
+      "id": "enum_output_format_members",
+      "description": "OutputFormat has all expected members",
+      "function": "OutputFormat",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Members: json, md, github"
+      ]
+    },
+    {
+      "id": "severity_rank_all_values",
+      "description": "severity_rank returns correct rank for all Severity members",
+      "function": "severity_rank",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "critical=4, high=3, medium=2, low=1, info=0"
+      ]
+    },
+    {
+      "id": "severity_rank_ordering",
+      "description": "severity_rank maintains strict ordering critical > high > medium > low > info",
+      "function": "severity_rank",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "rank(critical) > rank(high) > rank(medium) > rank(low) > rank(info)"
+      ]
+    },
+    {
+      "id": "severity_rank_return_type",
+      "description": "severity_rank returns int",
+      "function": "severity_rank",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "isinstance(result, int) for all members"
+      ]
+    },
+    {
+      "id": "severity_rank_invalid_input",
+      "description": "severity_rank raises error for invalid input",
+      "function": "severity_rank",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "invalid_severity",
+      "assertions": [
+        "Raises appropriate error for non-Severity input"
+      ]
+    },
+    {
+      "id": "severity_rank_range",
+      "description": "severity_rank returns values in [0, 4]",
+      "function": "severity_rank",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "0 <= result <= 4 for all members"
+      ]
+    },
+    {
+      "id": "confidence_rank_all_values",
+      "description": "confidence_rank returns correct rank for all Confidence members",
+      "function": "confidence_rank",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "high=2, medium=1, low=0"
+      ]
+    },
+    {
+      "id": "confidence_rank_ordering",
+      "description": "confidence_rank maintains strict ordering high > medium > low",
+      "function": "confidence_rank",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "rank(high) > rank(medium) > rank(low)"
+      ]
+    },
+    {
+      "id": "confidence_rank_invalid_input",
+      "description": "confidence_rank raises error for invalid input",
+      "function": "confidence_rank",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "invalid_confidence",
+      "assertions": [
+        "Raises appropriate error for non-Confidence input"
+      ]
+    },
+    {
+      "id": "learner_phase_rank_all_values",
+      "description": "learner_phase_rank returns correct rank for all LearnerPhase members",
+      "function": "learner_phase_rank",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Returns int ranks for shadow, canary, primary"
+      ]
+    },
+    {
+      "id": "learner_phase_rank_ordering",
+      "description": "learner_phase_rank maintains ordering based on contract",
+      "function": "learner_phase_rank",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Monotonic ordering across phases"
+      ]
+    },
+    {
+      "id": "learner_phase_rank_invalid_input",
+      "description": "learner_phase_rank raises error for invalid input",
+      "function": "learner_phase_rank",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "invalid_phase",
+      "assertions": [
+        "Raises appropriate error for non-LearnerPhase input"
+      ]
+    },
+    {
+      "id": "validate_iso_timestamp_valid",
+      "description": "validate_iso_timestamp accepts valid ISO 8601 strings",
+      "function": "validate_iso_timestamp",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Returns the input string unchanged"
+      ]
+    },
+    {
+      "id": "validate_iso_timestamp_with_timezone",
+      "description": "validate_iso_timestamp accepts ISO strings with timezone info",
+      "function": "validate_iso_timestamp",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Accepts '2024-01-01T00:00:00+00:00'"
+      ]
+    },
+    {
+      "id": "validate_iso_timestamp_date_only",
+      "description": "validate_iso_timestamp accepts date-only ISO strings",
+      "function": "validate_iso_timestamp",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Accepts '2024-01-01'"
+      ]
+    },
+    {
+      "id": "validate_iso_timestamp_invalid_format",
+      "description": "validate_iso_timestamp rejects non-ISO strings",
+      "function": "validate_iso_timestamp",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "invalid_iso_format",
+      "assertions": [
+        "Raises error for 'not-a-date'"
+      ]
+    },
+    {
+      "id": "validate_iso_timestamp_empty",
+      "description": "validate_iso_timestamp rejects empty string",
+      "function": "validate_iso_timestamp",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "empty_string",
+      "assertions": [
+        "Raises error for ''"
+      ]
+    },
+    {
+      "id": "diffhunk_construction",
+      "description": "DiffHunk can be constructed with valid data",
+      "function": "DiffHunk",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All fields are accessible and correct"
+      ]
+    },
+    {
+      "id": "diffhunk_frozen",
+      "description": "DiffHunk is frozen/immutable",
+      "function": "DiffHunk",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Attribute assignment raises ValidationError or TypeError"
+      ]
+    },
+    {
+      "id": "diffhunk_extra_forbid",
+      "description": "DiffHunk forbids extra fields",
+      "function": "DiffHunk",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "Extra field raises ValidationError"
+      ]
+    },
+    {
+      "id": "diffhunk_optional_language",
+      "description": "DiffHunk allows None for optional language field",
+      "function": "DiffHunk",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "language=None is accepted"
+      ]
+    },
+    {
+      "id": "diffhunk_roundtrip",
+      "description": "DiffHunk survives JSON round-trip",
+      "function": "DiffHunk",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "model_validate_json(instance.model_dump_json()) == instance"
+      ]
+    },
+    {
+      "id": "review_request_construction",
+      "description": "ReviewRequest can be constructed with valid data including nested DiffHunks",
+      "function": "ReviewRequest",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All fields correct, hunks are DiffHunk instances"
+      ]
+    },
+    {
+      "id": "review_request_frozen",
+      "description": "ReviewRequest is frozen/immutable",
+      "function": "ReviewRequest",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Attribute assignment raises error"
+      ]
+    },
+    {
+      "id": "finding_construction",
+      "description": "Finding can be constructed with valid data",
+      "function": "Finding",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All fields correct"
+      ]
+    },
+    {
+      "id": "finding_optional_fields",
+      "description": "Finding allows None for optional line_number and suggestion",
+      "function": "Finding",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "line_number=None and suggestion=None accepted"
+      ]
+    },
+    {
+      "id": "assessment_construction",
+      "description": "Assessment can be constructed with valid data",
+      "function": "Assessment",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All fields correct, nested findings accessible"
+      ]
+    },
+    {
+      "id": "trust_score_construction",
+      "description": "TrustScore can be constructed with valid weight",
+      "function": "TrustScore",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "weight=0.5 is accepted"
+      ]
+    },
+    {
+      "id": "trust_score_weight_boundary_zero",
+      "description": "TrustScore accepts weight=0.0",
+      "function": "TrustScore",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "weight=0.0 is accepted"
+      ]
+    },
+    {
+      "id": "trust_score_weight_boundary_one",
+      "description": "TrustScore accepts weight=1.0",
+      "function": "TrustScore",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "weight=1.0 is accepted"
+      ]
+    },
+    {
+      "id": "trust_score_weight_below_zero",
+      "description": "TrustScore rejects weight below 0.0",
+      "function": "TrustScore",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "weight=-0.1 raises ValidationError"
+      ]
+    },
+    {
+      "id": "trust_score_weight_above_one",
+      "description": "TrustScore rejects weight above 1.0",
+      "function": "TrustScore",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "weight=1.1 raises ValidationError"
+      ]
+    },
+    {
+      "id": "tessera_seal_construction",
+      "description": "TesseraSeal can be constructed with valid data",
+      "function": "TesseraSeal",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All fields correct, previous_hash can be None"
+      ]
+    },
+    {
+      "id": "review_report_construction",
+      "description": "ReviewReport can be constructed with deeply nested data",
+      "function": "ReviewReport",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All nested structures accessible"
+      ]
+    },
+    {
+      "id": "reviewer_credential_construction",
+      "description": "ReviewerCredential can be constructed with valid data",
+      "function": "ReviewerCredential",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All fields correct"
+      ]
+    },
+    {
+      "id": "policy_token_construction",
+      "description": "PolicyToken can be constructed with valid data",
+      "function": "PolicyToken",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All fields correct"
+      ]
+    },
+    {
+      "id": "chronicler_event_construction",
+      "description": "ChroniclerEvent can be constructed with valid data",
+      "function": "ChroniclerEvent",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All fields correct"
+      ]
+    },
+    {
+      "id": "stigmergy_signal_construction",
+      "description": "StigmergySignal can be constructed with valid data",
+      "function": "StigmergySignal",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All fields correct"
+      ]
+    },
+    {
+      "id": "learning_record_construction",
+      "description": "LearningRecord can be constructed with valid data",
+      "function": "LearningRecord",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All fields correct"
+      ]
+    },
+    {
+      "id": "kindex_entry_construction",
+      "description": "KindexEntry can be constructed with valid data",
+      "function": "KindexEntry",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All fields correct"
+      ]
+    },
+    {
+      "id": "pipeline_result_construction",
+      "description": "PipelineResult can be constructed with valid data",
+      "function": "PipelineResult",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All fields correct, deeply nested"
+      ]
+    },
+    {
+      "id": "canonical_bytes_returns_bytes",
+      "description": "canonical_bytes returns bytes type",
+      "function": "canonical_bytes",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "isinstance(result, bytes)"
+      ]
+    },
+    {
+      "id": "canonical_bytes_valid_json",
+      "description": "canonical_bytes output is valid UTF-8 JSON",
+      "function": "canonical_bytes",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "json.loads(output) succeeds"
+      ]
+    },
+    {
+      "id": "canonical_bytes_deterministic",
+      "description": "canonical_bytes returns identical bytes for same instance called twice",
+      "function": "canonical_bytes",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "first_call == second_call"
+      ]
+    },
+    {
+      "id": "canonical_bytes_equivalent_instances",
+      "description": "Two instances with same field values produce identical canonical_bytes",
+      "function": "canonical_bytes",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "instance1.canonical_bytes() == instance2.canonical_bytes()"
+      ]
+    },
+    {
+      "id": "canonical_hash_returns_hex_string",
+      "description": "canonical_hash returns 64-char lowercase hex string",
+      "function": "canonical_hash",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "len(result) == 64",
+        "all(c in '0123456789abcdef' for c in result)"
+      ]
+    },
+    {
+      "id": "canonical_hash_matches_sha256",
+      "description": "canonical_hash equals SHA-256 of canonical_bytes",
+      "function": "canonical_hash",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "result == hashlib.sha256(instance.canonical_bytes()).hexdigest()"
+      ]
+    },
+    {
+      "id": "canonical_hash_deterministic",
+      "description": "canonical_hash is deterministic for identical field values",
+      "function": "canonical_hash",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "instance1.canonical_hash() == instance2.canonical_hash()"
+      ]
+    },
+    {
+      "id": "canonical_hash_different_instances",
+      "description": "Different model data produces different hashes",
+      "function": "canonical_hash",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "hash1 != hash2"
+      ]
+    },
+    {
+      "id": "model_missing_required_field",
+      "description": "Model construction fails with missing required field",
+      "function": "DiffHunk",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "ValidationError raised when required fields missing"
+      ]
+    },
+    {
+      "id": "model_wrong_type_field",
+      "description": "Model construction fails with wrong type for field",
+      "function": "Finding",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "ValidationError",
+      "assertions": [
+        "ValidationError raised for invalid type"
+      ]
+    },
+    {
+      "id": "pact_key_class_var",
+      "description": "_ExemplarBase has PACT_KEY class variable",
+      "function": "_ExemplarBase",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "PACT_KEY == 'exemplar.schemas'"
+      ]
+    },
+    {
+      "id": "models_hashable",
+      "description": "Frozen models are hashable",
+      "function": "Finding",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "hash(instance) works without error",
+        "Equal instances have equal hashes"
+      ]
+    },
+    {
+      "id": "json_roundtrip_finding",
+      "description": "Finding survives JSON round-trip",
+      "function": "Finding",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "model_validate_json(instance.model_dump_json()) == instance"
+      ]
+    },
+    {
+      "id": "json_roundtrip_assessment",
+      "description": "Assessment survives JSON round-trip",
+      "function": "Assessment",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "model_validate_json(instance.model_dump_json()) == instance"
+      ]
+    },
+    {
+      "id": "json_roundtrip_review_report",
+      "description": "ReviewReport survives JSON round-trip",
+      "function": "ReviewReport",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "model_validate_json(instance.model_dump_json()) == instance"
+      ]
+    }
+  ],
+  "test_language": "python",
+  "generated_code": "\"\"\"\nContract tests for exemplar.schemas module.\nTests verify behavior at boundaries per the contract specification.\n\"\"\"\n\nimport hashlib\nimport json\n\nimport pytest\nfrom pydantic import ValidationError\n\nfrom exemplar.schemas import (\n    Assessment,\n    ChroniclerEvent,\n    ChroniclerEventType,\n    ClassificationLabel,\n    CliExitCode,\n    Confidence,\n    DiffHunk,\n    Finding,\n    KindexEntry,\n    LearnerPhase,\n    LearningRecord,\n    OutputFormat,\n    PipelineResult,\n    PolicyToken,\n    ReviewDecision,\n    ReviewReport,\n    ReviewRequest,\n    ReviewStage,\n    ReviewerCredential,\n    Severity,\n    StigmergySignal,\n    StigmergyVerb,\n    TesseraSeal,\n    TrustScore,\n    confidence_rank,\n    learner_phase_rank,\n    severity_rank,\n    validate_iso_timestamp,\n    _ExemplarBase,\n)\n\n\n# ============================================================================\n# Fixtures — reusable valid instances of each model\n# ============================================================================\n\n@pytest.fixture\ndef valid_diff_hunk():\n    return DiffHunk(\n        id=\"hunk-001\",\n        file_path=\"src/main.py\",\n        start_line_old=10,\n        count_old=5,\n        start_line_new=10,\n        count_new=7,\n        context_before=[\"import os\"],\n        added_lines=[\"import sys\", \"import json\"],\n        removed_lines=[\"import csv\"],\n        context_after=[\"def main():\"],\n        raw_header=\"@@ -10,5 +10,7 @@\",\n        classifications=[ClassificationLabel.public],\n        language=\"python\",\n    )\n\n\n@pytest.fixture\ndef valid_diff_hunk_no_language():\n    return DiffHunk(\n        id=\"hunk-002\",\n        file_path=\"README.md\",\n        start_line_old=1,\n        count_old=1,\n        start_line_new=1,\n        count_new=1,\n        context_before=[],\n        added_lines=[\"# Title\"],\n        removed_lines=[\"# Old Title\"],\n        context_after=[],\n        raw_header=\"@@ -1,1 +1,1 @@\",\n        classifications=[],\n        language=None,\n    )\n\n\n@pytest.fixture\ndef valid_finding():\n    return Finding(\n        id=\"finding-001\",\n        hunk_id=\"hunk-001\",\n        file_path=\"src/main.py\",\n        line_number=15,\n        severity=Severity.high,\n        confidence=Confidence.high,\n        title=\"Hardcoded secret\",\n        description=\"A hardcoded API key was found.\",\n        suggestion=\"Use environment variables instead.\",\n        rule_id=\"SEC-001\",\n        stage=ReviewStage.security,\n    )\n\n\n@pytest.fixture\ndef valid_finding_no_optionals():\n    return Finding(\n        id=\"finding-002\",\n        hunk_id=\"hunk-001\",\n        file_path=\"src/main.py\",\n        line_number=None,\n        severity=Severity.low,\n        confidence=Confidence.low,\n        title=\"Minor style issue\",\n        description=\"Trailing whitespace.\",\n        suggestion=None,\n        rule_id=\"STY-001\",\n        stage=ReviewStage.style,\n    )\n\n\n@pytest.fixture\ndef valid_assessment(valid_finding):\n    return Assessment(\n        id=\"assessment-001\",\n        review_request_id=\"rr-001\",\n        stage=ReviewStage.security,\n        reviewer_id=\"reviewer-sec-01\",\n        decision=ReviewDecision.warn,\n        findings=[valid_finding],\n        confidence=Confidence.high,\n        is_partial=False,\n        error_message=None,\n        duration_ms=1234,\n        created_at=\"2024-06-15T10:30:00Z\",\n    )\n\n\n@pytest.fixture\ndef valid_trust_score():\n    return TrustScore(\n        reviewer_id=\"reviewer-sec-01\",\n        stage=ReviewStage.security,\n        weight=0.85,\n        accepted_count=100,\n        dismissed_count=15,\n        updated_at=\"2024-06-15T10:30:00Z\",\n    )\n\n\n@pytest.fixture\ndef valid_tessera_seal():\n    return TesseraSeal(\n        content_hash=\"a\" * 64,\n        previous_hash=None,\n        chain_hash=\"b\" * 64,\n        sealed_at=\"2024-06-15T10:30:00Z\",\n        sealer_id=\"sealer-001\",\n    )\n\n\n@pytest.fixture\ndef valid_review_request(valid_diff_hunk):\n    return ReviewRequest(\n        id=\"rr-001\",\n        source=\"github\",\n        hunks=[valid_diff_hunk],\n        file_paths=[\"src/main.py\"],\n        created_at=\"2024-06-15T10:00:00Z\",\n        metadata={\"pr_number\": \"42\"},\n    )\n\n\n@pytest.fixture\ndef valid_review_report(valid_finding, valid_assessment, valid_trust_score, valid_tessera_seal):\n    return ReviewReport(\n        id=\"report-001\",\n        review_request_id=\"rr-001\",\n        decision=ReviewDecision.warn,\n        findings=[valid_finding],\n        assessments=[valid_assessment],\n        confidence=Confidence.high,\n        trust_scores=[valid_trust_score],\n        conflict_notes=[\"Minor disagreement on severity.\"],\n        summary=\"Review complete with warnings.\",\n        seal=valid_tessera_seal,\n        created_at=\"2024-06-15T11:00:00Z\",\n        metadata={\"output\": \"github\"},\n    )\n\n\n@pytest.fixture\ndef valid_reviewer_credential():\n    return ReviewerCredential(\n        reviewer_id=\"reviewer-sec-01\",\n        display_name=\"Security Reviewer\",\n        stage=ReviewStage.security,\n        public_key_hex=\"deadbeef\" * 8,\n        created_at=\"2024-01-01T00:00:00Z\",\n        is_active=True,\n    )\n\n\n@pytest.fixture\ndef valid_policy_token():\n    return PolicyToken(\n        token_id=\"token-001\",\n        reviewer_id=\"reviewer-sec-01\",\n        allowed_file_patterns=[\"*.py\"],\n        denied_file_patterns=[\"*.secret\"],\n        allowed_classifications=[ClassificationLabel.public, ClassificationLabel.internal_api],\n        max_severity=Severity.high,\n        issued_at=\"2024-06-15T10:00:00Z\",\n        expires_at=\"2025-06-15T10:00:00Z\",\n    )\n\n\n@pytest.fixture\ndef valid_chronicler_event():\n    return ChroniclerEvent(\n        event_id=\"evt-001\",\n        event_type=ChroniclerEventType[\"review.started\"],\n        review_request_id=\"rr-001\",\n        timestamp=\"2024-06-15T10:00:00Z\",\n        stage=None,\n        reviewer_id=None,\n        payload={\"detail\": \"starting review\"},\n        message=\"Review started for PR #42\",\n    )\n\n\n@pytest.fixture\ndef valid_stigmergy_signal():\n    return StigmergySignal(\n        signal_id=\"sig-001\",\n        pattern_key=\"hardcoded-secret\",\n        description=\"Hardcoded secrets in config files\",\n        occurrences=5,\n        first_seen_at=\"2024-01-01T00:00:00Z\",\n        last_seen_at=\"2024-06-15T10:00:00Z\",\n        reviewer_id=\"reviewer-sec-01\",\n        stage=ReviewStage.security,\n        metadata={\"severity\": \"high\"},\n    )\n\n\n@pytest.fixture\ndef valid_learning_record():\n    return LearningRecord(\n        record_id=\"lr-001\",\n        finding_id=\"finding-001\",\n        reviewer_id=\"reviewer-sec-01\",\n        stage=ReviewStage.security,\n        rule_id=\"SEC-001\",\n        severity=Severity.high,\n        accepted=True,\n        human_comment=\"Good catch!\",\n        recorded_at=\"2024-06-15T12:00:00Z\",\n    )\n\n\n@pytest.fixture\ndef valid_kindex_entry():\n    return KindexEntry(\n        key=\"kindex-001\",\n        kind=\"review\",\n        summary=\"Past review of auth module\",\n        data={\"file\": \"auth.py\"},\n        tags=[\"auth\", \"security\"],\n        created_at=\"2024-01-01T00:00:00Z\",\n        updated_at=\"2024-06-15T10:00:00Z\",\n    )\n\n\n@pytest.fixture\ndef valid_pipeline_result(valid_review_request, valid_assessment, valid_review_report, valid_chronicler_event):\n    return PipelineResult(\n        review_request=valid_review_request,\n        assessments=[valid_assessment],\n        report=valid_review_report,\n        events=[valid_chronicler_event],\n        formatted_output=\"## Review Report\\nWarnings found.\",\n        output_format=OutputFormat.md,\n        exit_code=1,\n    )\n\n\n# ============================================================================\n# Enum Tests\n# ============================================================================\n\nclass TestSeverityEnum:\n    \"\"\"Tests for the Severity StrEnum.\"\"\"\n\n    @pytest.mark.parametrize(\"member_name,expected_value\", [\n        (\"critical\", \"critical\"),\n        (\"high\", \"high\"),\n        (\"medium\", \"medium\"),\n        (\"low\", \"low\"),\n        (\"info\", \"info\"),\n    ])\n    def test_member_values(self, member_name, expected_value):\n        member = Severity(expected_value)\n        assert member.value == expected_value\n        assert member.name == member_name\n\n    def test_is_str_subclass(self):\n        for member in Severity:\n            assert isinstance(member, str), f\"{member} is not a str instance\"\n\n    def test_member_count(self):\n        assert len(Severity) == 5\n\n    def test_iteration_order(self):\n        names = [m.name for m in Severity]\n        assert \"critical\" in names\n        assert \"info\" in names\n\n    def test_invalid_value_raises(self):\n        with pytest.raises(ValueError):\n            Severity(\"nonexistent\")\n\n\nclass TestConfidenceEnum:\n    \"\"\"Tests for the Confidence StrEnum.\"\"\"\n\n    @pytest.mark.parametrize(\"value\", [\"high\", \"medium\", \"low\"])\n    def test_member_values(self, value):\n        member = Confidence(value)\n        assert member.value == value\n\n    def test_is_str_subclass(self):\n        for member in Confidence:\n            assert isinstance(member, str)\n\n    def test_member_count(self):\n        assert len(Confidence) == 3\n\n    def test_invalid_value_raises(self):\n        with pytest.raises(ValueError):\n            Confidence(\"invalid\")\n\n\nclass TestReviewStageEnum:\n    \"\"\"Tests for the ReviewStage StrEnum.\"\"\"\n\n    @pytest.mark.parametrize(\"value\", [\"security\", \"correctness\", \"style\", \"architecture\"])\n    def test_member_values(self, value):\n        member = ReviewStage(value)\n        assert member.value == value\n\n    def test_member_count(self):\n        assert len(ReviewStage) == 4\n\n    def test_is_str_subclass(self):\n        for member in ReviewStage:\n            assert isinstance(member, str)\n\n\nclass TestReviewDecisionEnum:\n    \"\"\"Tests for the ReviewDecision StrEnum.\"\"\"\n\n    @pytest.mark.parametrize(\"value\", [\"block\", \"warn\", \"pass\"])\n    def test_member_values(self, value):\n        member = ReviewDecision(value)\n        assert member.value == value\n\n    def test_member_count(self):\n        assert len(ReviewDecision) == 3\n\n    # 'pass' is a Python keyword but should work as enum value\n    def test_pass_member_accessible(self):\n        p = ReviewDecision(\"pass\")\n        assert p == \"pass\"\n\n\nclass TestClassificationLabelEnum:\n    \"\"\"Tests for the ClassificationLabel StrEnum.\"\"\"\n\n    @pytest.mark.parametrize(\"value\", [\"secret\", \"pii\", \"internal_api\", \"public\"])\n    def test_member_values(self, value):\n        member = ClassificationLabel(value)\n        assert member.value == value\n\n    def test_member_count(self):\n        assert len(ClassificationLabel) == 4\n\n\nclass TestChroniclerEventTypeEnum:\n    \"\"\"Tests for the ChroniclerEventType StrEnum.\"\"\"\n\n    EXPECTED_VALUES = [\n        \"review.started\", \"stage.started\", \"stage.complete\",\n        \"assessment.merged\", \"report.sealed\", \"review.complete\",\n        \"policy.violation\", \"pattern.detected\", \"learning.recorded\",\n    ]\n\n    @pytest.mark.parametrize(\"value\", EXPECTED_VALUES)\n    def test_member_values(self, value):\n        member = ChroniclerEventType(value)\n        assert member.value == value\n\n    def test_is_str_subclass(self):\n        for member in ChroniclerEventType:\n            assert isinstance(member, str)\n\n\nclass TestLearnerPhaseEnum:\n    \"\"\"Tests for the LearnerPhase StrEnum.\"\"\"\n\n    @pytest.mark.parametrize(\"value\", [\"shadow\", \"canary\", \"primary\"])\n    def test_member_values(self, value):\n        member = LearnerPhase(value)\n        assert member.value == value\n\n    def test_member_count(self):\n        assert len(LearnerPhase) == 3\n\n\nclass TestStigmergyVerbEnum:\n    \"\"\"Tests for the StigmergyVerb StrEnum.\"\"\"\n\n    @pytest.mark.parametrize(\"value\", [\"deposit\", \"reinforce\", \"decay\", \"query\"])\n    def test_member_values(self, value):\n        member = StigmergyVerb(value)\n        assert member.value == value\n\n    def test_is_str_subclass(self):\n        for member in StigmergyVerb:\n            assert isinstance(member, str)\n\n\nclass TestCliExitCodeEnum:\n    \"\"\"Tests for the CliExitCode IntEnum.\"\"\"\n\n    @pytest.mark.parametrize(\"value\", [0, 1, 2, 3])\n    def test_member_values(self, value):\n        member = CliExitCode(value)\n        assert member.value == value\n        assert isinstance(member.value, int)\n\n    def test_member_count(self):\n        assert len(CliExitCode) == 4\n\n\nclass TestOutputFormatEnum:\n    \"\"\"Tests for the OutputFormat StrEnum.\"\"\"\n\n    @pytest.mark.parametrize(\"value\", [\"json\", \"md\", \"github\"])\n    def test_member_values(self, value):\n        member = OutputFormat(value)\n        assert member.value == value\n\n    def test_member_count(self):\n        assert len(OutputFormat) == 3\n\n\n# ============================================================================\n# Rank Function Tests\n# ============================================================================\n\nclass TestSeverityRank:\n    \"\"\"Tests for the severity_rank function.\"\"\"\n\n    @pytest.mark.parametrize(\"severity,expected_rank\", [\n        (Severity.critical, 4),\n        (Severity.high, 3),\n        (Severity.medium, 2),\n        (Severity.low, 1),\n        (Severity.info, 0),\n    ])\n    def test_correct_rank(self, severity, expected_rank):\n        assert severity_rank(severity) == expected_rank\n\n    @pytest.mark.parametrize(\"severity\", list(Severity))\n    def test_return_type_is_int(self, severity):\n        result = severity_rank(severity)\n        assert isinstance(result, int)\n\n    @pytest.mark.parametrize(\"severity\", list(Severity))\n    def test_range_0_to_4(self, severity):\n        result = severity_rank(severity)\n        assert 0 <= result <= 4\n\n    def test_ordering_invariant(self):\n        assert severity_rank(Severity.critical) > severity_rank(Severity.high)\n        assert severity_rank(Severity.high) > severity_rank(Severity.medium)\n        assert severity_rank(Severity.medium) > severity_rank(Severity.low)\n        assert severity_rank(Severity.low) > severity_rank(Severity.info)\n\n    def test_invalid_input_raises(self):\n        with pytest.raises((ValueError, KeyError, TypeError, AttributeError)):\n            severity_rank(\"not_a_severity\")\n\n    def test_invalid_input_none(self):\n        with pytest.raises((ValueError, KeyError, TypeError, AttributeError)):\n            severity_rank(None)\n\n\nclass TestConfidenceRank:\n    \"\"\"Tests for the confidence_rank function.\"\"\"\n\n    @pytest.mark.parametrize(\"confidence,expected_rank\", [\n        (Confidence.high, 2),\n        (Confidence.medium, 1),\n        (Confidence.low, 0),\n    ])\n    def test_correct_rank(self, confidence, expected_rank):\n        assert confidence_rank(confidence) == expected_rank\n\n    @pytest.mark.parametrize(\"confidence\", list(Confidence))\n    def test_return_type_is_int(self, confidence):\n        result = confidence_rank(confidence)\n        assert isinstance(result, int)\n\n    @pytest.mark.parametrize(\"confidence\", list(Confidence))\n    def test_range_0_to_2(self, confidence):\n        result = confidence_rank(confidence)\n        assert 0 <= result <= 2\n\n    def test_ordering_invariant(self):\n        assert confidence_rank(Confidence.high) > confidence_rank(Confidence.medium)\n        assert confidence_rank(Confidence.medium) > confidence_rank(Confidence.low)\n\n    def test_invalid_input_raises(self):\n        with pytest.raises((ValueError, KeyError, TypeError, AttributeError)):\n            confidence_rank(\"not_a_confidence\")\n\n\nclass TestLearnerPhaseRank:\n    \"\"\"Tests for the learner_phase_rank function.\"\"\"\n\n    @pytest.mark.parametrize(\"phase\", list(LearnerPhase))\n    def test_return_type_is_int(self, phase):\n        result = learner_phase_rank(phase)\n        assert isinstance(result, int)\n\n    @pytest.mark.parametrize(\"phase\", list(LearnerPhase))\n    def test_range_0_to_3(self, phase):\n        result = learner_phase_rank(phase)\n        assert 0 <= result <= 3\n\n    def test_ordering_is_monotonic(self):\n        \"\"\"Phases should have a well-defined ordering.\"\"\"\n        ranks = [learner_phase_rank(p) for p in LearnerPhase]\n        # All ranks should be distinct\n        assert len(set(ranks)) == len(ranks)\n\n    def test_invalid_input_raises(self):\n        with pytest.raises((ValueError, KeyError, TypeError, AttributeError)):\n            learner_phase_rank(\"not_a_phase\")\n\n\n# ============================================================================\n# Timestamp Validation Tests\n# ============================================================================\n\nclass TestValidateIsoTimestamp:\n    \"\"\"Tests for the validate_iso_timestamp function.\"\"\"\n\n    @pytest.mark.parametrize(\"valid_ts\", [\n        \"2024-01-01T00:00:00\",\n        \"2024-06-15T10:30:00Z\",\n        \"2024-06-15T10:30:00+00:00\",\n        \"2024-06-15T10:30:00-05:00\",\n        \"2024-01-01T00:00:00.123456\",\n        \"2024-01-01\",\n    ])\n    def test_valid_iso_strings_accepted(self, valid_ts):\n        result = validate_iso_timestamp(valid_ts)\n        assert result == valid_ts, \"Returned value should be identical to input\"\n\n    def test_returns_input_unchanged(self):\n        ts = \"2024-06-15T10:30:00+00:00\"\n        result = validate_iso_timestamp(ts)\n        assert result is ts or result == ts\n\n    @pytest.mark.parametrize(\"invalid_ts\", [\n        \"not-a-date\",\n        \"2024/01/01\",\n        \"yesterday\",\n        \"12345\",\n        \"2024-13-01T00:00:00\",  # invalid month\n        \"abcdefg\",\n    ])\n    def test_invalid_iso_strings_rejected(self, invalid_ts):\n        with pytest.raises((ValueError, TypeError)):\n            validate_iso_timestamp(invalid_ts)\n\n    def test_empty_string_rejected(self):\n        with pytest.raises((ValueError, TypeError)):\n            validate_iso_timestamp(\"\")\n\n\n# ============================================================================\n# Frozen Model Tests — DiffHunk\n# ============================================================================\n\nclass TestDiffHunk:\n    \"\"\"Tests for the DiffHunk frozen model.\"\"\"\n\n    def test_construction_happy_path(self, valid_diff_hunk):\n        assert valid_diff_hunk.id == \"hunk-001\"\n        assert valid_diff_hunk.file_path == \"src/main.py\"\n        assert valid_diff_hunk.start_line_old == 10\n        assert valid_diff_hunk.count_old == 5\n        assert valid_diff_hunk.start_line_new == 10\n        assert valid_diff_hunk.count_new == 7\n        assert valid_diff_hunk.language == \"python\"\n        assert ClassificationLabel.public in valid_diff_hunk.classifications\n\n    def test_optional_language_none(self, valid_diff_hunk_no_language):\n        assert valid_diff_hunk_no_language.language is None\n\n    def test_frozen_immutability(self, valid_diff_hunk):\n        with pytest.raises((ValidationError, TypeError, AttributeError)):\n            valid_diff_hunk.id = \"changed\"\n\n    def test_extra_field_forbidden(self):\n        with pytest.raises(ValidationError):\n            DiffHunk(\n                id=\"hunk-001\",\n                file_path=\"src/main.py\",\n                start_line_old=10,\n                count_old=5,\n                start_line_new=10,\n                count_new=7,\n                context_before=[],\n                added_lines=[],\n                removed_lines=[],\n                context_after=[],\n                raw_header=\"@@\",\n                classifications=[],\n                language=None,\n                extra_field=\"should fail\",\n            )\n\n    def test_missing_required_field(self):\n        with pytest.raises(ValidationError):\n            DiffHunk(id=\"hunk-001\")  # missing many required fields\n\n    def test_json_roundtrip(self, valid_diff_hunk):\n        json_str = valid_diff_hunk.model_dump_json()\n        restored = DiffHunk.model_validate_json(json_str)\n        assert restored == valid_diff_hunk\n\n    def test_hashable(self, valid_diff_hunk):\n        h = hash(valid_diff_hunk)\n        assert isinstance(h, int)\n\n\n# ============================================================================\n# Frozen Model Tests — ReviewRequest\n# ============================================================================\n\nclass TestReviewRequest:\n    \"\"\"Tests for the ReviewRequest frozen model.\"\"\"\n\n    def test_construction_happy_path(self, valid_review_request):\n        assert valid_review_request.id == \"rr-001\"\n        assert valid_review_request.source == \"github\"\n        assert len(valid_review_request.hunks) == 1\n        assert isinstance(valid_review_request.hunks[0], DiffHunk)\n        assert valid_review_request.file_paths == [\"src/main.py\"]\n\n    def test_frozen_immutability(self, valid_review_request):\n        with pytest.raises((ValidationError, TypeError, AttributeError)):\n            valid_review_request.id = \"changed\"\n\n    def test_json_roundtrip(self, valid_review_request):\n        json_str = valid_review_request.model_dump_json()\n        restored = ReviewRequest.model_validate_json(json_str)\n        assert restored == valid_review_request\n\n\n# ============================================================================\n# Frozen Model Tests — Finding\n# ============================================================================\n\nclass TestFinding:\n    \"\"\"Tests for the Finding frozen model.\"\"\"\n\n    def test_construction_happy_path(self, valid_finding):\n        assert valid_finding.id == \"finding-001\"\n        assert valid_finding.severity == Severity.high\n        assert valid_finding.confidence == Confidence.high\n        assert valid_finding.stage == ReviewStage.security\n        assert valid_finding.line_number == 15\n        assert valid_finding.suggestion == \"Use environment variables instead.\"\n\n    def test_optional_fields_none(self, valid_finding_no_optionals):\n        assert valid_finding_no_optionals.line_number is None\n        assert valid_finding_no_optionals.suggestion is None\n\n    def test_frozen_immutability(self, valid_finding):\n        with pytest.raises((ValidationError, TypeError, AttributeError)):\n            valid_finding.title = \"changed\"\n\n    def test_wrong_type_severity(self):\n        with pytest.raises(ValidationError):\n            Finding(\n                id=\"f-001\",\n                hunk_id=\"h-001\",\n                file_path=\"x.py\",\n                line_number=1,\n                severity=\"NOT_A_SEVERITY\",\n                confidence=Confidence.low,\n                title=\"t\",\n                description=\"d\",\n                suggestion=None,\n                rule_id=\"R001\",\n                stage=ReviewStage.security,\n            )\n\n    def test_json_roundtrip(self, valid_finding):\n        json_str = valid_finding.model_dump_json()\n        restored = Finding.model_validate_json(json_str)\n        assert restored == valid_finding\n\n    def test_hashable_and_equal_instances_same_hash(self):\n        kwargs = dict(\n            id=\"f-001\", hunk_id=\"h-001\", file_path=\"x.py\", line_number=1,\n            severity=Severity.low, confidence=Confidence.low, title=\"t\",\n            description=\"d\", suggestion=None, rule_id=\"R001\", stage=ReviewStage.style,\n        )\n        f1 = Finding(**kwargs)\n        f2 = Finding(**kwargs)\n        assert hash(f1) == hash(f2)\n        assert f1 == f2\n\n\n# ============================================================================\n# Frozen Model Tests — Assessment\n# ============================================================================\n\nclass TestAssessment:\n    \"\"\"Tests for the Assessment frozen model.\"\"\"\n\n    def test_construction_happy_path(self, valid_assessment):\n        assert valid_assessment.id == \"assessment-001\"\n        assert valid_assessment.stage == ReviewStage.security\n        assert valid_assessment.decision == ReviewDecision.warn\n        assert len(valid_assessment.findings) == 1\n        assert valid_assessment.is_partial is False\n        assert valid_assessment.error_message is None\n\n    def test_frozen_immutability(self, valid_assessment):\n        with pytest.raises((ValidationError, TypeError, AttributeError)):\n            valid_assessment.decision = ReviewDecision.block\n\n    def test_json_roundtrip(self, valid_assessment):\n        json_str = valid_assessment.model_dump_json()\n        restored = Assessment.model_validate_json(json_str)\n        assert restored == valid_assessment\n\n\n# ============================================================================\n# Frozen Model Tests — TrustScore\n# ============================================================================\n\nclass TestTrustScore:\n    \"\"\"Tests for the TrustScore frozen model with weight validator.\"\"\"\n\n    def test_construction_happy_path(self, valid_trust_score):\n        assert valid_trust_score.weight == 0.85\n        assert valid_trust_score.accepted_count == 100\n\n    def test_weight_boundary_zero(self):\n        ts = TrustScore(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            weight=0.0, accepted_count=0, dismissed_count=0,\n            updated_at=\"2024-01-01T00:00:00Z\",\n        )\n        assert ts.weight == 0.0\n\n    def test_weight_boundary_one(self):\n        ts = TrustScore(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            weight=1.0, accepted_count=0, dismissed_count=0,\n            updated_at=\"2024-01-01T00:00:00Z\",\n        )\n        assert ts.weight == 1.0\n\n    def test_weight_below_zero_rejected(self):\n        with pytest.raises(ValidationError):\n            TrustScore(\n                reviewer_id=\"r1\", stage=ReviewStage.security,\n                weight=-0.1, accepted_count=0, dismissed_count=0,\n                updated_at=\"2024-01-01T00:00:00Z\",\n            )\n\n    def test_weight_above_one_rejected(self):\n        with pytest.raises(ValidationError):\n            TrustScore(\n                reviewer_id=\"r1\", stage=ReviewStage.security,\n                weight=1.1, accepted_count=0, dismissed_count=0,\n                updated_at=\"2024-01-01T00:00:00Z\",\n            )\n\n    def test_weight_just_inside_lower_bound(self):\n        ts = TrustScore(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            weight=0.001, accepted_count=0, dismissed_count=0,\n            updated_at=\"2024-01-01T00:00:00Z\",\n        )\n        assert ts.weight == pytest.approx(0.001)\n\n    def test_weight_just_inside_upper_bound(self):\n        ts = TrustScore(\n            reviewer_id=\"r1\", stage=ReviewStage.security,\n            weight=0.999, accepted_count=0, dismissed_count=0,\n            updated_at=\"2024-01-01T00:00:00Z\",\n        )\n        assert ts.weight == pytest.approx(0.999)\n\n    def test_frozen_immutability(self, valid_trust_score):\n        with pytest.raises((ValidationError, TypeError, AttributeError)):\n            valid_trust_score.weight = 0.5\n\n    def test_json_roundtrip(self, valid_trust_score):\n        json_str = valid_trust_score.model_dump_json()\n        restored = TrustScore.model_validate_json(json_str)\n        assert restored == valid_trust_score\n\n\n# ============================================================================\n# Frozen Model Tests — TesseraSeal\n# ============================================================================\n\nclass TestTesseraSeal:\n    \"\"\"Tests for the TesseraSeal frozen model.\"\"\"\n\n    def test_construction_happy_path(self, valid_tessera_seal):\n        assert valid_tessera_seal.content_hash == \"a\" * 64\n        assert valid_tessera_seal.previous_hash is None\n        assert valid_tessera_seal.chain_hash == \"b\" * 64\n\n    def test_with_previous_hash(self):\n        seal = TesseraSeal(\n            content_hash=\"a\" * 64,\n            previous_hash=\"c\" * 64,\n            chain_hash=\"d\" * 64,\n            sealed_at=\"2024-06-15T10:30:00Z\",\n            sealer_id=\"sealer-001\",\n        )\n        assert seal.previous_hash == \"c\" * 64\n\n    def test_frozen_immutability(self, valid_tessera_seal):\n        with pytest.raises((ValidationError, TypeError, AttributeError)):\n            valid_tessera_seal.content_hash = \"changed\"\n\n\n# ============================================================================\n# Frozen Model Tests — ReviewReport\n# ============================================================================\n\nclass TestReviewReport:\n    \"\"\"Tests for the ReviewReport frozen model with deep nesting.\"\"\"\n\n    def test_construction_happy_path(self, valid_review_report):\n        assert valid_review_report.id == \"report-001\"\n        assert valid_review_report.decision == ReviewDecision.warn\n        assert len(valid_review_report.findings) == 1\n        assert len(valid_review_report.assessments) == 1\n        assert len(valid_review_report.trust_scores) == 1\n        assert valid_review_report.seal is not None\n        assert valid_review_report.confidence == Confidence.high\n\n    def test_seal_optional_none(self, valid_finding, valid_assessment, valid_trust_score):\n        report = ReviewReport(\n            id=\"report-002\",\n            review_request_id=\"rr-002\",\n            decision=ReviewDecision(\"pass\"),\n            findings=[valid_finding],\n            assessments=[valid_assessment],\n            confidence=Confidence.medium,\n            trust_scores=[valid_trust_score],\n            conflict_notes=[],\n            summary=\"All clear.\",\n            seal=None,\n            created_at=\"2024-06-15T11:00:00Z\",\n            metadata={},\n        )\n        assert report.seal is None\n\n    def test_frozen_immutability(self, valid_review_report):\n        with pytest.raises((ValidationError, TypeError, AttributeError)):\n            valid_review_report.summary = \"changed\"\n\n    def test_json_roundtrip(self, valid_review_report):\n        json_str = valid_review_report.model_dump_json()\n        restored = ReviewReport.model_validate_json(json_str)\n        assert restored == valid_review_report\n\n\n# ============================================================================\n# Frozen Model Tests — ReviewerCredential\n# ============================================================================\n\nclass TestReviewerCredential:\n    \"\"\"Tests for the ReviewerCredential frozen model.\"\"\"\n\n    def test_construction_happy_path(self, valid_reviewer_credential):\n        assert valid_reviewer_credential.reviewer_id == \"reviewer-sec-01\"\n        assert valid_reviewer_credential.is_active is True\n\n    def test_frozen_immutability(self, valid_reviewer_credential):\n        with pytest.raises((ValidationError, TypeError, AttributeError)):\n            valid_reviewer_credential.is_active = False\n\n\n# ============================================================================\n# Frozen Model Tests — PolicyToken\n# ============================================================================\n\nclass TestPolicyToken:\n    \"\"\"Tests for the PolicyToken frozen model.\"\"\"\n\n    def test_construction_happy_path(self, valid_policy_token):\n        assert valid_policy_token.token_id == \"token-001\"\n        assert ClassificationLabel.public in valid_policy_token.allowed_classifications\n        assert valid_policy_token.max_severity == Severity.high\n\n    def test_expires_at_optional(self):\n        token = PolicyToken(\n            token_id=\"t-002\",\n            reviewer_id=\"r1\",\n            allowed_file_patterns=[],\n            denied_file_patterns=[],\n            allowed_classifications=[],\n            max_severity=Severity.info,\n            issued_at=\"2024-01-01T00:00:00Z\",\n            expires_at=None,\n        )\n        assert token.expires_at is None\n\n    def test_frozen_immutability(self, valid_policy_token):\n        with pytest.raises((ValidationError, TypeError, AttributeError)):\n            valid_policy_token.token_id = \"changed\"\n\n\n# ============================================================================\n# Frozen Model Tests — ChroniclerEvent\n# ============================================================================\n\nclass TestChroniclerEvent:\n    \"\"\"Tests for the ChroniclerEvent frozen model.\"\"\"\n\n    def test_construction_happy_path(self, valid_chronicler_event):\n        assert valid_chronicler_event.event_id == \"evt-001\"\n        assert valid_chronicler_event.event_type == ChroniclerEventType[\"review.started\"]\n        assert valid_chronicler_event.stage is None\n        assert valid_chronicler_event.reviewer_id is None\n\n    def test_with_optional_stage_and_reviewer(self):\n        event = ChroniclerEvent(\n            event_id=\"evt-002\",\n            event_type=ChroniclerEventType[\"stage.complete\"],\n            review_request_id=\"rr-001\",\n            timestamp=\"2024-06-15T10:05:00Z\",\n            stage=ReviewStage.security,\n            reviewer_id=\"reviewer-sec-01\",\n            payload={\"findings_count\": \"3\"},\n            message=\"Security stage complete.\",\n        )\n        assert event.stage == ReviewStage.security\n        assert event.reviewer_id == \"reviewer-sec-01\"\n\n    def test_frozen_immutability(self, valid_chronicler_event):\n        with pytest.raises((ValidationError, TypeError, AttributeError)):\n            valid_chronicler_event.message = \"changed\"\n\n\n# ============================================================================\n# Frozen Model Tests — StigmergySignal\n# ============================================================================\n\nclass TestStigmergySignal:\n    \"\"\"Tests for the StigmergySignal frozen model.\"\"\"\n\n    def test_construction_happy_path(self, valid_stigmergy_signal):\n        assert valid_stigmergy_signal.signal_id == \"sig-001\"\n        assert valid_stigmergy_signal.occurrences == 5\n\n    def test_optional_fields_none(self):\n        signal = StigmergySignal(\n            signal_id=\"sig-002\",\n            pattern_key=\"unused-import\",\n            description=\"Unused imports detected\",\n            occurrences=1,\n            first_seen_at=\"2024-01-01T00:00:00Z\",\n            last_seen_at=\"2024-01-01T00:00:00Z\",\n            reviewer_id=None,\n            stage=None,\n            metadata={},\n        )\n        assert signal.reviewer_id is None\n        assert signal.stage is None\n\n    def test_frozen_immutability(self, valid_stigmergy_signal):\n        with pytest.raises((ValidationError, TypeError, AttributeError)):\n            valid_stigmergy_signal.occurrences = 99\n\n\n# ============================================================================\n# Frozen Model Tests — LearningRecord\n# ============================================================================\n\nclass TestLearningRecord:\n    \"\"\"Tests for the LearningRecord frozen model.\"\"\"\n\n    def test_construction_happy_path(self, valid_learning_record):\n        assert valid_learning_record.record_id == \"lr-001\"\n        assert valid_learning_record.accepted is True\n        assert valid_learning_record.human_comment == \"Good catch!\"\n\n    def test_optional_human_comment_none(self):\n        lr = LearningRecord(\n            record_id=\"lr-002\",\n            finding_id=\"f-002\",\n            reviewer_id=\"r1\",\n            stage=ReviewStage.style,\n            rule_id=\"STY-001\",\n            severity=Severity.low,\n            accepted=False,\n            human_comment=None,\n            recorded_at=\"2024-06-15T12:00:00Z\",\n        )\n        assert lr.human_comment is None\n\n    def test_frozen_immutability(self, valid_learning_record):\n        with pytest.raises((ValidationError, TypeError, AttributeError)):\n            valid_learning_record.accepted = False\n\n\n# ============================================================================\n# Frozen Model Tests — KindexEntry\n# ============================================================================\n\nclass TestKindexEntry:\n    \"\"\"Tests for the KindexEntry frozen model.\"\"\"\n\n    def test_construction_happy_path(self, valid_kindex_entry):\n        assert valid_kindex_entry.key == \"kindex-001\"\n        assert valid_kindex_entry.kind == \"review\"\n        assert \"auth\" in valid_kindex_entry.tags\n\n    def test_empty_tags_and_data(self):\n        entry = KindexEntry(\n            key=\"k-002\",\n            kind=\"context\",\n            summary=\"Empty context\",\n            data={},\n            tags=[],\n            created_at=\"2024-01-01T00:00:00Z\",\n            updated_at=\"2024-01-01T00:00:00Z\",\n        )\n        assert entry.data == {}\n        assert entry.tags == []\n\n    def test_frozen_immutability(self, valid_kindex_entry):\n        with pytest.raises((ValidationError, TypeError, AttributeError)):\n            valid_kindex_entry.key = \"changed\"\n\n\n# ============================================================================\n# Frozen Model Tests — PipelineResult\n# ============================================================================\n\nclass TestPipelineResult:\n    \"\"\"Tests for the PipelineResult frozen model.\"\"\"\n\n    def test_construction_happy_path(self, valid_pipeline_result):\n        assert valid_pipeline_result.output_format == OutputFormat.md\n        assert valid_pipeline_result.exit_code == 1\n        assert isinstance(valid_pipeline_result.review_request, ReviewRequest)\n        assert isinstance(valid_pipeline_result.report, ReviewReport)\n        assert len(valid_pipeline_result.assessments) == 1\n        assert len(valid_pipeline_result.events) == 1\n\n    def test_frozen_immutability(self, valid_pipeline_result):\n        with pytest.raises((ValidationError, TypeError, AttributeError)):\n            valid_pipeline_result.exit_code = 0\n\n\n# ============================================================================\n# Canonical Serialization Tests\n# ============================================================================\n\nclass TestCanonicalBytes:\n    \"\"\"Tests for canonical_bytes() on _ExemplarBase subclasses.\"\"\"\n\n    def test_returns_bytes(self, valid_finding):\n        result = valid_finding.canonical_bytes()\n        assert isinstance(result, bytes)\n\n    def test_valid_utf8_json(self, valid_finding):\n        raw = valid_finding.canonical_bytes()\n        text = raw.decode(\"utf-8\")\n        parsed = json.loads(text)\n        assert isinstance(parsed, dict)\n\n    def test_deterministic_same_instance(self, valid_finding):\n        first = valid_finding.canonical_bytes()\n        second = valid_finding.canonical_bytes()\n        assert first == second\n\n    def test_deterministic_equivalent_instances(self):\n        kwargs = dict(\n            id=\"f-001\", hunk_id=\"h-001\", file_path=\"x.py\", line_number=1,\n            severity=Severity.low, confidence=Confidence.low, title=\"t\",\n            description=\"d\", suggestion=None, rule_id=\"R001\", stage=ReviewStage.style,\n        )\n        f1 = Finding(**kwargs)\n        f2 = Finding(**kwargs)\n        assert f1.canonical_bytes() == f2.canonical_bytes()\n\n    def test_json_matches_model_dump(self, valid_finding):\n        raw = valid_finding.canonical_bytes()\n        parsed = json.loads(raw)\n        expected = valid_finding.model_dump(mode=\"json\")\n        assert parsed == expected\n\n    def test_different_instances_different_bytes(self):\n        f1 = Finding(\n            id=\"f-001\", hunk_id=\"h-001\", file_path=\"x.py\", line_number=1,\n            severity=Severity.low, confidence=Confidence.low, title=\"t\",\n            description=\"d\", suggestion=None, rule_id=\"R001\", stage=ReviewStage.style,\n        )\n        f2 = Finding(\n            id=\"f-002\", hunk_id=\"h-001\", file_path=\"x.py\", line_number=1,\n            severity=Severity.high, confidence=Confidence.high, title=\"different\",\n            description=\"d\", suggestion=None, rule_id=\"R002\", stage=ReviewStage.security,\n        )\n        assert f1.canonical_bytes() != f2.canonical_bytes()\n\n    def test_sort_keys_compact_format(self, valid_finding):\n        raw = valid_finding.canonical_bytes()\n        text = raw.decode(\"utf-8\")\n        # Compact separators means no spaces after : or ,\n        assert \": \" not in text or text.count(\": \") == 0  # heuristic\n        # Verify by re-serializing with same params\n        expected = json.dumps(\n            valid_finding.model_dump(mode=\"json\"),\n            sort_keys=True,\n            separators=(\",\", \":\"),\n        ).encode(\"utf-8\")\n        assert raw == expected\n\n\nclass TestCanonicalHash:\n    \"\"\"Tests for canonical_hash() on _ExemplarBase subclasses.\"\"\"\n\n    def test_returns_64_char_hex_string(self, valid_finding):\n        result = valid_finding.canonical_hash()\n        assert isinstance(result, str)\n        assert len(result) == 64\n        assert all(c in \"0123456789abcdef\" for c in result)\n\n    def test_matches_sha256_of_canonical_bytes(self, valid_finding):\n        expected = hashlib.sha256(valid_finding.canonical_bytes()).hexdigest()\n        assert valid_finding.canonical_hash() == expected\n\n    def test_deterministic_same_instance(self, valid_finding):\n        first = valid_finding.canonical_hash()\n        second = valid_finding.canonical_hash()\n        assert first == second\n\n    def test_deterministic_equivalent_instances(self):\n        kwargs = dict(\n            id=\"f-001\", hunk_id=\"h-001\", file_path=\"x.py\", line_number=1,\n            severity=Severity.low, confidence=Confidence.low, title=\"t\",\n            description=\"d\", suggestion=None, rule_id=\"R001\", stage=ReviewStage.style,\n        )\n        f1 = Finding(**kwargs)\n        f2 = Finding(**kwargs)\n        assert f1.canonical_hash() == f2.canonical_hash()\n\n    def test_different_instances_different_hash(self):\n        f1 = Finding(\n            id=\"f-001\", hunk_id=\"h-001\", file_path=\"x.py\", line_number=1,\n            severity=Severity.low, confidence=Confidence.low, title=\"t\",\n            description=\"d\", suggestion=None, rule_id=\"R001\", stage=ReviewStage.style,\n        )\n        f2 = Finding(\n            id=\"f-002\", hunk_id=\"h-002\", file_path=\"y.py\", line_number=2,\n            severity=Severity.high, confidence=Confidence.high, title=\"u\",\n            description=\"e\", suggestion=\"fix\", rule_id=\"R002\", stage=ReviewStage.security,\n        )\n        assert f1.canonical_hash() != f2.canonical_hash()\n\n    def test_hash_on_nested_model(self, valid_review_report):\n        \"\"\"canonical_hash works on deeply nested models.\"\"\"\n        result = valid_review_report.canonical_hash()\n        assert len(result) == 64\n        expected = hashlib.sha256(valid_review_report.canonical_bytes()).hexdigest()\n        assert result == expected\n\n    def test_canonical_hash_on_trust_score(self, valid_trust_score):\n        result = valid_trust_score.canonical_hash()\n        assert len(result) == 64\n        assert result == hashlib.sha256(valid_trust_score.canonical_bytes()).hexdigest()\n\n\n# ============================================================================\n# Invariant Tests — PACT_KEY, frozen, extra='forbid'\n# ============================================================================\n\nclass TestExemplarBaseInvariants:\n    \"\"\"Tests for _ExemplarBase class-level invariants.\"\"\"\n\n    def test_pact_key_present(self):\n        assert hasattr(_ExemplarBase, \"PACT_KEY\")\n        assert _ExemplarBase.PACT_KEY == \"exemplar.schemas\"\n\n    def test_pact_key_inherited(self, valid_finding):\n        assert hasattr(valid_finding, \"PACT_KEY\")\n        assert valid_finding.PACT_KEY == \"exemplar.schemas\"\n\n    def test_all_models_frozen(self, valid_finding, valid_diff_hunk, valid_assessment,\n                                valid_trust_score, valid_tessera_seal,\n                                valid_review_request, valid_review_report,\n                                valid_reviewer_credential, valid_policy_token,\n                                valid_chronicler_event, valid_stigmergy_signal,\n                                valid_learning_record, valid_kindex_entry):\n        \"\"\"All model instances should reject attribute assignment.\"\"\"\n        instances = [\n            valid_finding, valid_diff_hunk, valid_assessment,\n            valid_trust_score, valid_tessera_seal,\n            valid_review_request, valid_review_report,\n            valid_reviewer_credential, valid_policy_token,\n            valid_chronicler_event, valid_stigmergy_signal,\n            valid_learning_record, valid_kindex_entry,\n        ]\n        for inst in instances:\n            # Get first field name\n            field_name = next(iter(inst.model_fields))\n            with pytest.raises((ValidationError, TypeError, AttributeError)):\n                setattr(inst, field_name, \"INVALID_MUTATION\")\n\n\nclass TestJsonRoundTrips:\n    \"\"\"Test JSON round-trip invariant across multiple models.\"\"\"\n\n    def test_diffhunk_roundtrip(self, valid_diff_hunk):\n        restored = DiffHunk.model_validate_json(valid_diff_hunk.model_dump_json())\n        assert restored == valid_diff_hunk\n\n    def test_finding_roundtrip(self, valid_finding):\n        restored = Finding.model_validate_json(valid_finding.model_dump_json())\n        assert restored == valid_finding\n\n    def test_assessment_roundtrip(self, valid_assessment):\n        restored = Assessment.model_validate_json(valid_assessment.model_dump_json())\n        assert restored == valid_assessment\n\n    def test_trust_score_roundtrip(self, valid_trust_score):\n        restored = TrustScore.model_validate_json(valid_trust_score.model_dump_json())\n        assert restored == valid_trust_score\n\n    def test_tessera_seal_roundtrip(self, valid_tessera_seal):\n        restored = TesseraSeal.model_validate_json(valid_tessera_seal.model_dump_json())\n        assert restored == valid_tessera_seal\n\n    def test_review_report_roundtrip(self, valid_review_report):\n        restored = ReviewReport.model_validate_json(valid_review_report.model_dump_json())\n        assert restored == valid_review_report\n\n    def test_review_request_roundtrip(self, valid_review_request):\n        restored = ReviewRequest.model_validate_json(valid_review_request.model_dump_json())\n        assert restored == valid_review_request\n\n    def test_reviewer_credential_roundtrip(self, valid_reviewer_credential):\n        restored = ReviewerCredential.model_validate_json(valid_reviewer_credential.model_dump_json())\n        assert restored == valid_reviewer_credential\n\n    def test_policy_token_roundtrip(self, valid_policy_token):\n        restored = PolicyToken.model_validate_json(valid_policy_token.model_dump_json())\n        assert restored == valid_policy_token\n\n    def test_chronicler_event_roundtrip(self, valid_chronicler_event):\n        restored = ChroniclerEvent.model_validate_json(valid_chronicler_event.model_dump_json())\n        assert restored == valid_chronicler_event\n\n    def test_stigmergy_signal_roundtrip(self, valid_stigmergy_signal):\n        restored = StigmergySignal.model_validate_json(valid_stigmergy_signal.model_dump_json())\n        assert restored == valid_stigmergy_signal\n\n    def test_learning_record_roundtrip(self, valid_learning_record):\n        restored = LearningRecord.model_validate_json(valid_learning_record.model_dump_json())\n        assert restored == valid_learning_record\n\n    def test_kindex_entry_roundtrip(self, valid_kindex_entry):\n        restored = KindexEntry.model_validate_json(valid_kindex_entry.model_dump_json())\n        assert restored == valid_kindex_entry\n\n\n# ============================================================================\n# Edge Case Tests — Empty Collections and Boundary Values\n# ============================================================================\n\nclass TestEdgeCases:\n    \"\"\"Edge case tests for boundary conditions.\"\"\"\n\n    def test_review_request_empty_hunks(self):\n        rr = ReviewRequest(\n            id=\"rr-empty\",\n            source=\"manual\",\n            hunks=[],\n            file_paths=[],\n            created_at=\"2024-01-01T00:00:00Z\",\n            metadata={},\n        )\n        assert rr.hunks == []\n        assert rr.file_paths == []\n\n    def test_review_report_empty_findings(self, valid_assessment, valid_trust_score):\n        report = ReviewReport(\n            id=\"report-empty\",\n            review_request_id=\"rr-001\",\n            decision=ReviewDecision(\"pass\"),\n            findings=[],\n            assessments=[valid_assessment],\n            confidence=Confidence.high,\n            trust_scores=[valid_trust_score],\n            conflict_notes=[],\n            summary=\"No issues found.\",\n            seal=None,\n            created_at=\"2024-06-15T11:00:00Z\",\n            metadata={},\n        )\n        assert report.findings == []\n        assert report.conflict_notes == []\n\n    def test_assessment_empty_findings(self):\n        assessment = Assessment(\n            id=\"a-empty\",\n            review_request_id=\"rr-001\",\n            stage=ReviewStage.style,\n            reviewer_id=\"r1\",\n            decision=ReviewDecision(\"pass\"),\n            findings=[],\n            confidence=Confidence.high,\n            is_partial=False,\n            error_message=None,\n            duration_ms=0,\n            created_at=\"2024-01-01T00:00:00Z\",\n        )\n        assert assessment.findings == []\n        assert assessment.duration_ms == 0\n\n    def test_diffhunk_empty_lines(self):\n        hunk = DiffHunk(\n            id=\"h-empty\",\n            file_path=\"empty.py\",\n            start_line_old=0,\n            count_old=0,\n            start_line_new=0,\n            count_new=0,\n            context_before=[],\n            added_lines=[],\n            removed_lines=[],\n            context_after=[],\n            raw_header=\"@@\",\n            classifications=[],\n            language=None,\n        )\n        assert hunk.added_lines == []\n        assert hunk.removed_lines == []\n\n    def test_multiple_classifications_on_hunk(self):\n        hunk = DiffHunk(\n            id=\"h-multi\",\n            file_path=\"config.py\",\n            start_line_old=1,\n            count_old=1,\n            start_line_new=1,\n            count_new=1,\n            context_before=[],\n            added_lines=[\"SECRET=abc\"],\n            removed_lines=[],\n            context_after=[],\n            raw_header=\"@@\",\n            classifications=[ClassificationLabel.secret, ClassificationLabel.pii],\n            language=\"python\",\n        )\n        assert len(hunk.classifications) == 2\n        assert ClassificationLabel.secret in hunk.classifications\n        assert ClassificationLabel.pii in hunk.classifications\n\n    def test_model_dump_returns_dict(self, valid_finding):\n        dumped = valid_finding.model_dump()\n        assert isinstance(dumped, dict)\n        assert \"id\" in dumped\n        assert \"severity\" in dumped\n\n    def test_model_validate_from_dict(self, valid_finding):\n        dumped = valid_finding.model_dump()\n        restored = Finding.model_validate(dumped)\n        assert restored == valid_finding\n"
+}

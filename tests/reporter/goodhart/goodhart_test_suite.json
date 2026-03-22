@@ -1,0 +1,869 @@
+{
+  "component_id": "reporter",
+  "contract_version": 1,
+  "test_cases": [
+    {
+      "id": "goodhart_canonicalize_different_reports_different_bytes",
+      "description": "Canonicalize must produce distinct byte outputs for reports that differ in any field, ensuring it is not returning a hardcoded value",
+      "function": "canonicalize",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Two ReviewReport instances differing only in their summary field, and another pair differing only in decision",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Two reports with different summaries produce different canonical bytes",
+        "Two reports with different decisions produce different canonical bytes"
+      ]
+    },
+    {
+      "id": "goodhart_canonicalize_sorted_keys_nested",
+      "description": "Canonical output must have lexicographically sorted keys at all nesting levels including within findings and assessments",
+      "function": "canonicalize",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with multiple findings containing various fields",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Parsed JSON from canonical bytes has sorted keys at every nesting level",
+        "Keys in nested finding objects are sorted"
+      ]
+    },
+    {
+      "id": "goodhart_canonicalize_no_whitespace",
+      "description": "Canonical byte representation must use compact separators with zero whitespace padding between tokens",
+      "function": "canonicalize",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with findings and metadata",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "No space after colon separator in canonical output",
+        "No space after comma separator in canonical output",
+        "No newlines in canonical output"
+      ]
+    },
+    {
+      "id": "goodhart_canonicalize_unicode_content",
+      "description": "Canonicalize must correctly handle non-ASCII unicode characters in report fields without escaping them (ensure_ascii=False)",
+      "function": "canonicalize",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with unicode characters in summary and finding descriptions (e.g. Chinese, emoji, accented chars)",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Unicode characters appear unescaped in the canonical bytes",
+        "Output is valid UTF-8"
+      ]
+    },
+    {
+      "id": "goodhart_canonicalize_metadata_ordering",
+      "description": "Canonical output must sort metadata dictionary keys lexicographically regardless of insertion order",
+      "function": "canonicalize",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with metadata keys inserted in reverse alphabetical order",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Metadata keys appear in sorted order in the canonical bytes"
+      ]
+    },
+    {
+      "id": "goodhart_seal_report_content_hash_is_sha256_of_canonical",
+      "description": "The seal's content_hash must be the actual SHA-256 hex digest of the canonicalize output, verifiable independently",
+      "function": "seal_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A fresh report with specific known content, sealed with a genesis chain store",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "content_hash equals hashlib.sha256(canonicalize(original_report)).hexdigest()"
+      ]
+    },
+    {
+      "id": "goodhart_seal_report_chain_hash_genesis_computation",
+      "description": "When previous_hash is None (genesis), chain_hash must be SHA-256 of (content_hash + '|' + 'GENESIS')",
+      "function": "seal_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report sealed with a chain store that returns None for get_previous_hash",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "chain_hash equals hashlib.sha256((content_hash + '|GENESIS').encode()).hexdigest()"
+      ]
+    },
+    {
+      "id": "goodhart_seal_report_chain_hash_with_previous",
+      "description": "When previous_hash exists, chain_hash must be SHA-256 of (content_hash + '|' + previous_hash) using the exact previous hash value",
+      "function": "seal_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report sealed with a chain store returning a specific known previous hash different from visible test values",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "chain_hash equals hashlib.sha256((content_hash + '|' + specific_prev_hash).encode()).hexdigest()"
+      ]
+    },
+    {
+      "id": "goodhart_seal_report_sealer_id_preserved",
+      "description": "The sealed report's seal.sealer_id must exactly match the provided sealer_id parameter",
+      "function": "seal_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A sealer_id with unusual but valid characters like 'sealer-with-special_chars.v2'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "sealed_report.seal.sealer_id equals the provided sealer_id string"
+      ]
+    },
+    {
+      "id": "goodhart_seal_report_timestamp_preserved",
+      "description": "The sealed report's seal.sealed_at must exactly match the injected timestamp parameter",
+      "function": "seal_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A specific timestamp different from any used in visible tests, e.g. '2099-12-31T23:59:59Z'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "sealed_report.seal.sealed_at equals the injected timestamp"
+      ]
+    },
+    {
+      "id": "goodhart_seal_report_append_seal_called",
+      "description": "seal_report must call chain_store.append_seal exactly once with the computed seal data",
+      "function": "seal_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {
+        "chain_store": "Mock SealChainStoreProtocol tracking append_seal calls"
+      },
+      "input_values": {},
+      "input_description": "",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "chain_store.append_seal was called exactly once"
+      ]
+    },
+    {
+      "id": "goodhart_seal_report_all_non_seal_fields_preserved",
+      "description": "Every field of the returned report except seal must be identical to the input, including metadata, conflict_notes, trust_scores, and all nested structures",
+      "function": "seal_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with populated conflict_notes, trust_scores, metadata, and multiple findings",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "report.id matches",
+        "report.summary matches",
+        "report.findings matches",
+        "report.assessments matches",
+        "report.metadata matches",
+        "report.conflict_notes matches",
+        "report.trust_scores matches",
+        "report.decision matches",
+        "report.confidence matches"
+      ]
+    },
+    {
+      "id": "goodhart_verify_seal_missing_seal_fields",
+      "description": "When seal is missing, verification result must have empty-string hashes for expected fields and specific missing_seal status",
+      "function": "verify_seal",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with seal=None",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "status is 'missing_seal'",
+        "valid is False",
+        "content_hash_match is False",
+        "chain_hash_match is False"
+      ]
+    },
+    {
+      "id": "goodhart_verify_seal_expected_vs_actual_hash_fields",
+      "description": "Verification result must correctly populate expected hashes from the seal and actual hashes from recomputation",
+      "function": "verify_seal",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A correctly sealed report verified to check all four hash fields",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "expected_content_hash equals seal.content_hash",
+        "expected_chain_hash equals seal.chain_hash",
+        "actual_content_hash equals independently computed SHA-256 of canonicalize output",
+        "actual_chain_hash equals independently computed chain hash"
+      ]
+    },
+    {
+      "id": "goodhart_verify_seal_both_hashes_wrong",
+      "description": "When both content_hash and chain_hash in the seal are wrong, status should be invalid_content_hash (content takes priority)",
+      "function": "verify_seal",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with a seal containing completely fabricated content_hash and chain_hash values",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "status is 'invalid_content_hash'",
+        "valid is False",
+        "content_hash_match is False",
+        "chain_hash_match is False"
+      ]
+    },
+    {
+      "id": "goodhart_verify_seal_only_chain_hash_wrong",
+      "description": "When content_hash is correct but chain_hash is wrong, status must be invalid_chain_hash specifically",
+      "function": "verify_seal",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A sealed report where seal.chain_hash is manually replaced with a different valid hex string while content_hash remains correct",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "status is 'invalid_chain_hash'",
+        "valid is False",
+        "content_hash_match is True",
+        "chain_hash_match is False"
+      ]
+    },
+    {
+      "id": "goodhart_verify_seal_verification_error_status",
+      "description": "When canonicalization fails during verify_seal, the result must have status verification_error with a non-empty error message, never raising an exception",
+      "function": "verify_seal",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report that has a seal but is constructed in a way that causes canonicalize to fail internally",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "No exception is raised",
+        "status is 'verification_error'",
+        "valid is False",
+        "error field is non-empty string"
+      ]
+    },
+    {
+      "id": "goodhart_format_report_json_truncated_always_false",
+      "description": "JSON format output must never be truncated regardless of content size",
+      "function": "format_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with very many findings producing large JSON output",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "FormattedReport.truncated is False for json format"
+      ]
+    },
+    {
+      "id": "goodhart_format_report_md_truncated_always_false",
+      "description": "Markdown format output must never be truncated regardless of content size",
+      "function": "format_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with very many findings producing large Markdown output",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "FormattedReport.truncated is False for md format"
+      ]
+    },
+    {
+      "id": "goodhart_format_report_github_truncation_includes_notice",
+      "description": "When GitHub format output exceeds 65000 characters, the truncation notice constant must be appended at the end",
+      "function": "format_report",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with enough findings to produce GitHub output exceeding 65000 characters",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "content ends with the GitHubTruncationNotice string",
+        "truncated is True",
+        "Total length of content is 65000 + len(truncation_notice)"
+      ]
+    },
+    {
+      "id": "goodhart_format_report_github_exact_boundary",
+      "description": "GitHub format output at exactly 65000 characters should not be truncated",
+      "function": "format_report",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report producing GitHub output of exactly 65000 characters (may need careful construction or checking the boundary condition)",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "If output is exactly 65000 chars, truncated is False"
+      ]
+    },
+    {
+      "id": "goodhart_format_report_deterministic_json",
+      "description": "Formatting the same report twice with the same timestamp in JSON format must produce byte-identical output",
+      "function": "format_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Any valid report formatted twice as JSON with the same timestamp",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Two calls produce identical content strings"
+      ]
+    },
+    {
+      "id": "goodhart_format_report_deterministic_md",
+      "description": "Formatting the same report twice with the same timestamp in Markdown format must produce byte-identical output",
+      "function": "format_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Any valid report formatted twice as md with the same timestamp",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Two calls produce identical content strings"
+      ]
+    },
+    {
+      "id": "goodhart_format_report_deterministic_github",
+      "description": "Formatting the same report twice with the same timestamp in GitHub format must produce byte-identical output",
+      "function": "format_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Any valid report formatted twice as github with the same timestamp",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Two calls produce identical content strings"
+      ]
+    },
+    {
+      "id": "goodhart_format_report_rendered_at_matches_timestamp",
+      "description": "FormattedReport.rendered_at must match the injected timestamp parameter",
+      "function": "format_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report formatted with a specific unusual timestamp like '2000-01-01T00:00:00.123456Z'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "rendered_at equals the provided timestamp"
+      ]
+    },
+    {
+      "id": "goodhart_render_markdown_all_severity_badges",
+      "description": "Each severity level must map to its specific emoji badge in markdown output (not just the ones tested in visible tests)",
+      "function": "render_markdown",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with exactly one finding at each severity level (critical, high, medium, low, info)",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "🔴 appears for critical findings",
+        "🟠 appears for high findings",
+        "🟡 appears for medium findings",
+        "🔵 appears for low findings",
+        "⚪ appears for info findings"
+      ]
+    },
+    {
+      "id": "goodhart_render_markdown_report_id_in_heading",
+      "description": "Markdown output must contain the report's id in a top-level heading",
+      "function": "render_markdown",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with a unique distinctive report id like 'unique-report-id-xyz-789'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Report id string appears in the output",
+        "A markdown heading containing the report id exists"
+      ]
+    },
+    {
+      "id": "goodhart_render_markdown_summary_table",
+      "description": "Markdown output must include a summary table with finding counts per severity level",
+      "function": "render_markdown",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with 2 critical, 1 high, and 3 medium findings",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Output contains severity count information for each level"
+      ]
+    },
+    {
+      "id": "goodhart_render_markdown_seal_section_present",
+      "description": "When report is sealed, markdown output must include a seal status section",
+      "function": "render_markdown",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A sealed report rendered as markdown",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Output contains seal-related information when report.seal is not None"
+      ]
+    },
+    {
+      "id": "goodhart_render_markdown_seal_section_absent",
+      "description": "When report is not sealed, markdown output must not include a seal status section",
+      "function": "render_markdown",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "An unsealed report rendered as markdown",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Output does not contain seal hash information when report.seal is None"
+      ]
+    },
+    {
+      "id": "goodhart_render_markdown_findings_grouped_by_stage",
+      "description": "Findings must be grouped by their ReviewStage under stage-level headings in the markdown output",
+      "function": "render_markdown",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with findings in security, correctness, and style stages",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Each stage with findings has a corresponding heading",
+        "Findings from different stages appear under their respective stage headings"
+      ]
+    },
+    {
+      "id": "goodhart_render_markdown_finding_ordering",
+      "description": "Within each stage, findings must be sorted by severity descending then by file_path ascending for deterministic output",
+      "function": "render_markdown",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with multiple findings in the same stage: critical in z.py, medium in a.py, critical in a.py",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Critical finding appears before medium finding in same stage",
+        "Among same-severity findings, alphabetically earlier file_path appears first"
+      ]
+    },
+    {
+      "id": "goodhart_render_github_details_tags_structure",
+      "description": "GitHub output must use proper <details>/<summary> HTML structure for each stage that has findings",
+      "function": "render_github",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with findings in multiple stages",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Output contains matching <details> and </details> tags",
+        "Output contains matching <summary> and </summary> tags",
+        "Each stage with findings has its own details section"
+      ]
+    },
+    {
+      "id": "goodhart_render_github_truncation_notice_exact",
+      "description": "The truncation notice appended to GitHub output must exactly match the specified constant value",
+      "function": "render_github",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report producing GitHub output exceeding 65000 characters",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Truncated output ends with exactly '\\n\\n---\\n⚠️ *Report truncated. Full report available in JSON format.*'"
+      ]
+    },
+    {
+      "id": "goodhart_render_github_truncated_body_is_65000_chars",
+      "description": "When truncation occurs, the body portion before the truncation notice must be exactly 65000 characters",
+      "function": "render_github",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with very many findings producing oversized GitHub output",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "The output minus the truncation notice suffix is exactly 65000 characters long"
+      ]
+    },
+    {
+      "id": "goodhart_render_json_no_seal_field_null",
+      "description": "render_json must include the seal field even when it is None (showing null in JSON), since the contract says 'includes seal data if present' but doesn't say to exclude it when absent",
+      "function": "render_json",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "An unsealed report rendered with render_json",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Output JSON contains the 'seal' key"
+      ]
+    },
+    {
+      "id": "goodhart_render_json_sorted_keys_deeply",
+      "description": "render_json must sort keys at all nesting levels including within findings, assessments, and trust_scores",
+      "function": "render_json",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with findings, assessments, and trust_scores to verify deep key sorting",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "All objects at every nesting level have sorted keys"
+      ]
+    },
+    {
+      "id": "goodhart_seal_report_no_callback_still_works",
+      "description": "seal_report must work correctly when chronicler_callback is None, producing a valid sealed report without attempting event emission",
+      "function": "seal_report",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report sealed with chronicler_callback=None",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Sealed report is returned with valid seal",
+        "No exception raised"
+      ]
+    },
+    {
+      "id": "goodhart_canonicalize_with_conflict_notes",
+      "description": "Canonicalize must include conflict_notes in the output and produce different bytes when conflict_notes differ",
+      "function": "canonicalize",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Two reports identical except one has conflict_notes=['note1', 'note2'] and the other has empty conflict_notes",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "canonical bytes for report with conflict_notes differ from report without",
+        "conflict_notes content is present in the canonical JSON"
+      ]
+    },
+    {
+      "id": "goodhart_canonicalize_with_metadata",
+      "description": "Canonicalize must include metadata in canonical output and metadata changes must produce different hashes",
+      "function": "canonicalize",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Two reports identical except one has metadata={'key': 'value1'} and the other has metadata={'key': 'value2'}",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Changing metadata values produces different canonical bytes"
+      ]
+    },
+    {
+      "id": "goodhart_seal_chain_hash_pipe_separator",
+      "description": "Chain hash computation must use pipe '|' as separator between content_hash and previous_hash, not any other delimiter",
+      "function": "seal_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report sealed with a chain store returning a known previous hash, verifying the pipe separator is used",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "chain_hash matches SHA-256 of content_hash + '|' + previous_hash exactly"
+      ]
+    },
+    {
+      "id": "goodhart_format_report_report_id_matches",
+      "description": "FormattedReport.report_id must match the input report's id for any report, not just reports with specific known ids",
+      "function": "format_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with a distinctive unusual id like 'rpt-adversarial-test-42'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "formatted.report_id equals report.id"
+      ]
+    },
+    {
+      "id": "goodhart_format_report_output_format_matches_all",
+      "description": "FormattedReport.output_format must match the requested format for every format variant",
+      "function": "format_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Same report formatted in all three formats",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "output_format is 'json' when json requested",
+        "output_format is 'md' when md requested",
+        "output_format is 'github' when github requested"
+      ]
+    },
+    {
+      "id": "goodhart_format_report_json_parseable_with_findings",
+      "description": "JSON format output must be parseable by json.loads and contain the actual report data including findings",
+      "function": "format_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with 3 findings formatted as JSON",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "json.loads succeeds on the content",
+        "Parsed JSON contains findings array with correct count",
+        "Parsed JSON contains the report id"
+      ]
+    },
+    {
+      "id": "goodhart_render_github_multiple_stages",
+      "description": "GitHub output must have separate <details> sections for each stage that contains findings, not just one section for all",
+      "function": "render_github",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A report with findings in security, correctness, and architecture stages (3 stages)",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Number of <details> sections matches number of stages with findings"
+      ]
+    },
+    {
+      "id": "goodhart_seal_report_returns_new_instance",
+      "description": "seal_report must return a distinct object instance from the input, not the same reference",
+      "function": "seal_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Any valid unsealed report",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "returned report is not the same object (id() differs)",
+        "returned report has a seal while original does not"
+      ]
+    },
+    {
+      "id": "goodhart_type_iso8601_with_fractional_seconds",
+      "description": "Iso8601Timestamp must accept timestamps with fractional seconds of varying precision",
+      "function": "Iso8601Timestamp",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Various timestamps with different fractional second precisions",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Accepts timestamp with milliseconds like '2024-01-01T00:00:00.123Z'",
+        "Accepts timestamp with microseconds like '2024-01-01T00:00:00.123456Z'",
+        "Accepts timestamp with single decimal like '2024-01-01T00:00:00.1Z'"
+      ]
+    },
+    {
+      "id": "goodhart_type_sha256hex_empty_string_valid",
+      "description": "Sha256Hex must accept empty string as valid since hashes may be unavailable",
+      "function": "Sha256Hex",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "An empty string passed to Sha256Hex",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Empty string '' is accepted by Sha256Hex"
+      ]
+    },
+    {
+      "id": "goodhart_type_report_id_boundary_256",
+      "description": "ReportId must accept a string of exactly 256 characters (upper boundary)",
+      "function": "ReportId",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A string of exactly 256 'a' characters",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "String of exactly 256 chars is accepted"
+      ]
+    },
+    {
+      "id": "goodhart_type_report_id_boundary_1",
+      "description": "ReportId must accept a string of exactly 1 character (lower boundary)",
+      "function": "ReportId",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "The string 'x'",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Single character string is accepted"
+      ]
+    },
+    {
+      "id": "goodhart_type_sealer_id_boundary_128",
+      "description": "SealerId must accept a string of exactly 128 characters (upper boundary)",
+      "function": "SealerId",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A string of exactly 128 'a' characters",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "String of exactly 128 chars is accepted"
+      ]
+    },
+    {
+      "id": "goodhart_type_sealer_id_too_long",
+      "description": "SealerId must reject a string longer than 128 characters",
+      "function": "SealerId",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A string of 129 'a' characters",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "String of 129 chars is rejected with validation error"
+      ]
+    },
+    {
+      "id": "goodhart_immutable_formatted_report",
+      "description": "FormattedReport instances must be frozen (immutable) - attempting to set attributes should raise an error",
+      "function": "format_report",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A FormattedReport instance from format_report",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Attempting to modify content attribute raises an error",
+        "Attempting to modify truncated attribute raises an error"
+      ]
+    },
+    {
+      "id": "goodhart_immutable_seal_verification_result",
+      "description": "SealVerificationResult instances must be frozen (immutable) - attempting to set attributes should raise an error",
+      "function": "verify_seal",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A SealVerificationResult instance from verify_seal",
+      "expected_output_description": "",
+      "expected_error": "",
+      "assertions": [
+        "Attempting to modify status attribute raises an error"
+      ]
+    }
+  ],
+  "test_language": "python",
+  "generated_code": "\"\"\"\nAdversarial hidden acceptance tests for the Report Formatter & Sealer component.\nThese tests catch implementations that pass visible tests through shortcuts\n(hardcoded returns, incomplete logic, etc.) rather than truly satisfying the contract.\n\"\"\"\nimport hashlib\nimport json\nimport pytest\nimport asyncio\nfrom unittest.mock import MagicMock, AsyncMock\n\nfrom exemplar.reporter import (\n    canonicalize,\n    seal_report,\n    verify_seal,\n    format_report,\n    render_json,\n    render_markdown,\n    render_github,\n    ReviewReport,\n    ReviewDecision,\n    Finding,\n    Assessment,\n    Confidence,\n    TrustScore,\n    TesseraSeal,\n    Severity,\n    ReviewStage,\n    OutputFormat,\n    FormattedReport,\n    SealVerificationResult,\n    ReportId,\n    Iso8601Timestamp,\n    Sha256Hex,\n    SealerId,\n    GithubCharLimit,\n)\n\n\n# ---- Helpers ----\n\ndef make_finding(\n    id=\"f1\",\n    hunk_id=\"h1\",\n    file_path=\"src/main.py\",\n    line_number=10,\n    severity=\"medium\",\n    confidence=\"high\",\n    title=\"Test Finding\",\n    description=\"A test finding\",\n    suggestion=None,\n    rule_id=\"R001\",\n    stage=\"security\",\n):\n    return Finding(\n        id=id,\n        hunk_id=hunk_id,\n        file_path=file_path,\n        line_number=line_number,\n        severity=severity,\n        confidence=confidence,\n        title=title,\n        description=description,\n        suggestion=suggestion,\n        rule_id=rule_id,\n        stage=stage,\n    )\n\n\ndef make_assessment(\n    id=\"a1\",\n    review_request_id=\"rr1\",\n    stage=\"security\",\n    reviewer_id=\"rev1\",\n    decision=\"pass\",\n    findings=None,\n    confidence=\"high\",\n    is_partial=False,\n    error_message=None,\n    duration_ms=100,\n    created_at=\"2024-01-01T00:00:00Z\",\n):\n    return Assessment(\n        id=id,\n        review_request_id=review_request_id,\n        stage=stage,\n        reviewer_id=reviewer_id,\n        decision=decision,\n        findings=findings or [],\n        confidence=confidence,\n        is_partial=is_partial,\n        error_message=error_message,\n        duration_ms=duration_ms,\n        created_at=created_at,\n    )\n\n\ndef make_report(\n    id=\"report-adv-001\",\n    review_request_id=\"rr-adv-001\",\n    decision=\"pass\",\n    findings=None,\n    assessments=None,\n    confidence=\"high\",\n    trust_scores=None,\n    conflict_notes=None,\n    summary=\"Adversarial test report\",\n    seal=None,\n    created_at=\"2024-06-15T12:00:00Z\",\n    metadata=None,\n):\n    return ReviewReport(\n        id=id,\n        review_request_id=review_request_id,\n        decision=decision,\n        findings=findings or [],\n        assessments=assessments or [],\n        confidence=confidence,\n        trust_scores=trust_scores or [],\n        conflict_notes=conflict_notes or [],\n        summary=summary,\n        seal=seal,\n        created_at=created_at,\n        metadata=metadata or {},\n    )\n\n\ndef make_chain_store(previous_hash=None):\n    \"\"\"Create a mock chain store that returns the given previous hash.\"\"\"\n    store = MagicMock()\n    store.get_previous_hash = MagicMock(return_value=previous_hash)\n    store.append_seal = MagicMock()\n    return store\n\n\nFIXED_TIMESTAMP = \"2024-07-01T10:30:00Z\"\n\n\n# ---- Canonicalize Tests ----\n\nclass TestGoodhartCanonicalize:\n    def test_goodhart_canonicalize_different_reports_different_bytes(self):\n        \"\"\"Canonicalize must produce distinct byte outputs for reports that differ in any field\"\"\"\n        report1 = make_report(summary=\"Summary Alpha\")\n        report2 = make_report(summary=\"Summary Beta\")\n        report3 = make_report(decision=\"block\")\n        report4 = make_report(decision=\"warn\")\n\n        bytes1 = canonicalize(report1)\n        bytes2 = canonicalize(report2)\n        bytes3 = canonicalize(report3)\n        bytes4 = canonicalize(report4)\n\n        assert bytes1 != bytes2, \"Different summaries must produce different canonical bytes\"\n        assert bytes3 != bytes4, \"Different decisions must produce different canonical bytes\"\n        assert bytes1 != bytes3, \"Different fields must produce different canonical bytes\"\n\n    def test_goodhart_canonicalize_sorted_keys_nested(self):\n        \"\"\"Canonical output must have lexicographically sorted keys at all nesting levels\"\"\"\n        finding = make_finding(id=\"f-nested\", file_path=\"z_file.py\", severity=\"critical\")\n        report = make_report(findings=[finding])\n        raw = canonicalize(report)\n        parsed = json.loads(raw)\n\n        def check_sorted_keys(obj, path=\"root\"):\n            if isinstance(obj, dict):\n                keys = list(obj.keys())\n                assert keys == sorted(keys), f\"Keys not sorted at {path}: {keys}\"\n                for k, v in obj.items():\n                    check_sorted_keys(v, path=f\"{path}.{k}\")\n            elif isinstance(obj, list):\n                for i, item in enumerate(obj):\n                    check_sorted_keys(item, path=f\"{path}[{i}]\")\n\n        check_sorted_keys(parsed)\n\n    def test_goodhart_canonicalize_no_whitespace(self):\n        \"\"\"Canonical byte representation must use compact separators with zero whitespace\"\"\"\n        finding = make_finding()\n        report = make_report(findings=[finding], metadata={\"key\": \"value\"})\n        raw = canonicalize(report)\n        text = raw.decode(\"utf-8\")\n\n        # Compact JSON should have no \": \" (colon-space) or \", \" (comma-space)\n        # but we need to be careful about values containing these patterns.\n        # Instead, re-serialize to verify compact form matches.\n        parsed = json.loads(text)\n        expected = json.dumps(parsed, sort_keys=True, separators=(\",\", \":\"), ensure_ascii=False)\n        assert text == expected, \"Canonical output must use compact separators\"\n        assert \"\\n\" not in text, \"Canonical output must not contain newlines\"\n\n    def test_goodhart_canonicalize_unicode_content(self):\n        \"\"\"Canonicalize must handle non-ASCII unicode without escaping (ensure_ascii=False)\"\"\"\n        report = make_report(\n            summary=\"审查报告 — résumé with émojis 🔍 and ñ\"\n        )\n        raw = canonicalize(report)\n        text = raw.decode(\"utf-8\")\n        assert \"审查报告\" in text, \"Chinese characters must appear unescaped\"\n        assert \"résumé\" in text, \"Accented characters must appear unescaped\"\n        assert \"🔍\" in text, \"Emoji must appear unescaped\"\n        assert \"\\\\u\" not in text.replace(\"\\\\u0000\", \"\"), \"Unicode should not be escaped\"\n\n    def test_goodhart_canonicalize_metadata_ordering(self):\n        \"\"\"Canonical output must sort metadata dictionary keys regardless of insertion order\"\"\"\n        report1 = make_report(metadata={\"zebra\": \"1\", \"alpha\": \"2\", \"middle\": \"3\"})\n        raw = canonicalize(report1)\n        text = raw.decode(\"utf-8\")\n\n        # Find the metadata section and check key ordering\n        parsed = json.loads(text)\n        meta_keys = list(parsed[\"metadata\"].keys())\n        assert meta_keys == sorted(meta_keys), f\"Metadata keys must be sorted: {meta_keys}\"\n\n    def test_goodhart_canonicalize_with_conflict_notes(self):\n        \"\"\"Canonicalize must include conflict_notes and produce different bytes when they differ\"\"\"\n        report_with = make_report(conflict_notes=[\"note1\", \"note2\"])\n        report_without = make_report(conflict_notes=[])\n        bytes_with = canonicalize(report_with)\n        bytes_without = canonicalize(report_without)\n        assert bytes_with != bytes_without, \"conflict_notes changes must affect canonical bytes\"\n        text = bytes_with.decode(\"utf-8\")\n        assert \"note1\" in text, \"conflict_notes content must be in canonical output\"\n\n    def test_goodhart_canonicalize_with_metadata_changes(self):\n        \"\"\"Canonicalize must reflect metadata changes in output\"\"\"\n        report1 = make_report(metadata={\"key\": \"value1\"})\n        report2 = make_report(metadata={\"key\": \"value2\"})\n        assert canonicalize(report1) != canonicalize(report2), \"Metadata changes must produce different bytes\"\n\n\n# ---- Seal Report Tests ----\n\nclass TestGoodhartSealReport:\n    @pytest.fixture\n    def event_loop(self):\n        loop = asyncio.new_event_loop()\n        yield loop\n        loop.close()\n\n    def test_goodhart_seal_report_content_hash_is_sha256_of_canonical(self):\n        \"\"\"The seal's content_hash must be the actual SHA-256 of canonicalize output\"\"\"\n        report = make_report(\n            id=\"rpt-hash-verify-001\",\n            summary=\"Verify hash computation independently\"\n        )\n        chain_store = make_chain_store(previous_hash=None)\n\n        sealed = asyncio.get_event_loop().run_until_complete(\n            seal_report(report, chain_store, \"test-sealer\", FIXED_TIMESTAMP, None)\n        )\n\n        canonical_bytes = canonicalize(report)\n        expected_hash = hashlib.sha256(canonical_bytes).hexdigest()\n        assert sealed.seal.content_hash == expected_hash, \\\n            f\"content_hash must be SHA-256 of canonical bytes: expected {expected_hash}, got {sealed.seal.content_hash}\"\n\n    def test_goodhart_seal_report_chain_hash_genesis_computation(self):\n        \"\"\"Genesis chain_hash must be SHA-256 of (content_hash + '|GENESIS')\"\"\"\n        report = make_report(id=\"rpt-genesis-verify\")\n        chain_store = make_chain_store(previous_hash=None)\n\n        sealed = asyncio.get_event_loop().run_until_complete(\n            seal_report(report, chain_store, \"sealer-g\", FIXED_TIMESTAMP, None)\n        )\n\n        content_hash = sealed.seal.content_hash\n        expected_chain = hashlib.sha256(\n            (content_hash + \"|GENESIS\").encode()\n        ).hexdigest()\n        assert sealed.seal.chain_hash == expected_chain, \\\n            f\"Genesis chain_hash mismatch: expected {expected_chain}, got {sealed.seal.chain_hash}\"\n        assert sealed.seal.previous_hash is None, \"Genesis seal should have None previous_hash\"\n\n    def test_goodhart_seal_report_chain_hash_with_specific_previous(self):\n        \"\"\"Chain hash with a specific previous hash must use that exact value in computation\"\"\"\n        report = make_report(id=\"rpt-chain-specific\")\n        specific_prev = \"abcd1234\" * 8  # 64-char hex string\n        chain_store = make_chain_store(previous_hash=specific_prev)\n\n        sealed = asyncio.get_event_loop().run_until_complete(\n            seal_report(report, chain_store, \"sealer-c\", FIXED_TIMESTAMP, None)\n        )\n\n        content_hash = sealed.seal.content_hash\n        expected_chain = hashlib.sha256(\n            (content_hash + \"|\" + specific_prev).encode()\n        ).hexdigest()\n        assert sealed.seal.chain_hash == expected_chain, \\\n            f\"Chained chain_hash mismatch: expected {expected_chain}, got {sealed.seal.chain_hash}\"\n        assert sealed.seal.previous_hash == specific_prev\n\n    def test_goodhart_seal_report_sealer_id_preserved(self):\n        \"\"\"seal.sealer_id must exactly match the provided sealer_id\"\"\"\n        report = make_report(id=\"rpt-sealer-id-test\")\n        chain_store = make_chain_store()\n        unusual_sealer = \"sealer-with-special_chars.v2\"\n\n        sealed = asyncio.get_event_loop().run_until_complete(\n            seal_report(report, chain_store, unusual_sealer, FIXED_TIMESTAMP, None)\n        )\n\n        assert sealed.seal.sealer_id == unusual_sealer\n\n    def test_goodhart_seal_report_timestamp_preserved(self):\n        \"\"\"seal.sealed_at must exactly match the injected timestamp\"\"\"\n        report = make_report(id=\"rpt-ts-test\")\n        chain_store = make_chain_store()\n        unusual_ts = \"2099-12-31T23:59:59Z\"\n\n        sealed = asyncio.get_event_loop().run_until_complete(\n            seal_report(report, chain_store, \"sealer\", unusual_ts, None)\n        )\n\n        assert sealed.seal.sealed_at == unusual_ts\n\n    def test_goodhart_seal_report_append_seal_called_once(self):\n        \"\"\"seal_report must call chain_store.append_seal exactly once\"\"\"\n        report = make_report(id=\"rpt-append-test\")\n        chain_store = make_chain_store()\n\n        asyncio.get_event_loop().run_until_complete(\n            seal_report(report, chain_store, \"sealer\", FIXED_TIMESTAMP, None)\n        )\n\n        assert chain_store.append_seal.call_count == 1, \\\n            f\"append_seal should be called exactly once, was called {chain_store.append_seal.call_count} times\"\n\n    def test_goodhart_seal_report_all_non_seal_fields_preserved(self):\n        \"\"\"Every field except seal must be identical between input and output\"\"\"\n        findings = [\n            make_finding(id=\"f1\", severity=\"critical\", file_path=\"a.py\"),\n            make_finding(id=\"f2\", severity=\"low\", file_path=\"b.py\"),\n        ]\n        assessments = [make_assessment(id=\"a1\")]\n        trust_scores = [\n            TrustScore(\n                reviewer_id=\"rev1\", stage=\"security\", weight=0.8,\n                accepted_count=5, dismissed_count=1, updated_at=\"2024-01-01T00:00:00Z\"\n            )\n        ]\n        report = make_report(\n            id=\"rpt-field-preserve\",\n            findings=findings,\n            assessments=assessments,\n            trust_scores=trust_scores,\n            conflict_notes=[\"conflict A\", \"conflict B\"],\n            metadata={\"custom_key\": \"custom_value\"},\n            decision=\"block\",\n            confidence=\"low\",\n            summary=\"Detailed summary for field preservation test\",\n        )\n        chain_store = make_chain_store()\n\n        sealed = asyncio.get_event_loop().run_until_complete(\n            seal_report(report, chain_store, \"sealer\", FIXED_TIMESTAMP, None)\n        )\n\n        assert sealed.id == report.id\n        assert sealed.review_request_id == report.review_request_id\n        assert sealed.decision == report.decision\n        assert sealed.confidence == report.confidence\n        assert sealed.summary == report.summary\n        assert sealed.created_at == report.created_at\n        assert sealed.metadata == report.metadata\n        assert sealed.conflict_notes == report.conflict_notes\n        assert len(sealed.findings) == len(report.findings)\n        assert len(sealed.assessments) == len(report.assessments)\n        assert len(sealed.trust_scores) == len(report.trust_scores)\n        for i, (sf, rf) in enumerate(zip(sealed.findings, report.findings)):\n            assert sf.id == rf.id, f\"Finding {i} id mismatch\"\n\n    def test_goodhart_seal_report_no_callback_still_works(self):\n        \"\"\"seal_report must work correctly when chronicler_callback is None\"\"\"\n        report = make_report(id=\"rpt-no-callback\")\n        chain_store = make_chain_store()\n\n        sealed = asyncio.get_event_loop().run_until_complete(\n            seal_report(report, chain_store, \"sealer\", FIXED_TIMESTAMP, None)\n        )\n\n        assert sealed.seal is not None\n        assert sealed.seal.content_hash != \"\"\n        assert sealed.seal.chain_hash != \"\"\n\n    def test_goodhart_seal_report_returns_new_instance(self):\n        \"\"\"seal_report must return a distinct object, not the same reference\"\"\"\n        report = make_report(id=\"rpt-new-instance\")\n        chain_store = make_chain_store()\n\n        sealed = asyncio.get_event_loop().run_until_complete(\n            seal_report(report, chain_store, \"sealer\", FIXED_TIMESTAMP, None)\n        )\n\n        assert sealed is not report, \"Must return a new instance\"\n        assert report.seal is None, \"Original must remain unsealed\"\n        assert sealed.seal is not None, \"New instance must be sealed\"\n\n    def test_goodhart_seal_report_chain_hash_pipe_separator(self):\n        \"\"\"Chain hash must use '|' as separator, not another delimiter\"\"\"\n        report = make_report(id=\"rpt-pipe-sep\")\n        prev_hash = \"1111111111111111111111111111111111111111111111111111111111111111\"\n        chain_store = make_chain_store(previous_hash=prev_hash)\n\n        sealed = asyncio.get_event_loop().run_until_complete(\n            seal_report(report, chain_store, \"sealer\", FIXED_TIMESTAMP, None)\n        )\n\n        content_hash = sealed.seal.content_hash\n        # Correct: pipe separator\n        correct_chain = hashlib.sha256((content_hash + \"|\" + prev_hash).encode()).hexdigest()\n        # Wrong: other separators\n        wrong_dash = hashlib.sha256((content_hash + \"-\" + prev_hash).encode()).hexdigest()\n        wrong_none = hashlib.sha256((content_hash + prev_hash).encode()).hexdigest()\n\n        assert sealed.seal.chain_hash == correct_chain\n        assert sealed.seal.chain_hash != wrong_dash, \"Must not use '-' separator\"\n        assert sealed.seal.chain_hash != wrong_none, \"Must not concatenate without separator\"\n\n\n# ---- Verify Seal Tests ----\n\nclass TestGoodhartVerifySeal:\n    def _make_sealed_report(self, **kwargs):\n        \"\"\"Helper to create a sealed report for verification tests.\"\"\"\n        report = make_report(**kwargs)\n        chain_store = make_chain_store()\n        sealed = asyncio.get_event_loop().run_until_complete(\n            seal_report(report, chain_store, \"sealer\", FIXED_TIMESTAMP, None)\n        )\n        return sealed\n\n    def test_goodhart_verify_seal_missing_seal_result_fields(self):\n        \"\"\"Missing seal verification must set correct status and all boolean fields to False\"\"\"\n        report = make_report(id=\"rpt-no-seal\")\n        result = verify_seal(report)\n\n        assert result.status == \"missing_seal\"\n        assert result.valid is False\n        assert result.content_hash_match is False\n        assert result.chain_hash_match is False\n\n    def test_goodhart_verify_seal_expected_vs_actual_hash_fields(self):\n        \"\"\"Expected hashes come from seal, actual hashes are freshly recomputed\"\"\"\n        sealed = self._make_sealed_report(id=\"rpt-hash-fields\")\n        result = verify_seal(sealed)\n\n        # Expected comes from seal\n        assert result.expected_content_hash == sealed.seal.content_hash\n        assert result.expected_chain_hash == sealed.seal.chain_hash\n\n        # Actual is independently computed\n        canonical_bytes = canonicalize(sealed)\n        independent_content_hash = hashlib.sha256(canonical_bytes).hexdigest()\n        assert result.actual_content_hash == independent_content_hash\n\n        prev = sealed.seal.previous_hash or \"GENESIS\"\n        independent_chain_hash = hashlib.sha256(\n            (independent_content_hash + \"|\" + prev).encode()\n        ).hexdigest()\n        assert result.actual_chain_hash == independent_chain_hash\n\n    def test_goodhart_verify_seal_both_hashes_wrong(self):\n        \"\"\"When both hashes are wrong, status should be invalid_content_hash (content priority)\"\"\"\n        sealed = self._make_sealed_report(id=\"rpt-both-wrong\")\n        # Create a copy with fabricated hashes\n        fake_seal = TesseraSeal(\n            content_hash=\"0000000000000000000000000000000000000000000000000000000000000000\",\n            previous_hash=sealed.seal.previous_hash,\n            chain_hash=\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\n            sealed_at=sealed.seal.sealed_at,\n            sealer_id=sealed.seal.sealer_id,\n        )\n        tampered = sealed.model_copy(update={\"seal\": fake_seal})\n        result = verify_seal(tampered)\n\n        assert result.status == \"invalid_content_hash\"\n        assert result.valid is False\n        assert result.content_hash_match is False\n        assert result.chain_hash_match is False\n\n    def test_goodhart_verify_seal_only_chain_hash_wrong(self):\n        \"\"\"Correct content_hash but wrong chain_hash gives invalid_chain_hash status\"\"\"\n        sealed = self._make_sealed_report(id=\"rpt-chain-only-wrong\")\n        # Keep content_hash correct, fabricate chain_hash\n        fake_seal = TesseraSeal(\n            content_hash=sealed.seal.content_hash,\n            previous_hash=sealed.seal.previous_hash,\n            chain_hash=\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n            sealed_at=sealed.seal.sealed_at,\n            sealer_id=sealed.seal.sealer_id,\n        )\n        tampered = sealed.model_copy(update={\"seal\": fake_seal})\n        result = verify_seal(tampered)\n\n        assert result.status == \"invalid_chain_hash\"\n        assert result.valid is False\n        assert result.content_hash_match is True\n        assert result.chain_hash_match is False\n\n    def test_goodhart_verify_seal_never_raises_on_weird_seal(self):\n        \"\"\"verify_seal must not raise even with unusual but technically valid seal data\"\"\"\n        report = make_report(id=\"rpt-weird-seal\")\n        weird_seal = TesseraSeal(\n            content_hash=\"b\" * 64,\n            previous_hash=\"c\" * 64,\n            chain_hash=\"d\" * 64,\n            sealed_at=\"2024-01-01T00:00:00Z\",\n            sealer_id=\"weird-sealer\",\n        )\n        report_with_weird_seal = report.model_copy(update={\"seal\": weird_seal})\n\n        # Should not raise\n        result = verify_seal(report_with_weird_seal)\n        assert result.valid is False\n        assert isinstance(result.status, str)\n\n\n# ---- Format Report Tests ----\n\nclass TestGoodhartFormatReport:\n    def test_goodhart_format_report_json_truncated_always_false(self):\n        \"\"\"JSON format must never set truncated=True regardless of size\"\"\"\n        # Create report with many findings to produce large output\n        findings = [\n            make_finding(id=f\"f-{i}\", description=\"x\" * 500, severity=\"medium\")\n            for i in range(200)\n        ]\n        report = make_report(id=\"rpt-large-json\", findings=findings)\n        result = format_report(report, \"json\", FIXED_TIMESTAMP)\n        assert result.truncated is False\n\n    def test_goodhart_format_report_md_truncated_always_false(self):\n        \"\"\"Markdown format must never set truncated=True regardless of size\"\"\"\n        findings = [\n            make_finding(id=f\"f-{i}\", description=\"x\" * 500, severity=\"high\")\n            for i in range(200)\n        ]\n        report = make_report(id=\"rpt-large-md\", findings=findings)\n        result = format_report(report, \"md\", FIXED_TIMESTAMP)\n        assert result.truncated is False\n\n    def test_goodhart_format_report_github_truncation_includes_notice(self):\n        \"\"\"Truncated GitHub output must end with the exact truncation notice\"\"\"\n        findings = [\n            make_finding(\n                id=f\"f-trunc-{i}\",\n                description=\"Very long description \" * 100,\n                severity=\"critical\",\n                stage=\"security\",\n            )\n            for i in range(200)\n        ]\n        report = make_report(id=\"rpt-github-trunc\", findings=findings)\n        result = format_report(report, \"github\", FIXED_TIMESTAMP)\n\n        if result.truncated:\n            truncation_notice = \"\\n\\n---\\n⚠️ *Report truncated. Full report available in JSON format.*\"\n            assert result.content.endswith(truncation_notice), \\\n                \"Truncated output must end with the exact truncation notice\"\n\n    def test_goodhart_format_report_deterministic_json(self):\n        \"\"\"Same inputs + same timestamp must produce identical JSON output\"\"\"\n        report = make_report(id=\"rpt-det-json\", summary=\"Determinism test JSON\")\n        r1 = format_report(report, \"json\", FIXED_TIMESTAMP)\n        r2 = format_report(report, \"json\", FIXED_TIMESTAMP)\n        assert r1.content == r2.content\n\n    def test_goodhart_format_report_deterministic_md(self):\n        \"\"\"Same inputs + same timestamp must produce identical Markdown output\"\"\"\n        report = make_report(\n            id=\"rpt-det-md\",\n            findings=[make_finding()],\n            summary=\"Determinism test MD\"\n        )\n        r1 = format_report(report, \"md\", FIXED_TIMESTAMP)\n        r2 = format_report(report, \"md\", FIXED_TIMESTAMP)\n        assert r1.content == r2.content\n\n    def test_goodhart_format_report_deterministic_github(self):\n        \"\"\"Same inputs + same timestamp must produce identical GitHub output\"\"\"\n        report = make_report(\n            id=\"rpt-det-gh\",\n            findings=[make_finding()],\n            summary=\"Determinism test GH\"\n        )\n        r1 = format_report(report, \"github\", FIXED_TIMESTAMP)\n        r2 = format_report(report, \"github\", FIXED_TIMESTAMP)\n        assert r1.content == r2.content\n\n    def test_goodhart_format_report_rendered_at_matches_timestamp(self):\n        \"\"\"rendered_at must match the injected timestamp exactly\"\"\"\n        report = make_report(id=\"rpt-rendered-at\")\n        unusual_ts = \"2000-01-01T00:00:00.123456Z\"\n        result = format_report(report, \"json\", unusual_ts)\n        assert result.rendered_at == unusual_ts\n\n    def test_goodhart_format_report_report_id_matches_unusual_id(self):\n        \"\"\"FormattedReport.report_id must match report.id for unusual ids\"\"\"\n        unusual_id = \"rpt-adversarial-test-42-with-special\"\n        report = make_report(id=unusual_id)\n        result = format_report(report, \"json\", FIXED_TIMESTAMP)\n        assert result.report_id == unusual_id\n\n    def test_goodhart_format_report_output_format_matches_all_variants(self):\n        \"\"\"output_format field must match requested format for every variant\"\"\"\n        report = make_report(id=\"rpt-fmt-match\", findings=[make_finding()])\n        for fmt in [\"json\", \"md\", \"github\"]:\n            result = format_report(report, fmt, FIXED_TIMESTAMP)\n            assert result.output_format == fmt, f\"output_format should be '{fmt}'\"\n\n    def test_goodhart_format_report_json_parseable_with_findings(self):\n        \"\"\"JSON output must be parseable and contain actual report data\"\"\"\n        findings = [\n            make_finding(id=f\"f-parse-{i}\", severity=\"high\")\n            for i in range(3)\n        ]\n        report = make_report(id=\"rpt-json-parse\", findings=findings)\n        result = format_report(report, \"json\", FIXED_TIMESTAMP)\n\n        parsed = json.loads(result.content)\n        assert parsed[\"id\"] == \"rpt-json-parse\"\n        assert len(parsed[\"findings\"]) == 3\n\n    def test_goodhart_format_report_character_count_various_formats(self):\n        \"\"\"character_count must equal len(content) for all format types with non-trivial content\"\"\"\n        findings = [make_finding(id=f\"f-cc-{i}\") for i in range(5)]\n        report = make_report(id=\"rpt-cc-test\", findings=findings)\n\n        for fmt in [\"json\", \"md\", \"github\"]:\n            result = format_report(report, fmt, FIXED_TIMESTAMP)\n            assert result.character_count == len(result.content), \\\n                f\"character_count must equal len(content) for {fmt} format\"\n\n    def test_goodhart_format_report_metadata_pact_component_all_formats(self):\n        \"\"\"metadata must contain pact_component='reporter' for every format\"\"\"\n        report = make_report(id=\"rpt-meta-all\")\n        for fmt in [\"json\", \"md\", \"github\"]:\n            result = format_report(report, fmt, FIXED_TIMESTAMP)\n            assert result.metadata.get(\"pact_component\") == \"reporter\", \\\n                f\"pact_component must be 'reporter' for {fmt} format\"\n\n    def test_goodhart_immutable_formatted_report(self):\n        \"\"\"FormattedReport must be frozen (immutable)\"\"\"\n        report = make_report(id=\"rpt-frozen-fr\")\n        result = format_report(report, \"json\", FIXED_TIMESTAMP)\n        with pytest.raises(Exception):  # ValidationError or AttributeError for frozen\n            result.content = \"tampered\"\n        with pytest.raises(Exception):\n            result.truncated = True\n\n\n# ---- Render JSON Tests ----\n\nclass TestGoodhartRenderJson:\n    def test_goodhart_render_json_no_seal_includes_key(self):\n        \"\"\"render_json output must include the seal key even when seal is None\"\"\"\n        report = make_report(id=\"rpt-json-noseal\")\n        output = render_json(report)\n        parsed = json.loads(output)\n        assert \"seal\" in parsed, \"JSON output must include 'seal' key even when None\"\n\n    def test_goodhart_render_json_sorted_keys_deeply(self):\n        \"\"\"Keys must be sorted at all nesting levels in render_json output\"\"\"\n        findings = [make_finding(id=\"f-deep-sort\")]\n        assessments = [make_assessment(id=\"a-deep-sort\", findings=[make_finding(id=\"f-in-assess\")])]\n        report = make_report(id=\"rpt-deep-sort\", findings=findings, assessments=assessments)\n        output = render_json(report)\n        parsed = json.loads(output)\n\n        def check_sorted(obj, path=\"root\"):\n            if isinstance(obj, dict):\n                keys = list(obj.keys())\n                assert keys == sorted(keys), f\"Keys not sorted at {path}: {keys}\"\n                for k, v in obj.items():\n                    check_sorted(v, f\"{path}.{k}\")\n            elif isinstance(obj, list):\n                for i, item in enumerate(obj):\n                    check_sorted(item, f\"{path}[{i}]\")\n\n        check_sorted(parsed)\n\n    def test_goodhart_render_json_two_space_indent(self):\n        \"\"\"render_json must use 2-space indentation\"\"\"\n        report = make_report(id=\"rpt-indent\", findings=[make_finding()])\n        output = render_json(report)\n        lines = output.split(\"\\n\")\n        # Find lines with indentation and verify they use 2-space multiples\n        indented_lines = [l for l in lines if l.startswith(\" \")]\n        assert len(indented_lines) > 0, \"Should have indented lines\"\n        for line in indented_lines:\n            stripped = line.lstrip(\" \")\n            indent_count = len(line) - len(stripped)\n            assert indent_count % 2 == 0, f\"Indent must be multiple of 2, got {indent_count}\"\n\n\n# ---- Render Markdown Tests ----\n\nclass TestGoodhartRenderMarkdown:\n    def test_goodhart_render_markdown_all_five_severity_badges(self):\n        \"\"\"All five severity emoji badges must appear for their respective findings\"\"\"\n        findings = [\n            make_finding(id=\"f-crit\", severity=\"critical\", file_path=\"a.py\", stage=\"security\"),\n            make_finding(id=\"f-high\", severity=\"high\", file_path=\"b.py\", stage=\"security\"),\n            make_finding(id=\"f-med\", severity=\"medium\", file_path=\"c.py\", stage=\"security\"),\n            make_finding(id=\"f-low\", severity=\"low\", file_path=\"d.py\", stage=\"security\"),\n            make_finding(id=\"f-info\", severity=\"info\", file_path=\"e.py\", stage=\"security\"),\n        ]\n        report = make_report(id=\"rpt-all-badges\", findings=findings)\n        output = render_markdown(report, FIXED_TIMESTAMP)\n\n        assert \"🔴\" in output, \"Must contain 🔴 for critical\"\n        assert \"🟠\" in output, \"Must contain 🟠 for high\"\n        assert \"🟡\" in output, \"Must contain 🟡 for medium\"\n        assert \"🔵\" in output, \"Must contain 🔵 for low\"\n        assert \"⚪\" in output, \"Must contain ⚪ for info\"\n\n    def test_goodhart_render_markdown_report_id_in_heading(self):\n        \"\"\"Report id must appear in a heading in the markdown output\"\"\"\n        distinctive_id = \"unique-report-id-xyz-789\"\n        report = make_report(id=distinctive_id)\n        output = render_markdown(report, FIXED_TIMESTAMP)\n        assert distinctive_id in output, \"Report id must appear in output\"\n        # Check it's in a heading line\n        heading_lines = [l for l in output.split(\"\\n\") if l.startswith(\"#\")]\n        id_in_heading = any(distinctive_id in l for l in heading_lines)\n        assert id_in_heading, \"Report id must be in a markdown heading\"\n\n    def test_goodhart_render_markdown_summary_table(self):\n        \"\"\"Markdown must include severity count summary information\"\"\"\n        findings = [\n            make_finding(id=\"f-c1\", severity=\"critical\", file_path=\"a.py\", stage=\"security\"),\n            make_finding(id=\"f-c2\", severity=\"critical\", file_path=\"b.py\", stage=\"security\"),\n            make_finding(id=\"f-h1\", severity=\"high\", file_path=\"c.py\", stage=\"security\"),\n            make_finding(id=\"f-m1\", severity=\"medium\", file_path=\"d.py\", stage=\"correctness\"),\n            make_finding(id=\"f-m2\", severity=\"medium\", file_path=\"e.py\", stage=\"correctness\"),\n            make_finding(id=\"f-m3\", severity=\"medium\", file_path=\"f.py\", stage=\"correctness\"),\n        ]\n        report = make_report(id=\"rpt-summary-table\", findings=findings)\n        output = render_markdown(report, FIXED_TIMESTAMP)\n\n        # Should contain severity names and counts in some tabular form\n        assert \"critical\" in output.lower() or \"Critical\" in output\n        assert \"high\" in output.lower() or \"High\" in output\n\n    def test_goodhart_render_markdown_seal_section_present_when_sealed(self):\n        \"\"\"Sealed report markdown must include seal information\"\"\"\n        report = make_report(id=\"rpt-seal-md\")\n        chain_store = make_chain_store()\n        sealed = asyncio.get_event_loop().run_until_complete(\n            seal_report(report, chain_store, \"sealer\", FIXED_TIMESTAMP, None)\n        )\n        output = render_markdown(sealed, FIXED_TIMESTAMP)\n        # Should mention seal-related content\n        assert sealed.seal.content_hash[:16] in output or \"seal\" in output.lower(), \\\n            \"Sealed report markdown must contain seal information\"\n\n    def test_goodhart_render_markdown_no_seal_section_when_unsealed(self):\n        \"\"\"Unsealed report markdown should not contain seal hash information\"\"\"\n        report = make_report(id=\"rpt-noseal-md\")\n        output = render_markdown(report, FIXED_TIMESTAMP)\n        # Should not contain arbitrary hex hash strings (64 chars) that would indicate seal data\n        # Basic check: \"content_hash\" should not appear\n        assert \"content_hash\" not in output, \"Unsealed markdown should not mention content_hash\"\n\n    def test_goodhart_render_markdown_findings_grouped_by_stage(self):\n        \"\"\"Findings from different stages must appear under different stage headings\"\"\"\n        findings = [\n            make_finding(id=\"f-sec\", stage=\"security\", severity=\"high\", file_path=\"a.py\"),\n            make_finding(id=\"f-cor\", stage=\"correctness\", severity=\"medium\", file_path=\"b.py\"),\n            make_finding(id=\"f-sty\", stage=\"style\", severity=\"low\", file_path=\"c.py\"),\n        ]\n        report = make_report(id=\"rpt-stage-group\", findings=findings)\n        output = render_markdown(report, FIXED_TIMESTAMP)\n\n        # All three stages should appear\n        output_lower = output.lower()\n        assert \"security\" in output_lower, \"Security stage heading must appear\"\n        assert \"correctness\" in output_lower, \"Correctness stage heading must appear\"\n        assert \"style\" in output_lower, \"Style stage heading must appear\"\n\n    def test_goodhart_render_markdown_finding_ordering(self):\n        \"\"\"Within a stage, findings must be sorted by severity desc then file_path asc\"\"\"\n        findings = [\n            make_finding(id=\"f1\", severity=\"medium\", file_path=\"z_file.py\", stage=\"security\"),\n            make_finding(id=\"f2\", severity=\"critical\", file_path=\"z_file.py\", stage=\"security\"),\n            make_finding(id=\"f3\", severity=\"critical\", file_path=\"a_file.py\", stage=\"security\"),\n        ]\n        report = make_report(id=\"rpt-ordering\", findings=findings)\n        output = render_markdown(report, FIXED_TIMESTAMP)\n\n        # f3 (critical, a_file) should come before f2 (critical, z_file) which should come before f1 (medium, z_file)\n        pos_f3 = output.find(\"a_file.py\")\n        pos_f2_z = output.find(\"z_file.py\")\n        # Since critical should come before medium, and a_file before z_file at same severity\n        assert pos_f3 < pos_f2_z, \"critical a_file.py must appear before z_file.py findings\"\n\n\n# ---- Render GitHub Tests ----\n\nclass TestGoodhartRenderGithub:\n    def test_goodhart_render_github_details_tags_structure(self):\n        \"\"\"GitHub output must have proper <details>/<summary> structure per stage\"\"\"\n        findings = [\n            make_finding(id=\"f-sec\", stage=\"security\", file_path=\"a.py\"),\n            make_finding(id=\"f-cor\", stage=\"correctness\", file_path=\"b.py\"),\n        ]\n        report = make_report(id=\"rpt-details-struct\", findings=findings)\n        output = render_github(report, FIXED_TIMESTAMP)\n\n        details_count = output.count(\"<details>\") + output.count(\"<details \")\n        close_details_count = output.count(\"</details>\")\n        assert details_count >= 2, \"Should have at least 2 <details> sections for 2 stages\"\n        assert details_count == close_details_count, \"Every <details> must have matching </details>\"\n\n        summary_count = output.count(\"<summary>\") + output.count(\"<summary \")\n        close_summary_count = output.count(\"</summary>\")\n        assert summary_count >= 2, \"Should have at least 2 <summary> tags\"\n        assert summary_count == close_summary_count, \"Every <summary> must have matching </summary>\"\n\n    def test_goodhart_render_github_truncation_notice_exact(self):\n        \"\"\"Truncation notice must match the exact specified constant\"\"\"\n        findings = [\n            make_finding(\n                id=f\"f-notice-{i}\",\n                description=\"Long description content \" * 200,\n                severity=\"critical\",\n                stage=\"security\",\n            )\n            for i in range(200)\n        ]\n        report = make_report(id=\"rpt-notice-exact\", findings=findings)\n        output = render_github(report, FIXED_TIMESTAMP)\n\n        truncation_notice = \"\\n\\n---\\n⚠️ *Report truncated. Full report available in JSON format.*\"\n        if len(output) > 65000:\n            assert output.endswith(truncation_notice), \\\n                \"Must end with exact truncation notice\"\n\n    def test_goodhart_render_github_truncated_body_is_65000(self):\n        \"\"\"When truncated, the body before notice must be exactly 65000 chars\"\"\"\n        findings = [\n            make_finding(\n                id=f\"f-body-{i}\",\n                description=\"Padding content for size \" * 200,\n                severity=\"high\",\n                stage=\"security\",\n            )\n            for i in range(300)\n        ]\n        report = make_report(id=\"rpt-body-size\", findings=findings)\n        output = render_github(report, FIXED_TIMESTAMP)\n\n        truncation_notice = \"\\n\\n---\\n⚠️ *Report truncated. Full report available in JSON format.*\"\n        if output.endswith(truncation_notice):\n            body = output[: -len(truncation_notice)]\n            assert len(body) == 65000, \\\n                f\"Body before truncation notice must be 65000 chars, got {len(body)}\"\n\n    def test_goodhart_render_github_multiple_stages_separate_sections(self):\n        \"\"\"Each stage with findings must have its own <details> section\"\"\"\n        findings = [\n            make_finding(id=\"f-sec\", stage=\"security\", file_path=\"a.py\"),\n            make_finding(id=\"f-cor\", stage=\"correctness\", file_path=\"b.py\"),\n            make_finding(id=\"f-arc\", stage=\"architecture\", file_path=\"c.py\"),\n        ]\n        report = make_report(id=\"rpt-multi-stage\", findings=findings)\n        output = render_github(report, FIXED_TIMESTAMP)\n\n        # Count details sections - should be at least 3\n        details_open = output.count(\"<details>\") + output.count(\"<details \")\n        assert details_open >= 3, f\"Should have 3 <details> sections for 3 stages, got {details_open}\"\n\n    def test_goodhart_render_github_omits_empty_stages(self):\n        \"\"\"Stages with no findings must not have <details> sections\"\"\"\n        # Only security findings\n        findings = [make_finding(id=\"f-only-sec\", stage=\"security\", file_path=\"a.py\")]\n        report = make_report(id=\"rpt-one-stage\", findings=findings)\n        output = render_github(report, FIXED_TIMESTAMP)\n\n        output_lower = output.lower()\n        # Should not have sections for correctness, style, architecture\n        # Check that those stage names don't appear in summary tags\n        # (they might appear in other contexts, so be conservative)\n        details_count = output.count(\"<details>\") + output.count(\"<details \")\n        assert details_count >= 1, \"Should have at least 1 details section\"\n        # Shouldn't have 4 sections since only 1 stage has findings\n        assert details_count < 4, \"Should not have details for stages without findings\"\n\n\n# ---- Type Validation Tests ----\n\nclass TestGoodhartTypes:\n    def test_goodhart_type_iso8601_with_fractional_seconds_various(self):\n        \"\"\"Iso8601Timestamp must accept various fractional second precisions\"\"\"\n        # Single digit fraction\n        ts1 = Iso8601Timestamp(\"2024-01-01T00:00:00.1Z\")\n        assert ts1 is not None\n\n        # Milliseconds\n        ts2 = Iso8601Timestamp(\"2024-01-01T00:00:00.123Z\")\n        assert ts2 is not None\n\n        # Microseconds\n        ts3 = Iso8601Timestamp(\"2024-01-01T00:00:00.123456Z\")\n        assert ts3 is not None\n\n    def test_goodhart_type_sha256hex_empty_string(self):\n        \"\"\"Sha256Hex must accept empty string for unavailable hashes\"\"\"\n        h = Sha256Hex(\"\")\n        assert h is not None\n\n    def test_goodhart_type_report_id_boundary_256_chars(self):\n        \"\"\"ReportId must accept exactly 256 characters\"\"\"\n        rid = ReportId(\"a\" * 256)\n        assert rid is not None\n\n    def test_goodhart_type_report_id_boundary_1_char(self):\n        \"\"\"ReportId must accept exactly 1 character\"\"\"\n        rid = ReportId(\"x\")\n        assert rid is not None\n\n    def test_goodhart_type_sealer_id_boundary_128_chars(self):\n        \"\"\"SealerId must accept exactly 128 characters\"\"\"\n        sid = SealerId(\"a\" * 128)\n        assert sid is not None\n\n    def test_goodhart_type_sealer_id_too_long_129(self):\n        \"\"\"SealerId must reject 129 characters\"\"\"\n        with pytest.raises(Exception):\n            SealerId(\"a\" * 129)\n\n    def test_goodhart_type_report_id_boundary_257_rejected(self):\n        \"\"\"ReportId must reject exactly 257 characters\"\"\"\n        with pytest.raises(Exception):\n            ReportId(\"a\" * 257)\n\n\n# ---- Immutability Tests ----\n\nclass TestGoodhartImmutability:\n    def test_goodhart_immutable_seal_verification_result(self):\n        \"\"\"SealVerificationResult must be frozen\"\"\"\n        report = make_report(id=\"rpt-frozen-svr\")\n        result = verify_seal(report)\n        with pytest.raises(Exception):\n            result.status = \"valid\"\n        with pytest.raises(Exception):\n            result.valid = True\n\n\n# ---- Integration-style Adversarial Tests ----\n\nclass TestGoodhartIntegration:\n    def test_goodhart_seal_then_verify_different_report_content(self):\n        \"\"\"Seal+verify round trip must work for reports with varied content\"\"\"\n        findings = [\n            make_finding(id=\"f-int-1\", severity=\"critical\", stage=\"security\", file_path=\"main.py\"),\n            make_finding(id=\"f-int-2\", severity=\"info\", stage=\"style\", file_path=\"style.css\"),\n        ]\n        report = make_report(\n            id=\"rpt-integration-roundtrip\",\n            findings=findings,\n            conflict_notes=[\"Some conflict\"],\n            metadata={\"env\": \"test\", \"run\": \"42\"},\n            decision=\"warn\",\n            confidence=\"medium\",\n        )\n        chain_store = make_chain_store()\n        sealed = asyncio.get_event_loop().run_until_complete(\n            seal_report(report, chain_store, \"int-sealer\", FIXED_TIMESTAMP, None)\n        )\n        result = verify_seal(sealed)\n        assert result.status == \"valid\"\n        assert result.valid is True\n        assert result.content_hash_match is True\n        assert result.chain_hash_match is True\n\n    def test_goodhart_canonical_and_render_json_differ(self):\n        \"\"\"canonicalize output (compact) must differ from render_json output (indented)\"\"\"\n        report = make_report(id=\"rpt-format-diff\", findings=[make_finding()])\n        canonical = canonicalize(report).decode(\"utf-8\")\n        rendered = render_json(report)\n\n        # They should both be valid JSON but different strings\n        assert canonical != rendered, \"Compact canonical must differ from pretty-printed JSON\"\n        # Canonical has no newlines, rendered does\n        assert \"\\n\" not in canonical\n        assert \"\\n\" in rendered\n\n    def test_goodhart_format_report_sealed_with_different_content(self):\n        \"\"\"is_sealed must correctly reflect seal presence for a report sealed with specific content\"\"\"\n        report = make_report(id=\"rpt-sealed-check\", summary=\"Check seal reflection\")\n        chain_store = make_chain_store()\n        sealed = asyncio.get_event_loop().run_until_complete(\n            seal_report(report, chain_store, \"sealer\", FIXED_TIMESTAMP, None)\n        )\n\n        for fmt in [\"json\", \"md\", \"github\"]:\n            result = format_report(sealed, fmt, FIXED_TIMESTAMP)\n            assert result.is_sealed is True, f\"is_sealed must be True for sealed report in {fmt}\"\n\n            result_unsealed = format_report(report, fmt, FIXED_TIMESTAMP)\n            assert result_unsealed.is_sealed is False, f\"is_sealed must be False for unsealed report in {fmt}\"\n\n    def test_goodhart_seal_with_many_findings_verifies(self):\n        \"\"\"Seal and verify must work correctly with many findings (not just small test reports)\"\"\"\n        findings = [\n            make_finding(\n                id=f\"f-many-{i}\",\n                severity=[\"critical\", \"high\", \"medium\", \"low\", \"info\"][i % 5],\n                file_path=f\"src/file_{i}.py\",\n                stage=[\"security\", \"correctness\", \"style\", \"architecture\"][i % 4],\n                description=f\"Finding number {i} with some description text\"\n            )\n            for i in range(50)\n        ]\n        report = make_report(id=\"rpt-many-findings\", findings=findings)\n        chain_store = make_chain_store()\n        sealed = asyncio.get_event_loop().run_until_complete(\n            seal_report(report, chain_store, \"sealer\", FIXED_TIMESTAMP, None)\n        )\n        result = verify_seal(sealed)\n        assert result.valid is True\n        assert result.status == \"valid\"\n"
+}

@@ -1,0 +1,1168 @@
+{
+  "project_id": "exemplar",
+  "tasks": [
+    {
+      "id": "T001",
+      "phase": "setup",
+      "component_id": "",
+      "description": "Initialize project directory structure",
+      "file_path": "",
+      "status": "pending",
+      "parallel": false,
+      "depends_on": [],
+      "category": "scaffold"
+    },
+    {
+      "id": "T002",
+      "phase": "setup",
+      "component_id": "",
+      "description": "Verify environment and dependencies",
+      "file_path": "",
+      "status": "pending",
+      "parallel": false,
+      "depends_on": [
+        "T001"
+      ],
+      "category": "scaffold"
+    },
+    {
+      "id": "T003",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: Assessment",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T004",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: ChroniclerEvent",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T005",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: ChroniclerEventType",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T006",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: CircuitConfig",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T007",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: ClassificationLabel",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T008",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: CliExitCode",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T009",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: Confidence",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T010",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: DiffHunk",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T011",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: FilePath",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T012",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: Finding",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T013",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: KindexEntry",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T014",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: LearnerPhase",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T015",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: LearningRecord",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T016",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: LedgerConfig",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T017",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: LedgerFieldRule",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T018",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: OutputFormat",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T019",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: PactKey",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T020",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: PolicyToken",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T021",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: ReviewDecision",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T022",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: ReviewReport",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T023",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: ReviewRequest",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T024",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: ReviewRequestId",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T025",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: ReviewStage",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T026",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: ReviewerCredential",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T027",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: ReviewerId",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T028",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: RuleId",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T029",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: Severity",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T030",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: StigmergySignal",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T031",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: TesseraSeal",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T032",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: TrustScore",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T033",
+      "phase": "foundational",
+      "component_id": "",
+      "description": "Define shared type: TrustWeight",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "type_definition"
+    },
+    {
+      "id": "T034",
+      "phase": "component",
+      "component_id": "schemas",
+      "description": "Review contract for Data Models & Schemas",
+      "file_path": "contracts/schemas/interface.json",
+      "status": "completed",
+      "parallel": true,
+      "depends_on": [],
+      "category": "contract_review"
+    },
+    {
+      "id": "T035",
+      "phase": "component",
+      "component_id": "schemas",
+      "description": "Set up test harness for Data Models & Schemas",
+      "file_path": "",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T034"
+      ],
+      "category": "test_setup"
+    },
+    {
+      "id": "T036",
+      "phase": "component",
+      "component_id": "schemas",
+      "description": "Write contract tests for Data Models & Schemas",
+      "file_path": "",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T035"
+      ],
+      "category": "test_write"
+    },
+    {
+      "id": "T037",
+      "phase": "component",
+      "component_id": "schemas",
+      "description": "Implement Data Models & Schemas",
+      "file_path": "implementations/schemas/src/",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T036"
+      ],
+      "category": "implement"
+    },
+    {
+      "id": "T038",
+      "phase": "component",
+      "component_id": "schemas",
+      "description": "Run tests and verify Data Models & Schemas",
+      "file_path": "",
+      "status": "failed",
+      "parallel": false,
+      "depends_on": [
+        "T037"
+      ],
+      "category": "verify"
+    },
+    {
+      "id": "T039",
+      "phase": "component",
+      "component_id": "config",
+      "description": "Review contract for Configuration System",
+      "file_path": "contracts/config/interface.json",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [],
+      "category": "contract_review"
+    },
+    {
+      "id": "T040",
+      "phase": "component",
+      "component_id": "config",
+      "description": "Set up test harness for Configuration System",
+      "file_path": "",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T039"
+      ],
+      "category": "test_setup"
+    },
+    {
+      "id": "T041",
+      "phase": "component",
+      "component_id": "config",
+      "description": "Write contract tests for Configuration System",
+      "file_path": "",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T040"
+      ],
+      "category": "test_write"
+    },
+    {
+      "id": "T042",
+      "phase": "component",
+      "component_id": "config",
+      "description": "Implement Configuration System",
+      "file_path": "implementations/config/src/",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T041"
+      ],
+      "category": "implement"
+    },
+    {
+      "id": "T043",
+      "phase": "component",
+      "component_id": "config",
+      "description": "Run tests and verify Configuration System",
+      "file_path": "",
+      "status": "failed",
+      "parallel": false,
+      "depends_on": [
+        "T042"
+      ],
+      "category": "verify"
+    },
+    {
+      "id": "T044",
+      "phase": "component",
+      "component_id": "governance",
+      "description": "Review contract for Governance Primitives",
+      "file_path": "contracts/governance/interface.json",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [],
+      "category": "contract_review"
+    },
+    {
+      "id": "T045",
+      "phase": "component",
+      "component_id": "governance",
+      "description": "Set up test harness for Governance Primitives",
+      "file_path": "",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T044"
+      ],
+      "category": "test_setup"
+    },
+    {
+      "id": "T046",
+      "phase": "component",
+      "component_id": "governance",
+      "description": "Write contract tests for Governance Primitives",
+      "file_path": "",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T045"
+      ],
+      "category": "test_write"
+    },
+    {
+      "id": "T047",
+      "phase": "component",
+      "component_id": "governance",
+      "description": "Implement Governance Primitives",
+      "file_path": "implementations/governance/src/",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T046"
+      ],
+      "category": "implement"
+    },
+    {
+      "id": "T048",
+      "phase": "component",
+      "component_id": "governance",
+      "description": "Run tests and verify Governance Primitives",
+      "file_path": "",
+      "status": "failed",
+      "parallel": false,
+      "depends_on": [
+        "T047"
+      ],
+      "category": "verify"
+    },
+    {
+      "id": "T049",
+      "phase": "component",
+      "component_id": "intake",
+      "description": "Review contract for Diff Intake & Classification",
+      "file_path": "contracts/intake/interface.json",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [],
+      "category": "contract_review"
+    },
+    {
+      "id": "T050",
+      "phase": "component",
+      "component_id": "intake",
+      "description": "Set up test harness for Diff Intake & Classification",
+      "file_path": "",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T049"
+      ],
+      "category": "test_setup"
+    },
+    {
+      "id": "T051",
+      "phase": "component",
+      "component_id": "intake",
+      "description": "Write contract tests for Diff Intake & Classification",
+      "file_path": "",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T050"
+      ],
+      "category": "test_write"
+    },
+    {
+      "id": "T052",
+      "phase": "component",
+      "component_id": "intake",
+      "description": "Implement Diff Intake & Classification",
+      "file_path": "implementations/intake/src/",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T051"
+      ],
+      "category": "implement"
+    },
+    {
+      "id": "T053",
+      "phase": "component",
+      "component_id": "intake",
+      "description": "Run tests and verify Diff Intake & Classification",
+      "file_path": "",
+      "status": "failed",
+      "parallel": false,
+      "depends_on": [
+        "T052"
+      ],
+      "category": "verify"
+    },
+    {
+      "id": "T054",
+      "phase": "component",
+      "component_id": "reviewers",
+      "description": "Review contract for Reviewer Implementations",
+      "file_path": "contracts/reviewers/interface.json",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [],
+      "category": "contract_review"
+    },
+    {
+      "id": "T055",
+      "phase": "component",
+      "component_id": "reviewers",
+      "description": "Set up test harness for Reviewer Implementations",
+      "file_path": "",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T054"
+      ],
+      "category": "test_setup"
+    },
+    {
+      "id": "T056",
+      "phase": "component",
+      "component_id": "reviewers",
+      "description": "Write contract tests for Reviewer Implementations",
+      "file_path": "",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T055"
+      ],
+      "category": "test_write"
+    },
+    {
+      "id": "T057",
+      "phase": "component",
+      "component_id": "reviewers",
+      "description": "Implement Reviewer Implementations",
+      "file_path": "implementations/reviewers/src/",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T056"
+      ],
+      "category": "implement"
+    },
+    {
+      "id": "T058",
+      "phase": "component",
+      "component_id": "reviewers",
+      "description": "Run tests and verify Reviewer Implementations",
+      "file_path": "",
+      "status": "failed",
+      "parallel": false,
+      "depends_on": [
+        "T057"
+      ],
+      "category": "verify"
+    },
+    {
+      "id": "T059",
+      "phase": "component",
+      "component_id": "circuit",
+      "description": "Review contract for Baton Circuit Router",
+      "file_path": "contracts/circuit/interface.json",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [],
+      "category": "contract_review"
+    },
+    {
+      "id": "T060",
+      "phase": "component",
+      "component_id": "circuit",
+      "description": "Set up test harness for Baton Circuit Router",
+      "file_path": "",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T059"
+      ],
+      "category": "test_setup"
+    },
+    {
+      "id": "T061",
+      "phase": "component",
+      "component_id": "circuit",
+      "description": "Write contract tests for Baton Circuit Router",
+      "file_path": "",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T060"
+      ],
+      "category": "test_write"
+    },
+    {
+      "id": "T062",
+      "phase": "component",
+      "component_id": "circuit",
+      "description": "Implement Baton Circuit Router",
+      "file_path": "implementations/circuit/src/",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T061"
+      ],
+      "category": "implement"
+    },
+    {
+      "id": "T063",
+      "phase": "component",
+      "component_id": "circuit",
+      "description": "Run tests and verify Baton Circuit Router",
+      "file_path": "",
+      "status": "failed",
+      "parallel": false,
+      "depends_on": [
+        "T062"
+      ],
+      "category": "verify"
+    },
+    {
+      "id": "T064",
+      "phase": "component",
+      "component_id": "assessor",
+      "description": "Review contract for Assessment Merger & Trust Scoring",
+      "file_path": "contracts/assessor/interface.json",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [],
+      "category": "contract_review"
+    },
+    {
+      "id": "T065",
+      "phase": "component",
+      "component_id": "assessor",
+      "description": "Set up test harness for Assessment Merger & Trust Scoring",
+      "file_path": "",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T064"
+      ],
+      "category": "test_setup"
+    },
+    {
+      "id": "T066",
+      "phase": "component",
+      "component_id": "assessor",
+      "description": "Write contract tests for Assessment Merger & Trust Scoring",
+      "file_path": "",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T065"
+      ],
+      "category": "test_write"
+    },
+    {
+      "id": "T067",
+      "phase": "component",
+      "component_id": "assessor",
+      "description": "Implement Assessment Merger & Trust Scoring",
+      "file_path": "implementations/assessor/src/",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T066"
+      ],
+      "category": "implement"
+    },
+    {
+      "id": "T068",
+      "phase": "component",
+      "component_id": "assessor",
+      "description": "Run tests and verify Assessment Merger & Trust Scoring",
+      "file_path": "",
+      "status": "failed",
+      "parallel": false,
+      "depends_on": [
+        "T067"
+      ],
+      "category": "verify"
+    },
+    {
+      "id": "T069",
+      "phase": "component",
+      "component_id": "reporter",
+      "description": "Review contract for Report Formatter & Sealer",
+      "file_path": "contracts/reporter/interface.json",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [],
+      "category": "contract_review"
+    },
+    {
+      "id": "T070",
+      "phase": "component",
+      "component_id": "reporter",
+      "description": "Set up test harness for Report Formatter & Sealer",
+      "file_path": "",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T069"
+      ],
+      "category": "test_setup"
+    },
+    {
+      "id": "T071",
+      "phase": "component",
+      "component_id": "reporter",
+      "description": "Write contract tests for Report Formatter & Sealer",
+      "file_path": "",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T070"
+      ],
+      "category": "test_write"
+    },
+    {
+      "id": "T072",
+      "phase": "component",
+      "component_id": "reporter",
+      "description": "Implement Report Formatter & Sealer",
+      "file_path": "implementations/reporter/src/",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T071"
+      ],
+      "category": "implement"
+    },
+    {
+      "id": "T073",
+      "phase": "component",
+      "component_id": "reporter",
+      "description": "Run tests and verify Report Formatter & Sealer",
+      "file_path": "",
+      "status": "failed",
+      "parallel": false,
+      "depends_on": [
+        "T072"
+      ],
+      "category": "verify"
+    },
+    {
+      "id": "T074",
+      "phase": "component",
+      "component_id": "learner",
+      "description": "Review contract for Apprentice Learning Module",
+      "file_path": "contracts/learner/interface.json",
+      "status": "pending",
+      "parallel": false,
+      "depends_on": [],
+      "category": "contract_review"
+    },
+    {
+      "id": "T075",
+      "phase": "component",
+      "component_id": "learner",
+      "description": "Set up test harness for Apprentice Learning Module",
+      "file_path": "",
+      "status": "pending",
+      "parallel": false,
+      "depends_on": [
+        "T074"
+      ],
+      "category": "test_setup"
+    },
+    {
+      "id": "T076",
+      "phase": "component",
+      "component_id": "learner",
+      "description": "Write contract tests for Apprentice Learning Module",
+      "file_path": "",
+      "status": "pending",
+      "parallel": false,
+      "depends_on": [
+        "T075"
+      ],
+      "category": "test_write"
+    },
+    {
+      "id": "T077",
+      "phase": "component",
+      "component_id": "learner",
+      "description": "Implement Apprentice Learning Module",
+      "file_path": "implementations/learner/src/",
+      "status": "pending",
+      "parallel": false,
+      "depends_on": [
+        "T076"
+      ],
+      "category": "implement"
+    },
+    {
+      "id": "T078",
+      "phase": "component",
+      "component_id": "learner",
+      "description": "Run tests and verify Apprentice Learning Module",
+      "file_path": "",
+      "status": "pending",
+      "parallel": false,
+      "depends_on": [
+        "T077"
+      ],
+      "category": "verify"
+    },
+    {
+      "id": "T079",
+      "phase": "component",
+      "component_id": "cli",
+      "description": "Review contract for CLI Entry Point",
+      "file_path": "contracts/cli/interface.json",
+      "status": "pending",
+      "parallel": false,
+      "depends_on": [],
+      "category": "contract_review"
+    },
+    {
+      "id": "T080",
+      "phase": "component",
+      "component_id": "cli",
+      "description": "Set up test harness for CLI Entry Point",
+      "file_path": "",
+      "status": "pending",
+      "parallel": false,
+      "depends_on": [
+        "T079"
+      ],
+      "category": "test_setup"
+    },
+    {
+      "id": "T081",
+      "phase": "component",
+      "component_id": "cli",
+      "description": "Write contract tests for CLI Entry Point",
+      "file_path": "",
+      "status": "pending",
+      "parallel": false,
+      "depends_on": [
+        "T080"
+      ],
+      "category": "test_write"
+    },
+    {
+      "id": "T082",
+      "phase": "component",
+      "component_id": "cli",
+      "description": "Implement CLI Entry Point",
+      "file_path": "implementations/cli/src/",
+      "status": "pending",
+      "parallel": false,
+      "depends_on": [
+        "T081"
+      ],
+      "category": "implement"
+    },
+    {
+      "id": "T083",
+      "phase": "component",
+      "component_id": "cli",
+      "description": "Run tests and verify CLI Entry Point",
+      "file_path": "",
+      "status": "pending",
+      "parallel": false,
+      "depends_on": [
+        "T082"
+      ],
+      "category": "verify"
+    },
+    {
+      "id": "T084",
+      "phase": "component",
+      "component_id": "mcp_server",
+      "description": "Review contract for MCP Server",
+      "file_path": "contracts/mcp_server/interface.json",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [],
+      "category": "contract_review"
+    },
+    {
+      "id": "T085",
+      "phase": "component",
+      "component_id": "mcp_server",
+      "description": "Set up test harness for MCP Server",
+      "file_path": "",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T084"
+      ],
+      "category": "test_setup"
+    },
+    {
+      "id": "T086",
+      "phase": "component",
+      "component_id": "mcp_server",
+      "description": "Write contract tests for MCP Server",
+      "file_path": "",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T085"
+      ],
+      "category": "test_write"
+    },
+    {
+      "id": "T087",
+      "phase": "component",
+      "component_id": "mcp_server",
+      "description": "Implement MCP Server",
+      "file_path": "implementations/mcp_server/src/",
+      "status": "completed",
+      "parallel": false,
+      "depends_on": [
+        "T086"
+      ],
+      "category": "implement"
+    },
+    {
+      "id": "T088",
+      "phase": "component",
+      "component_id": "mcp_server",
+      "description": "Run tests and verify MCP Server",
+      "file_path": "",
+      "status": "failed",
+      "parallel": false,
+      "depends_on": [
+        "T087"
+      ],
+      "category": "verify"
+    },
+    {
+      "id": "T089",
+      "phase": "integration",
+      "component_id": "root",
+      "description": "Review integration contract for Root",
+      "file_path": "",
+      "status": "pending",
+      "parallel": false,
+      "depends_on": [],
+      "category": "contract_review"
+    },
+    {
+      "id": "T090",
+      "phase": "integration",
+      "component_id": "root",
+      "description": "Write integration tests for Root",
+      "file_path": "",
+      "status": "pending",
+      "parallel": true,
+      "depends_on": [],
+      "category": "test_write"
+    },
+    {
+      "id": "T091",
+      "phase": "integration",
+      "component_id": "root",
+      "description": "Wire children for Root",
+      "file_path": "",
+      "status": "pending",
+      "parallel": false,
+      "depends_on": [
+        "T068",
+        "T063",
+        "T083",
+        "T043",
+        "T048",
+        "T053",
+        "T078",
+        "T088",
+        "T073",
+        "T058",
+        "T038"
+      ],
+      "category": "integrate"
+    },
+    {
+      "id": "T092",
+      "phase": "integration",
+      "component_id": "root",
+      "description": "Run integration tests for Root",
+      "file_path": "",
+      "status": "pending",
+      "parallel": false,
+      "depends_on": [
+        "T091"
+      ],
+      "category": "verify"
+    },
+    {
+      "id": "T093",
+      "phase": "polish",
+      "component_id": "",
+      "description": "Run full contract validation gate",
+      "file_path": "",
+      "status": "pending",
+      "parallel": false,
+      "depends_on": [],
+      "category": "validate"
+    },
+    {
+      "id": "T094",
+      "phase": "polish",
+      "component_id": "",
+      "description": "Cross-artifact analysis",
+      "file_path": "",
+      "status": "pending",
+      "parallel": false,
+      "depends_on": [],
+      "category": "validate"
+    },
+    {
+      "id": "T095",
+      "phase": "polish",
+      "component_id": "",
+      "description": "Update design document",
+      "file_path": "",
+      "status": "pending",
+      "parallel": false,
+      "depends_on": [],
+      "category": "document"
+    }
+  ],
+  "checkpoints": [
+    {
+      "after_phase": "component",
+      "description": "All leaf components verified",
+      "validation": "All leaf contract tests pass"
+    },
+    {
+      "after_phase": "integration",
+      "description": "All integrations verified",
+      "validation": "All integration tests pass"
+    }
+  ],
+  "generated_at": "2026-03-22T14:49:03.195146",
+  "version": 1
+}

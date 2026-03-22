@@ -1,0 +1,1765 @@
+{
+  "component_id": "root",
+  "name": "Root",
+  "description": "Lightweight orchestrator implementing PipelineProtocol that wires together all Exemplar sub-components into an end-to-end governed code review pipeline. Root accepts ExemplarConfig, injects protocol-typed dependencies (ClockProvider, IdGenerator, ChroniclerEmitter, SealChainStoreProtocol), and orchestrates the async pipeline: intake.run_intake → circuit.run → assessor.merge_assessments → reporter.format_report + seal_report. Root contains zero business logic — only wiring, sequencing, error handling at stage boundaries, and Chronicler event emission with PACT key attribution. Supports async context manager for resource lifecycle (opening/closing seal chain store, chronicler log). All data flowing through the pipeline uses frozen Pydantic v2 models from schemas. Root itself is NOT a frozen model — it holds mutable runtime references to component instances.",
+  "version": 1,
+  "types": [
+    {
+      "name": "PipelineStage",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "intake",
+        "circuit",
+        "assess",
+        "format",
+        "seal"
+      ],
+      "inner_types": [],
+      "description": "Named stages of the Root orchestration pipeline, used for error boundary identification and Chronicler event context. StrEnum in implementation.",
+      "owner_component": ""
+    },
+    {
+      "name": "ErrorSeverity",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "fatal",
+        "recoverable",
+        "ignorable"
+      ],
+      "inner_types": [],
+      "description": "Classification of pipeline errors by recoverability. Fatal errors abort the pipeline; recoverable errors produce partial results; ignorable errors are logged and suppressed.",
+      "owner_component": ""
+    },
+    {
+      "name": "ExemplarError",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "stage",
+          "type_ref": "PipelineStage",
+          "required": true,
+          "default": "",
+          "description": "The pipeline stage where the error occurred.",
+          "validators": []
+        },
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable error description.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "len(value) >= 1",
+              "error_message": "Error message must not be empty"
+            }
+          ]
+        },
+        {
+          "name": "pact_key",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "PACT attribution key of the method that produced this error.",
+          "validators": [
+            {
+              "kind": "regex",
+              "expression": "^exemplar\\.root\\.[a-z_]+$",
+              "error_message": "PACT key must follow exemplar.root.method_name pattern"
+            }
+          ]
+        },
+        {
+          "name": "cause",
+          "type_ref": "str",
+          "required": false,
+          "default": "",
+          "description": "String representation of the underlying exception that triggered this error, if any.",
+          "validators": []
+        },
+        {
+          "name": "error_severity",
+          "type_ref": "ErrorSeverity",
+          "required": true,
+          "default": "",
+          "description": "Whether this error is fatal, recoverable, or ignorable.",
+          "validators": []
+        },
+        {
+          "name": "context",
+          "type_ref": "dict",
+          "required": false,
+          "default": "{}",
+          "description": "Arbitrary key-value context for debugging (e.g., review_request_id, stage config).",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Base exception for all Root-level pipeline errors. Carries the failing stage, a human-readable message, optional cause exception context, and PACT key for attribution. Subclass of Exception in implementation.",
+      "owner_component": ""
+    },
+    {
+      "name": "PipelineStageError",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "stage",
+          "type_ref": "PipelineStage",
+          "required": true,
+          "default": "",
+          "description": "The pipeline stage where the error occurred.",
+          "validators": []
+        },
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable error description.",
+          "validators": []
+        },
+        {
+          "name": "pact_key",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "PACT attribution key.",
+          "validators": []
+        },
+        {
+          "name": "cause",
+          "type_ref": "str",
+          "required": false,
+          "default": "",
+          "description": "String repr of underlying exception.",
+          "validators": []
+        },
+        {
+          "name": "error_severity",
+          "type_ref": "ErrorSeverity",
+          "required": true,
+          "default": "",
+          "description": "Recoverability classification.",
+          "validators": []
+        },
+        {
+          "name": "context",
+          "type_ref": "dict",
+          "required": false,
+          "default": "{}",
+          "description": "Debugging context.",
+          "validators": []
+        },
+        {
+          "name": "component_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The component_id of the sub-component that failed (e.g., 'intake', 'circuit', 'assessor', 'reporter').",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Error specific to a pipeline stage failure, wrapping the underlying component error with stage context. Subclass of ExemplarError in implementation.",
+      "owner_component": ""
+    },
+    {
+      "name": "PactKeyConstants",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "ROOT_INIT",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "PACT key for Root.__init__. Value: 'exemplar.root.__init__'",
+          "validators": []
+        },
+        {
+          "name": "ROOT_RUN_PIPELINE",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "PACT key for Root.run_pipeline. Value: 'exemplar.root.run_pipeline'",
+          "validators": []
+        },
+        {
+          "name": "ROOT_AENTER",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "PACT key for Root.__aenter__. Value: 'exemplar.root.__aenter__'",
+          "validators": []
+        },
+        {
+          "name": "ROOT_AEXIT",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "PACT key for Root.__aexit__. Value: 'exemplar.root.__aexit__'",
+          "validators": []
+        },
+        {
+          "name": "ROOT_CREATE",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "PACT key for create_root factory. Value: 'exemplar.root.create_root'",
+          "validators": []
+        },
+        {
+          "name": "ROOT_BUILD_PIPELINE_RESULT",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "PACT key for _build_pipeline_result. Value: 'exemplar.root.build_pipeline_result'",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Module-level PACT key constants for all Root public methods. Used in Chronicler event payloads and ExemplarError attribution. All values are class-level str constants in implementation.",
+      "owner_component": ""
+    },
+    {
+      "name": "RootConfig",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "chronicle_log_path",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "File path for Chronicler JSON-lines log output.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "len(value) >= 1",
+              "error_message": "Chronicle log path must not be empty"
+            }
+          ]
+        },
+        {
+          "name": "seal_chain_path",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "File path for Tessera seal chain state.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "len(value) >= 1",
+              "error_message": "Seal chain path must not be empty"
+            }
+          ]
+        },
+        {
+          "name": "kindex_store_path",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "File path for Kindex persistent store.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "len(value) >= 1",
+              "error_message": "Kindex store path must not be empty"
+            }
+          ]
+        },
+        {
+          "name": "stigmergy_store_path",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "File path for Stigmergy pattern store.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "len(value) >= 1",
+              "error_message": "Stigmergy store path must not be empty"
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Frozen Pydantic model extracting the Root-relevant subset of ExemplarConfig. Constructed by Root.__init__ from the full ExemplarConfig. Carries paths for chronicle log, seal chain, kindex store, and stigmergy store, plus the full sub-configs needed to construct components.",
+      "owner_component": ""
+    },
+    {
+      "name": "PipelineEvent",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "event_type",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Well-known Chronicler event type string.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "str",
+          "required": false,
+          "default": "",
+          "description": "Pipeline stage name, if applicable.",
+          "validators": []
+        },
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable event description.",
+          "validators": []
+        },
+        {
+          "name": "payload",
+          "type_ref": "dict",
+          "required": false,
+          "default": "{}",
+          "description": "Arbitrary structured data for the event.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A Chronicler event accumulated during pipeline execution. Lightweight wrapper to track events emitted at stage boundaries before they are included in PipelineResult.",
+      "owner_component": ""
+    },
+    {
+      "name": "ExitCodeMapping",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "pass_code",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Exit code for pass decision. Value: 0.",
+          "validators": []
+        },
+        {
+          "name": "warn_code",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Exit code for warn decision. Value: 1.",
+          "validators": []
+        },
+        {
+          "name": "block_code",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Exit code for block decision. Value: 2.",
+          "validators": []
+        },
+        {
+          "name": "error_code",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Exit code for error condition. Value: 3.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Static mapping from ReviewDecision to integer exit codes. pass→0, warn→1, block→2. Used by Root to populate PipelineResult.exit_code.",
+      "owner_component": ""
+    }
+  ],
+  "functions": [
+    {
+      "name": "__init__",
+      "description": "Construct a Root orchestrator instance. Validates and slices ExemplarConfig into sub-configs for each component. Instantiates governance primitives (ChronicleEmitter, TesseraSealer, LedgerClassifier, KindexStore, StigmergyTracker). Constructs BatonCircuitRouter with reviewer instances from get_all_reviewers(). Stores injected protocol-typed dependencies (ClockProvider, ChroniclerEmitter, SealChainStoreProtocol). Does NOT open file handles or perform I/O — that happens in __aenter__. PACT key: exemplar.root.__init__.",
+      "inputs": [
+        {
+          "name": "config",
+          "type_ref": "any",
+          "required": true,
+          "default": "",
+          "description": "A valid ExemplarConfig instance. Root extracts sub-configs for circuit, reviewers, ledger, apprentice, and file paths.",
+          "validators": []
+        },
+        {
+          "name": "clock",
+          "type_ref": "any",
+          "required": false,
+          "default": "None",
+          "description": "Injectable ClockProvider for deterministic testing. If None, a real-time clock is used.",
+          "validators": []
+        },
+        {
+          "name": "chronicler",
+          "type_ref": "any",
+          "required": false,
+          "default": "None",
+          "description": "Injectable ChroniclerEmitter for event emission. If None, a file-based ChronicleEmitter is constructed from config.chronicle_log_path.",
+          "validators": []
+        },
+        {
+          "name": "chain_store",
+          "type_ref": "any",
+          "required": false,
+          "default": "None",
+          "description": "Injectable SealChainStoreProtocol for Tessera seal chain. If None, a file-based store is constructed from config.seal_chain_path.",
+          "validators": []
+        },
+        {
+          "name": "id_generator",
+          "type_ref": "any",
+          "required": false,
+          "default": "None",
+          "description": "Injectable callable returning UUID4 hex strings for deterministic testing. If None, uuid.uuid4().hex is used.",
+          "validators": []
+        }
+      ],
+      "output_type": "None",
+      "error_cases": [
+        {
+          "name": "invalid_config",
+          "condition": "config is not a valid ExemplarConfig or fails internal extraction",
+          "error_type": "ExemplarError",
+          "error_data": {
+            "stage": "intake",
+            "error_severity": "fatal",
+            "pact_key": "exemplar.root.__init__"
+          }
+        },
+        {
+          "name": "circuit_config_error",
+          "condition": "CircuitConfig is invalid or reviewers cannot be registered (e.g., no enabled reviewers for a configured stage)",
+          "error_type": "ExemplarError",
+          "error_data": {
+            "stage": "circuit",
+            "error_severity": "fatal",
+            "pact_key": "exemplar.root.__init__",
+            "cause": "CircuitConfigError details"
+          }
+        },
+        {
+          "name": "invalid_clock_protocol",
+          "condition": "Provided clock does not satisfy ClockProvider protocol",
+          "error_type": "TypeError",
+          "error_data": {
+            "detail": "clock must implement ClockProvider protocol (now_utc, monotonic_ms)"
+          }
+        },
+        {
+          "name": "invalid_chronicler_protocol",
+          "condition": "Provided chronicler does not satisfy ChroniclerEmitter protocol",
+          "error_type": "TypeError",
+          "error_data": {
+            "detail": "chronicler must implement ChroniclerEmitter protocol (async emit)"
+          }
+        }
+      ],
+      "preconditions": [
+        "config is a valid ExemplarConfig that passes all Pydantic validators",
+        "If clock is provided, it satisfies ClockProvider protocol (now_utc() -> str, monotonic_ms() -> int)",
+        "If chronicler is provided, it satisfies ChroniclerEmitter protocol (async emit(event) -> None)",
+        "If chain_store is provided, it satisfies SealChainStoreProtocol (async get_previous_hash() -> str|None, async append_seal(seal) -> None)"
+      ],
+      "postconditions": [
+        "self._config holds the original ExemplarConfig reference",
+        "self._root_config is a RootConfig extracted from the ExemplarConfig",
+        "self._circuit_router is a fully constructed BatonCircuitRouter with all enabled reviewers registered",
+        "self._clock, self._chronicler, self._chain_store, self._id_generator are stored (injected or default-constructed)",
+        "self._is_open is False (no resources opened until __aenter__)",
+        "No file I/O has been performed"
+      ],
+      "idempotent": false,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "__aenter__",
+      "description": "Async context manager entry. Opens file-based resources: ensures chronicle log directory exists, initializes seal chain store file if absent, initializes learner state directory. Returns self for use in 'async with' blocks. PACT key: exemplar.root.__aenter__.",
+      "inputs": [],
+      "output_type": "any",
+      "error_cases": [
+        {
+          "name": "already_open",
+          "condition": "self._is_open is True (double entry into context manager)",
+          "error_type": "ExemplarError",
+          "error_data": {
+            "stage": "intake",
+            "error_severity": "fatal",
+            "pact_key": "exemplar.root.__aenter__",
+            "message": "Root context manager is already open"
+          }
+        },
+        {
+          "name": "filesystem_permission_error",
+          "condition": "Cannot create chronicle log directory, seal chain file, or learner state directory due to permissions",
+          "error_type": "ExemplarError",
+          "error_data": {
+            "stage": "intake",
+            "error_severity": "fatal",
+            "pact_key": "exemplar.root.__aenter__",
+            "cause": "PermissionError details"
+          }
+        },
+        {
+          "name": "learner_init_failure",
+          "condition": "learner.initialize_state() fails (corrupt existing state)",
+          "error_type": "ExemplarError",
+          "error_data": {
+            "stage": "intake",
+            "error_severity": "fatal",
+            "pact_key": "exemplar.root.__aenter__",
+            "cause": "StateCorruptionError details"
+          }
+        }
+      ],
+      "preconditions": [
+        "Root was successfully constructed via __init__",
+        "self._is_open is False (not already entered)"
+      ],
+      "postconditions": [
+        "self._is_open is True",
+        "Chronicle log directory exists on filesystem",
+        "Seal chain store file is initialized (empty chain if new)",
+        "Learner state directory is initialized via learner.initialize_state()",
+        "Returned value is self"
+      ],
+      "idempotent": false,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "writes_file",
+          "target": "chronicle log directory",
+          "description": "Ensures chronicle log directory exists via os.makedirs"
+        },
+        {
+          "kind": "writes_file",
+          "target": "seal chain store file",
+          "description": "Initializes seal chain store file if absent"
+        },
+        {
+          "kind": "writes_file",
+          "target": "learner state directory",
+          "description": "Initializes .exemplar/learner/ directory and state.json/records.json if absent"
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "__aexit__",
+      "description": "Async context manager exit. Performs cleanup: flushes any buffered chronicle events, closes file handles. Suppresses no exceptions (re-raises all). PACT key: exemplar.root.__aexit__.",
+      "inputs": [
+        {
+          "name": "exc_type",
+          "type_ref": "any",
+          "required": false,
+          "default": "None",
+          "description": "Exception type if context exited with error.",
+          "validators": []
+        },
+        {
+          "name": "exc_val",
+          "type_ref": "any",
+          "required": false,
+          "default": "None",
+          "description": "Exception value if context exited with error.",
+          "validators": []
+        },
+        {
+          "name": "exc_tb",
+          "type_ref": "any",
+          "required": false,
+          "default": "None",
+          "description": "Exception traceback if context exited with error.",
+          "validators": []
+        }
+      ],
+      "output_type": "bool",
+      "error_cases": [
+        {
+          "name": "cleanup_failure",
+          "condition": "File handle flush or close raises an I/O error during cleanup",
+          "error_type": "ExemplarError",
+          "error_data": {
+            "stage": "seal",
+            "error_severity": "ignorable",
+            "pact_key": "exemplar.root.__aexit__",
+            "message": "Cleanup failure during context exit — logged and suppressed"
+          }
+        }
+      ],
+      "preconditions": [
+        "self._is_open is True"
+      ],
+      "postconditions": [
+        "self._is_open is False",
+        "All file handles have been closed or flushed",
+        "Return value is False (exceptions are not suppressed)"
+      ],
+      "idempotent": false,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "writes_file",
+          "target": "chronicle log file",
+          "description": "Flushes any buffered chronicle events to log file"
+        },
+        {
+          "kind": "logging",
+          "target": "",
+          "description": "Logs cleanup status and any errors during resource release"
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "run_pipeline",
+      "description": "Execute the full end-to-end review pipeline. Orchestrates: (1) emit review.started Chronicler event, (2) intake.run_intake to parse and classify diff, (3) circuit.run to route hunks through reviewer stages, (4) assessor.merge_assessments to combine assessments with trust-weighted scoring, (5) reporter.format_report to render output, (6) reporter.seal_report to apply Tessera seal, (7) emit review.complete Chronicler event. Error boundaries: intake/circuit failures with zero usable results are fatal (raise PipelineStageError); reviewer timeouts produce partial Assessments (recoverable); chronicler/seal failures are fire-and-forget (ignorable). Accumulates all Chronicler events emitted during the pipeline for inclusion in PipelineResult. Maps final ReviewDecision to exit_code (pass→0, warn→1, block→2). PACT key: exemplar.root.run_pipeline.",
+      "inputs": [
+        {
+          "name": "diff_source",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Raw unified diff text to review. Must be non-empty.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "len(value) >= 1",
+              "error_message": "diff_source must not be empty"
+            }
+          ]
+        },
+        {
+          "name": "output_format",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Desired output format: 'json', 'md', or 'github'.",
+          "validators": [
+            {
+              "kind": "custom",
+              "expression": "value in ('json', 'md', 'github')",
+              "error_message": "output_format must be one of: json, md, github"
+            }
+          ]
+        },
+        {
+          "name": "metadata",
+          "type_ref": "dict",
+          "required": false,
+          "default": "{}",
+          "description": "Arbitrary key-value metadata to attach to the ReviewRequest (PR number, branch, author, etc.).",
+          "validators": []
+        }
+      ],
+      "output_type": "any",
+      "error_cases": [
+        {
+          "name": "not_open",
+          "condition": "self._is_open is False — run_pipeline called outside async context manager",
+          "error_type": "ExemplarError",
+          "error_data": {
+            "stage": "intake",
+            "error_severity": "fatal",
+            "pact_key": "exemplar.root.run_pipeline",
+            "message": "Root context manager must be entered before running pipeline"
+          }
+        },
+        {
+          "name": "empty_diff",
+          "condition": "diff_source is empty string",
+          "error_type": "ExemplarError",
+          "error_data": {
+            "stage": "intake",
+            "error_severity": "fatal",
+            "pact_key": "exemplar.root.run_pipeline",
+            "message": "diff_source must not be empty"
+          }
+        },
+        {
+          "name": "intake_failure",
+          "condition": "intake.run_intake returns zero hunks and one or more fatal errors (completely unparseable diff)",
+          "error_type": "PipelineStageError",
+          "error_data": {
+            "stage": "intake",
+            "error_severity": "fatal",
+            "component_id": "intake",
+            "pact_key": "exemplar.root.run_pipeline"
+          }
+        },
+        {
+          "name": "circuit_failure",
+          "condition": "circuit.run raises an unexpected error (not a reviewer timeout, which is handled internally)",
+          "error_type": "PipelineStageError",
+          "error_data": {
+            "stage": "circuit",
+            "error_severity": "fatal",
+            "component_id": "circuit",
+            "pact_key": "exemplar.root.run_pipeline"
+          }
+        },
+        {
+          "name": "assessor_failure",
+          "condition": "assessor.merge_assessments raises ValueError (invalid input data)",
+          "error_type": "PipelineStageError",
+          "error_data": {
+            "stage": "assess",
+            "error_severity": "fatal",
+            "component_id": "assessor",
+            "pact_key": "exemplar.root.run_pipeline"
+          }
+        },
+        {
+          "name": "reporter_format_failure",
+          "condition": "reporter.format_report raises ReporterRenderError or ReporterFormatError",
+          "error_type": "PipelineStageError",
+          "error_data": {
+            "stage": "format",
+            "error_severity": "fatal",
+            "component_id": "reporter",
+            "pact_key": "exemplar.root.run_pipeline"
+          }
+        },
+        {
+          "name": "seal_failure",
+          "condition": "reporter.seal_report raises ReporterSealError or ReporterChainStoreError — fire-and-forget, report is returned unsealed",
+          "error_type": "ExemplarError",
+          "error_data": {
+            "stage": "seal",
+            "error_severity": "ignorable",
+            "pact_key": "exemplar.root.run_pipeline",
+            "message": "Seal failed; report returned unsealed"
+          }
+        },
+        {
+          "name": "invalid_output_format",
+          "condition": "output_format is not one of 'json', 'md', 'github'",
+          "error_type": "ExemplarError",
+          "error_data": {
+            "stage": "format",
+            "error_severity": "fatal",
+            "pact_key": "exemplar.root.run_pipeline",
+            "message": "Unsupported output format"
+          }
+        }
+      ],
+      "preconditions": [
+        "self._is_open is True (Root context manager has been entered)",
+        "diff_source is a non-empty string containing unified diff text",
+        "output_format is a valid OutputFormat variant string"
+      ],
+      "postconditions": [
+        "Returned PipelineResult.review_request contains parsed and classified DiffHunks",
+        "Returned PipelineResult.assessments contains one Assessment per configured review stage",
+        "Returned PipelineResult.report is a merged ReviewReport with TesseraSeal attached (if sealing succeeded)",
+        "Returned PipelineResult.formatted_output contains the report rendered in the requested format",
+        "Returned PipelineResult.output_format matches the requested output_format",
+        "Returned PipelineResult.exit_code is 0 (pass), 1 (warn), or 2 (block)",
+        "Returned PipelineResult.events contains all Chronicler events emitted during pipeline execution",
+        "A review.started ChroniclerEvent was emitted at pipeline start (fire-and-forget)",
+        "A review.complete ChroniclerEvent was emitted at pipeline end (fire-and-forget)",
+        "All findings in the report are sorted deterministically per assessor contract"
+      ],
+      "idempotent": false,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": "diff source (passed as string, but may originate from file)",
+          "description": "Processes diff text through intake pipeline"
+        },
+        {
+          "kind": "writes_file",
+          "target": "chronicle log file",
+          "description": "Emits review.started, stage boundary, and review.complete Chronicler events"
+        },
+        {
+          "kind": "writes_file",
+          "target": "seal chain store file",
+          "description": "Appends Tessera seal to chain store via reporter.seal_report"
+        },
+        {
+          "kind": "logging",
+          "target": "",
+          "description": "Logs pipeline progress, errors, and fire-and-forget failures to stderr via stdlib logging"
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 30000,
+        "max_memory_mb": null,
+        "complexity": "O(n * r) where n = number of diff hunks and r = number of review stages"
+      }
+    },
+    {
+      "name": "_run_intake_stage",
+      "description": "Internal method: executes the intake stage of the pipeline. Creates a string-based DiffSource from the raw diff text, invokes intake.run_intake with the LedgerConfig and ChroniclerEmitter, and returns the IntakeResult. Emits stage.started and stage.complete Chronicler events. PACT key: exemplar.root.run_pipeline (attributed to parent).",
+      "inputs": [
+        {
+          "name": "diff_text",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Raw unified diff text.",
+          "validators": []
+        },
+        {
+          "name": "metadata",
+          "type_ref": "dict",
+          "required": false,
+          "default": "{}",
+          "description": "Request metadata to attach.",
+          "validators": []
+        },
+        {
+          "name": "accumulated_events",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "Mutable list collecting ChroniclerEvents emitted during the pipeline.",
+          "validators": []
+        }
+      ],
+      "output_type": "any",
+      "error_cases": [
+        {
+          "name": "intake_read_failure",
+          "condition": "DiffSource.read() raises an IOError",
+          "error_type": "PipelineStageError",
+          "error_data": {
+            "stage": "intake",
+            "component_id": "intake",
+            "error_severity": "fatal"
+          }
+        },
+        {
+          "name": "intake_parse_failure",
+          "condition": "parse_diff returns zero hunks with errors",
+          "error_type": "PipelineStageError",
+          "error_data": {
+            "stage": "intake",
+            "component_id": "intake",
+            "error_severity": "fatal"
+          }
+        }
+      ],
+      "preconditions": [
+        "diff_text is a non-empty string",
+        "accumulated_events is an initialized (possibly empty) list"
+      ],
+      "postconditions": [
+        "Returned IntakeResult.review_request.hunks has zero or more classified DiffHunks",
+        "stage.started and stage.complete events have been appended to accumulated_events",
+        "ChroniclerEmitter emission failures are caught and logged (fire-and-forget)"
+      ],
+      "idempotent": false,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "logging",
+          "target": "",
+          "description": "Emits stage.started and stage.complete Chronicler events (fire-and-forget)"
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "_run_circuit_stage",
+      "description": "Internal method: executes the circuit stage. Invokes BatonCircuitRouter.run() with the ReviewRequest from intake. Returns the list of Assessments (one per configured stage). Reviewer timeouts and failures produce partial Assessments (handled by circuit internally). Emits stage boundary events. PACT key: exemplar.root.run_pipeline (attributed to parent).",
+      "inputs": [
+        {
+          "name": "review_request",
+          "type_ref": "any",
+          "required": true,
+          "default": "",
+          "description": "A valid ReviewRequest with at least one DiffHunk.",
+          "validators": []
+        },
+        {
+          "name": "accumulated_events",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "Mutable list collecting ChroniclerEvents.",
+          "validators": []
+        }
+      ],
+      "output_type": "list",
+      "error_cases": [
+        {
+          "name": "circuit_run_failure",
+          "condition": "BatonCircuitRouter.run() raises ValueError (invalid request)",
+          "error_type": "PipelineStageError",
+          "error_data": {
+            "stage": "circuit",
+            "component_id": "circuit",
+            "error_severity": "fatal"
+          }
+        }
+      ],
+      "preconditions": [
+        "review_request.hunks is non-empty",
+        "BatonCircuitRouter was successfully constructed in __init__"
+      ],
+      "postconditions": [
+        "Returned list has exactly len(config.stages) Assessments",
+        "Assessments are ordered by their position in CircuitConfig.stages",
+        "Partial assessments (is_partial=True) are included for timed-out/failed reviewers"
+      ],
+      "idempotent": false,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "logging",
+          "target": "",
+          "description": "Emits stage boundary Chronicler events (fire-and-forget)"
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "_run_assess_stage",
+      "description": "Internal method: executes the assessment merge stage. Retrieves trust adjustments from learner (if phase is canary or primary), resolves trust scores, invokes assessor.merge_assessments. Returns the merged ReviewReport. Emits stage boundary events. PACT key: exemplar.root.run_pipeline (attributed to parent).",
+      "inputs": [
+        {
+          "name": "assessments",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "List of Assessment objects from circuit stage.",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Review request ID for correlation.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "1 <= len(value) <= 256",
+              "error_message": "review_request_id must be 1-256 characters"
+            }
+          ]
+        },
+        {
+          "name": "accumulated_events",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "Mutable list collecting ChroniclerEvents.",
+          "validators": []
+        }
+      ],
+      "output_type": "any",
+      "error_cases": [
+        {
+          "name": "assessor_merge_failure",
+          "condition": "assessor.merge_assessments raises ValueError",
+          "error_type": "PipelineStageError",
+          "error_data": {
+            "stage": "assess",
+            "component_id": "assessor",
+            "error_severity": "fatal"
+          }
+        },
+        {
+          "name": "learner_trust_failure",
+          "condition": "learner.get_trust_adjustments() fails — fire-and-forget, default trust weights used",
+          "error_type": "ExemplarError",
+          "error_data": {
+            "stage": "assess",
+            "error_severity": "ignorable",
+            "message": "Learner trust adjustment failed; using default weights"
+          }
+        }
+      ],
+      "preconditions": [
+        "assessments is a non-empty list of valid Assessment objects",
+        "All assessments have review_request_id matching review_request_id parameter"
+      ],
+      "postconditions": [
+        "Returned ReviewReport.review_request_id matches the input review_request_id",
+        "Returned ReviewReport.findings are sorted deterministically",
+        "Returned ReviewReport.decision is one of block, warn, pass",
+        "Trust adjustments from learner are applied if learner phase is canary or primary"
+      ],
+      "idempotent": false,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": "learner state file",
+          "description": "Reads trust adjustments from .exemplar/learner/state.json if learner phase is canary/primary"
+        },
+        {
+          "kind": "logging",
+          "target": "",
+          "description": "Emits stage boundary Chronicler events (fire-and-forget)"
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "_run_format_and_seal_stage",
+      "description": "Internal method: executes the format and seal stages. Invokes reporter.format_report to render the ReviewReport, then reporter.seal_report to apply Tessera seal. Seal failure is fire-and-forget (report is returned unsealed). Emits stage boundary and report.sealed events. PACT key: exemplar.root.run_pipeline (attributed to parent).",
+      "inputs": [
+        {
+          "name": "report",
+          "type_ref": "any",
+          "required": true,
+          "default": "",
+          "description": "Merged ReviewReport from assess stage.",
+          "validators": []
+        },
+        {
+          "name": "output_format",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Desired output format string.",
+          "validators": []
+        },
+        {
+          "name": "accumulated_events",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "Mutable list collecting ChroniclerEvents.",
+          "validators": []
+        }
+      ],
+      "output_type": "dict",
+      "error_cases": [
+        {
+          "name": "format_failure",
+          "condition": "reporter.format_report raises ReporterRenderError",
+          "error_type": "PipelineStageError",
+          "error_data": {
+            "stage": "format",
+            "component_id": "reporter",
+            "error_severity": "fatal"
+          }
+        },
+        {
+          "name": "seal_failure",
+          "condition": "reporter.seal_report raises any error — fire-and-forget",
+          "error_type": "ExemplarError",
+          "error_data": {
+            "stage": "seal",
+            "error_severity": "ignorable",
+            "message": "Sealing failed; returning unsealed report"
+          }
+        }
+      ],
+      "preconditions": [
+        "report is a valid ReviewReport instance",
+        "output_format is one of 'json', 'md', 'github'"
+      ],
+      "postconditions": [
+        "Returned dict has keys 'sealed_report' (ReviewReport, possibly with seal) and 'formatted_output' (FormattedReport)",
+        "If sealing succeeded, sealed_report.seal is a valid TesseraSeal",
+        "If sealing failed, sealed_report.seal is None and a warning is logged",
+        "formatted_output.content is a non-empty string in the requested format"
+      ],
+      "idempotent": false,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "writes_file",
+          "target": "seal chain store",
+          "description": "Appends seal to chain store file via SealChainStoreProtocol"
+        },
+        {
+          "kind": "logging",
+          "target": "",
+          "description": "Emits stage boundary and report.sealed Chronicler events (fire-and-forget)"
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "_build_pipeline_result",
+      "description": "Internal pure helper: assembles a PipelineResult from the outputs of all pipeline stages. Maps ReviewDecision to exit_code (pass→0, warn→1, block→2). Pure function except for clock injection for timestamp. PACT key: exemplar.root.build_pipeline_result.",
+      "inputs": [
+        {
+          "name": "review_request",
+          "type_ref": "any",
+          "required": true,
+          "default": "",
+          "description": "The ReviewRequest from intake stage.",
+          "validators": []
+        },
+        {
+          "name": "assessments",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "List of Assessment objects from circuit stage.",
+          "validators": []
+        },
+        {
+          "name": "report",
+          "type_ref": "any",
+          "required": true,
+          "default": "",
+          "description": "The final (possibly sealed) ReviewReport.",
+          "validators": []
+        },
+        {
+          "name": "events",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "All ChroniclerEvents accumulated during pipeline execution.",
+          "validators": []
+        },
+        {
+          "name": "formatted_output",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The rendered report content string.",
+          "validators": []
+        },
+        {
+          "name": "output_format",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The output format used.",
+          "validators": []
+        }
+      ],
+      "output_type": "any",
+      "error_cases": [
+        {
+          "name": "unknown_decision",
+          "condition": "report.decision is not a recognized ReviewDecision variant",
+          "error_type": "ExemplarError",
+          "error_data": {
+            "stage": "format",
+            "error_severity": "fatal",
+            "pact_key": "exemplar.root.build_pipeline_result",
+            "message": "Unknown ReviewDecision in report"
+          }
+        }
+      ],
+      "preconditions": [
+        "All inputs are valid and non-None",
+        "report.decision is a valid ReviewDecision"
+      ],
+      "postconditions": [
+        "Returned PipelineResult.exit_code is 0 for pass, 1 for warn, 2 for block",
+        "Returned PipelineResult.review_request is the input review_request",
+        "Returned PipelineResult.assessments is the input assessments list",
+        "Returned PipelineResult.report is the input report",
+        "Returned PipelineResult.events is the input events list",
+        "Returned PipelineResult.formatted_output is the input formatted_output string",
+        "Returned PipelineResult.output_format matches the input output_format"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "_emit_event",
+      "description": "Internal fire-and-forget helper: constructs a ChroniclerEvent and emits it via the injected ChroniclerEmitter. Catches all exceptions from the emitter — failures are logged via stdlib logging but never propagate. Uses the injected clock for timestamp and id_generator for event_id. PACT key is passed as a payload field.",
+      "inputs": [
+        {
+          "name": "event_type",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Well-known Chronicler event type string.",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Review request ID for correlation.",
+          "validators": []
+        },
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable event description.",
+          "validators": []
+        },
+        {
+          "name": "pact_key",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "PACT attribution key to embed in event payload.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "str",
+          "required": false,
+          "default": "",
+          "description": "Optional pipeline stage name.",
+          "validators": []
+        },
+        {
+          "name": "payload",
+          "type_ref": "dict",
+          "required": false,
+          "default": "{}",
+          "description": "Additional event payload data.",
+          "validators": []
+        },
+        {
+          "name": "accumulated_events",
+          "type_ref": "list",
+          "required": false,
+          "default": "None",
+          "description": "If provided, the constructed event is also appended to this list for inclusion in PipelineResult.",
+          "validators": []
+        }
+      ],
+      "output_type": "None",
+      "error_cases": [],
+      "preconditions": [],
+      "postconditions": [
+        "If emitter succeeds, event was durably emitted to chronicle log",
+        "If emitter fails, failure is logged via stdlib logging — no exception propagates",
+        "If accumulated_events is provided, event is appended to it regardless of emitter success/failure",
+        "Event payload contains 'pact_key' field with the provided PACT key"
+      ],
+      "idempotent": false,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "writes_file",
+          "target": "chronicle log file",
+          "description": "Emits ChroniclerEvent via ChroniclerEmitter (fire-and-forget)"
+        },
+        {
+          "kind": "logging",
+          "target": "",
+          "description": "Logs emitter failures via stdlib logging"
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "create_root",
+      "description": "Factory function that creates a fully configured Root instance. Loads ExemplarConfig via config.load_config (using optional explicit path), constructs Root with all defaults, and returns it. This is the primary entry point for both CLI and MCP server. PACT key: exemplar.root.create_root.",
+      "inputs": [
+        {
+          "name": "config_path",
+          "type_ref": "str",
+          "required": false,
+          "default": "",
+          "description": "Optional explicit path to YAML config file. If empty, config resolution follows the standard cascade: env var → conventional → builtin defaults.",
+          "validators": []
+        },
+        {
+          "name": "clock",
+          "type_ref": "any",
+          "required": false,
+          "default": "None",
+          "description": "Injectable ClockProvider for deterministic testing.",
+          "validators": []
+        },
+        {
+          "name": "chronicler",
+          "type_ref": "any",
+          "required": false,
+          "default": "None",
+          "description": "Injectable ChroniclerEmitter.",
+          "validators": []
+        },
+        {
+          "name": "chain_store",
+          "type_ref": "any",
+          "required": false,
+          "default": "None",
+          "description": "Injectable SealChainStoreProtocol.",
+          "validators": []
+        },
+        {
+          "name": "id_generator",
+          "type_ref": "any",
+          "required": false,
+          "default": "None",
+          "description": "Injectable ID generator callable.",
+          "validators": []
+        }
+      ],
+      "output_type": "any",
+      "error_cases": [
+        {
+          "name": "config_file_not_found",
+          "condition": "Explicit config_path does not exist on filesystem",
+          "error_type": "ExemplarError",
+          "error_data": {
+            "stage": "intake",
+            "error_severity": "fatal",
+            "pact_key": "exemplar.root.create_root",
+            "cause": "ConfigFileNotFoundError"
+          }
+        },
+        {
+          "name": "config_parse_error",
+          "condition": "Config file has invalid YAML syntax",
+          "error_type": "ExemplarError",
+          "error_data": {
+            "stage": "intake",
+            "error_severity": "fatal",
+            "pact_key": "exemplar.root.create_root",
+            "cause": "ConfigParseError"
+          }
+        },
+        {
+          "name": "config_validation_error",
+          "condition": "Config file content fails Pydantic validation",
+          "error_type": "ExemplarError",
+          "error_data": {
+            "stage": "intake",
+            "error_severity": "fatal",
+            "pact_key": "exemplar.root.create_root",
+            "cause": "ConfigValidationError"
+          }
+        },
+        {
+          "name": "root_construction_failure",
+          "condition": "Root.__init__ raises ExemplarError (e.g., invalid circuit config)",
+          "error_type": "ExemplarError",
+          "error_data": {
+            "stage": "intake",
+            "error_severity": "fatal",
+            "pact_key": "exemplar.root.create_root"
+          }
+        }
+      ],
+      "preconditions": [
+        "If config_path is provided and non-empty, it points to a readable YAML file"
+      ],
+      "postconditions": [
+        "Returned object is a fully constructed Root instance",
+        "Root._is_open is False (caller must use async with to open)",
+        "Config was loaded and validated successfully"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": "YAML config file",
+          "description": "Reads and parses YAML config file via config.load_config if path is provided or conventional path exists"
+        },
+        {
+          "kind": "logging",
+          "target": "",
+          "description": "Logs config resolution source and any warnings"
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "map_decision_to_exit_code",
+      "description": "Pure mapping function from ReviewDecision string to integer exit code. pass→0, warn→1, block→2. Used by _build_pipeline_result. PACT key: exemplar.root.build_pipeline_result.",
+      "inputs": [
+        {
+          "name": "decision",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ReviewDecision variant string: 'pass', 'warn', or 'block'.",
+          "validators": [
+            {
+              "kind": "custom",
+              "expression": "value in ('pass', 'warn', 'block')",
+              "error_message": "decision must be one of: pass, warn, block"
+            }
+          ]
+        }
+      ],
+      "output_type": "int",
+      "error_cases": [
+        {
+          "name": "invalid_decision",
+          "condition": "decision is not 'pass', 'warn', or 'block'",
+          "error_type": "ExemplarError",
+          "error_data": {
+            "stage": "format",
+            "error_severity": "fatal",
+            "pact_key": "exemplar.root.build_pipeline_result",
+            "message": "Unknown ReviewDecision"
+          }
+        }
+      ],
+      "preconditions": [
+        "decision is a valid ReviewDecision variant string"
+      ],
+      "postconditions": [
+        "Returns 0 for 'pass', 1 for 'warn', 2 for 'block'",
+        "Return value is always in {0, 1, 2}"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "get_config",
+      "description": "Read-only accessor returning the ExemplarConfig used by this Root instance. Useful for CLI/MCP introspection and debugging. PACT key: exemplar.root.get_config.",
+      "inputs": [],
+      "output_type": "any",
+      "error_cases": [],
+      "preconditions": [
+        "Root was successfully constructed"
+      ],
+      "postconditions": [
+        "Returned value is the ExemplarConfig passed to __init__ (or loaded by create_root)",
+        "Returned config is a frozen Pydantic model — caller cannot mutate it"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "get_circuit_router",
+      "description": "Read-only accessor returning the BatonCircuitRouter instance constructed by Root. Useful for CLI/MCP introspection and testing. PACT key: exemplar.root.get_circuit_router.",
+      "inputs": [],
+      "output_type": "any",
+      "error_cases": [],
+      "preconditions": [
+        "Root was successfully constructed"
+      ],
+      "postconditions": [
+        "Returned value is the BatonCircuitRouter instance",
+        "Router's execution plan is accessible via get_execution_plan()"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": ""
+        }
+      ],
+      "performance_budget": null
+    }
+  ],
+  "dependencies": [
+    "assessor",
+    "circuit",
+    "cli",
+    "config",
+    "governance",
+    "intake",
+    "learner",
+    "mcp_server",
+    "reporter",
+    "reviewers",
+    "schemas"
+  ],
+  "dependency_contracts": {
+    "schemas": [
+      "Severity",
+      "Confidence",
+      "ReviewStage",
+      "ReviewDecision",
+      "ClassificationLabel",
+      "ChroniclerEventType",
+      "LearnerPhase",
+      "OutputFormat",
+      "CliExitCode",
+      "DiffHunk",
+      "ReviewRequest",
+      "Finding",
+      "Assessment",
+      "TrustScore",
+      "TesseraSeal",
+      "ReviewReport",
+      "ChroniclerEvent",
+      "PipelineResult",
+      "PolicyToken",
+      "ReviewerCredential",
+      "StigmergySignal",
+      "LearningRecord",
+      "KindexEntry",
+      "severity_rank",
+      "confidence_rank",
+      "canonical_bytes",
+      "canonical_hash",
+      "validate_iso_timestamp"
+    ],
+    "config": [
+      "ExemplarConfig",
+      "CircuitConfig",
+      "ReviewerConfig",
+      "LedgerConfig",
+      "ApprenticeConfig",
+      "ConfigSource",
+      "ConfigError",
+      "ConfigFileNotFoundError",
+      "ConfigValidationError",
+      "ConfigParseError",
+      "ResolvedConfigPath",
+      "load_config",
+      "default_config",
+      "resolve_config_path"
+    ],
+    "intake": [
+      "DiffSource",
+      "DiffSourceKind",
+      "IntakeResult",
+      "IntakeError",
+      "IntakePhase",
+      "EventEmitter",
+      "run_intake",
+      "parse_diff",
+      "classify_hunks"
+    ],
+    "circuit": [
+      "BatonCircuitRouter",
+      "CircuitConfig",
+      "ExecutionPlan",
+      "ExecutionStep",
+      "ParallelGroup",
+      "CircuitConfigError",
+      "ChroniclerEmitter",
+      "ClockProvider",
+      "ReviewerProtocol",
+      "run",
+      "resolve_execution_plan",
+      "invoke_reviewer"
+    ],
+    "assessor": [
+      "merge_assessments",
+      "MergeContext",
+      "ConflictNote",
+      "PactAttribution"
+    ],
+    "reporter": [
+      "format_report",
+      "seal_report",
+      "verify_seal",
+      "canonicalize",
+      "FormattedReport",
+      "SealVerificationResult",
+      "SealChainStoreProtocol",
+      "OutputFormat",
+      "SealVerificationStatus",
+      "ReporterSealError",
+      "ReporterChainStoreError",
+      "ReporterSerializationError"
+    ],
+    "governance": [
+      "TesseraSealer",
+      "ChronicleEmitter",
+      "AgentSafeEnforcer",
+      "SignetManager",
+      "ArbiterScorer",
+      "LedgerClassifier",
+      "StigmergyTracker",
+      "KindexStore",
+      "GovernanceError",
+      "SealVerificationError",
+      "PolicyViolationError",
+      "CredentialError"
+    ],
+    "learner": [
+      "record_decision",
+      "get_trust_adjustments",
+      "check_phase_progression",
+      "get_current_phase",
+      "should_apply_adjustments",
+      "initialize_state",
+      "LearnerPhase"
+    ],
+    "cli": [
+      "main",
+      "build_parser",
+      "parse_and_validate_args",
+      "CliExitCode",
+      "CliArgs",
+      "CliResult"
+    ],
+    "mcp_server": [
+      "create_server",
+      "run_server",
+      "PipelineProtocol",
+      "ServerConfig"
+    ],
+    "reviewers": [
+      "filter_hunks_by_policy",
+      "derive_decision",
+      "build_assessment",
+      "get_all_reviewers",
+      "get_reviewer_by_stage",
+      "SecurityReviewer",
+      "CorrectnessReviewer",
+      "StyleReviewer",
+      "ArchitectureReviewer"
+    ]
+  },
+  "invariants": [
+    "Root contains zero business logic — only wiring, sequencing, error handling at stage boundaries, and Chronicler event emission. All domain logic lives in sub-components.",
+    "Root is NOT a frozen Pydantic model — it holds mutable runtime state (component references, _is_open flag). All data flowing through the pipeline uses frozen schemas models.",
+    "All Chronicler event emissions from Root are fire-and-forget: emitter failures are caught, logged, and never propagate to the pipeline caller.",
+    "PACT key constants (exemplar.root.*) are embedded in every ChroniclerEvent payload emitted by Root and in every ExemplarError raised by Root.",
+    "Pipeline stage error classification is deterministic: intake failures with zero hunks are fatal; reviewer timeouts produce partial assessments (recoverable via circuit); seal/chronicler failures are ignorable (fire-and-forget).",
+    "Root.__init__ never performs file I/O. All file I/O initialization happens in __aenter__.",
+    "Root.__aexit__ never suppresses exceptions — it always returns False from the async context manager.",
+    "The injected ClockProvider is used for all timestamps in Root-emitted ChroniclerEvents and PipelineResult, enabling deterministic testing.",
+    "The injected id_generator is used for all event_id and report_id generation in Root, enabling deterministic testing.",
+    "create_root is the canonical entry point — CLI main() and MCP create_server() should both use it to obtain a Root instance.",
+    "Exit code mapping is deterministic and fixed: pass→0, warn→1, block→2, error→3.",
+    "Learner trust adjustment retrieval is fire-and-forget: if learner state is unavailable, default trust weights from ExemplarConfig are used without error.",
+    "Root holds exactly one BatonCircuitRouter instance, constructed once in __init__, reused across all run_pipeline calls.",
+    "If seal_report fails, the pipeline still returns a valid PipelineResult with an unsealed ReviewReport — sealing is never fatal."
+  ],
+  "requires": [
+    "schemas",
+    "config",
+    "intake",
+    "circuit",
+    "assessor",
+    "reporter",
+    "governance",
+    "reviewers"
+  ],
+  "processing_register": "rigorous-analytical",
+  "data_access": {
+    "reads": [
+      "INTERNAL",
+      "PII",
+      "PUBLIC"
+    ],
+    "writes": [
+      "INTERNAL"
+    ],
+    "rationale": "Root orchestrates the full review pipeline which processes diff text that may contain secrets (classified as SECRET by Ledger), PII patterns (email addresses, names in comments), and internal API references. Root reads the raw diff (PUBLIC input), passes it through intake classification which may flag PII/SECRET content in hunks, then routes classified hunks through reviewers. Root writes INTERNAL-tier data: Chronicler event logs (audit trail with review request IDs, stage timings, PACT keys), Tessera seal chain entries (hash-chain proofs over report content), and pipeline result metadata. Root never directly reads or writes SECRET-tier data — Ledger classification labels flow through as metadata on DiffHunks, and the actual secret content is handled by intake and reviewers, not Root.",
+    "side_effects": [
+      {
+        "type": "file_write",
+        "classification": "INTERNAL",
+        "fields": [
+          "event_id",
+          "event_type",
+          "review_request_id",
+          "timestamp",
+          "stage",
+          "payload",
+          "message"
+        ],
+        "rationale": "Appends structured ChroniclerEvent JSON lines to the chronicle log file at each pipeline stage boundary for audit trail and governance compliance."
+      },
+      {
+        "type": "file_write",
+        "classification": "INTERNAL",
+        "fields": [
+          "content_hash",
+          "chain_hash",
+          "previous_hash",
+          "sealed_at",
+          "sealer_id"
+        ],
+        "rationale": "Appends TesseraSeal entries to the seal chain store file via SealChainStoreProtocol to maintain hash-chain integrity proofs over ReviewReports."
+      },
+      {
+        "type": "file_read",
+        "classification": "INTERNAL",
+        "fields": [
+          "current_phase",
+          "reviewer_stats",
+          "reviewer_rule_stats"
+        ],
+        "rationale": "Reads learner state from .exemplar/learner/state.json to determine if trust adjustments should be applied (canary/primary phase) and to retrieve computed trust weights."
+      },
+      {
+        "type": "file_write",
+        "classification": "INTERNAL",
+        "fields": [
+          "state.json",
+          "records.json"
+        ],
+        "rationale": "Initializes learner state directory and files during __aenter__ if they do not exist."
+      },
+      {
+        "type": "file_read",
+        "classification": "INTERNAL",
+        "fields": [
+          "seal_chain_path"
+        ],
+        "rationale": "Reads the most recent chain_hash from seal chain store to link new seals to the existing chain."
+      }
+    ]
+  },
+  "authority": {
+    "domains": [
+      "pipeline_orchestration",
+      "pipeline_lifecycle"
+    ],
+    "rationale": "Root is the single authoritative owner of the end-to-end pipeline execution sequence (intake → circuit → assess → format → seal) and the pipeline lifecycle (resource initialization via async context manager, event accumulation, exit code mapping). No other component defines or modifies the pipeline stage ordering, error boundary classification, or PipelineResult assembly. Sub-components own their respective domains (intake owns diff parsing, assessor owns merge logic, etc.) but Root alone owns the orchestration wiring and lifecycle."
+  }
+}

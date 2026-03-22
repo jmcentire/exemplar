@@ -1,0 +1,1172 @@
+{
+  "component_id": "intake",
+  "name": "Diff Intake & Classification",
+  "description": "Async module that parses unified diff text into DiffHunk records. Extracts file paths, changed line numbers, context lines, and hunk metadata. Applies Ledger field classification rules to flag hunks containing potential secrets, PII, or internal API references. Output: list of classified DiffHunks ready for circuit routing. Handles malformed diffs gracefully with partial-success semantics and clear error messages. Supports reading from file path or stdin via a DiffSource protocol abstraction. Two-phase architecture: pure parse phase (deterministic string processing) followed by classify phase (pre-compiled Ledger regex rules applied to added_lines only). All public functions carry PACT keys for Sentinel attribution. Chronicler events emitted at stage boundaries via fire-and-forget EventEmitter protocol.",
+  "version": 1,
+  "types": [
+    {
+      "name": "DiffSourceKind",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "file",
+        "stdin"
+      ],
+      "inner_types": [],
+      "description": "Discriminator for the origin of diff text input.",
+      "owner_component": ""
+    },
+    {
+      "name": "ClassificationLabel",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "secret",
+        "pii",
+        "internal_api",
+        "public"
+      ],
+      "inner_types": [],
+      "description": "Ledger data classification label for diff content.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "LineRange",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "start",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "First line number in the range (1-based).",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": ">=1",
+              "error_message": "Line numbers are 1-based; start must be >= 1."
+            }
+          ]
+        },
+        {
+          "name": "count",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of lines in the range.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": ">=0",
+              "error_message": "Line count must be non-negative."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A contiguous range of line numbers within a single file side (old or new). Frozen Pydantic model.",
+      "owner_component": ""
+    },
+    {
+      "name": "HunkMetadata",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "old_range",
+          "type_ref": "LineRange",
+          "required": true,
+          "default": "",
+          "description": "Line range in the original (pre-change) file.",
+          "validators": []
+        },
+        {
+          "name": "new_range",
+          "type_ref": "LineRange",
+          "required": true,
+          "default": "",
+          "description": "Line range in the modified (post-change) file.",
+          "validators": []
+        },
+        {
+          "name": "section_header",
+          "type_ref": "str",
+          "required": false,
+          "default": "",
+          "description": "Optional function/class name from the @@ header trailing text.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Parsed header metadata from a single unified diff hunk (the @@ line). Frozen Pydantic model.",
+      "owner_component": ""
+    },
+    {
+      "name": "DiffHunk",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique identifier for this hunk (deterministic from content).",
+          "validators": []
+        },
+        {
+          "name": "file_path",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Relative file path the hunk belongs to.",
+          "validators": []
+        },
+        {
+          "name": "start_line_old",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Starting line number in the old file.",
+          "validators": []
+        },
+        {
+          "name": "count_old",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of lines in the old file span.",
+          "validators": []
+        },
+        {
+          "name": "start_line_new",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Starting line number in the new file.",
+          "validators": []
+        },
+        {
+          "name": "count_new",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of lines in the new file span.",
+          "validators": []
+        },
+        {
+          "name": "context_before",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Context lines before the change.",
+          "validators": []
+        },
+        {
+          "name": "added_lines",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Lines added in this hunk.",
+          "validators": []
+        },
+        {
+          "name": "removed_lines",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Lines removed in this hunk.",
+          "validators": []
+        },
+        {
+          "name": "context_after",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Context lines after the change.",
+          "validators": []
+        },
+        {
+          "name": "raw_header",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Original @@ header line from the diff.",
+          "validators": []
+        },
+        {
+          "name": "classifications",
+          "type_ref": "list[ClassificationLabel]",
+          "required": true,
+          "default": "[]",
+          "description": "Ledger classification labels applied to this hunk.",
+          "validators": []
+        },
+        {
+          "name": "language",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Detected programming language of the file, if known.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single parsed hunk from a unified diff, with metadata and classification labels.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "HunkId",
+      "kind": "primitive",
+      "fields": [],
+      "item_type": "str",
+      "variants": [],
+      "inner_types": [
+        "str"
+      ],
+      "description": "Deterministic hunk identifier: 'hunk-' prefix followed by 12 lowercase hex characters derived from SHA-256 hash of (file_path + raw_header + added_lines content).",
+      "owner_component": ""
+    },
+    {
+      "name": "FilePath",
+      "kind": "primitive",
+      "fields": [],
+      "item_type": "str",
+      "variants": [],
+      "inner_types": [
+        "str"
+      ],
+      "description": "A relative file path extracted from a diff header. Must not be empty, must not contain null bytes, must use forward slashes.",
+      "owner_component": ""
+    },
+    {
+      "name": "ReviewRequestId",
+      "kind": "primitive",
+      "fields": [],
+      "item_type": "str",
+      "variants": [],
+      "inner_types": [
+        "str"
+      ],
+      "description": "UUID4-based review request identifier: 'req-' prefix followed by a UUID4 hex string (32 chars).",
+      "owner_component": ""
+    },
+    {
+      "name": "IntakeError",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "line_number",
+          "type_ref": "int",
+          "required": false,
+          "default": "",
+          "description": "1-based line number in the raw diff where the error was detected. None if not locatable.",
+          "validators": []
+        },
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable description of what went wrong.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": ">=1",
+              "error_message": "Error message must not be empty."
+            }
+          ]
+        },
+        {
+          "name": "raw_content",
+          "type_ref": "str",
+          "required": false,
+          "default": "",
+          "description": "The raw text fragment that triggered the error, for diagnostics. None if not applicable.",
+          "validators": []
+        },
+        {
+          "name": "phase",
+          "type_ref": "IntakePhase",
+          "required": true,
+          "default": "",
+          "description": "Which intake phase produced this error.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Frozen Pydantic model capturing a parse or classification error with location context. Not an exception — a data record for partial-success reporting.",
+      "owner_component": ""
+    },
+    {
+      "name": "IntakePhase",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "read",
+        "parse",
+        "classify",
+        "orchestrate"
+      ],
+      "inner_types": [],
+      "description": "Discriminator for which phase of intake processing produced an error or event.",
+      "owner_component": ""
+    },
+    {
+      "name": "IntakeResult",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "review_request",
+          "type_ref": "ReviewRequest",
+          "required": true,
+          "default": "",
+          "description": "The assembled ReviewRequest with classified hunks, ready for circuit routing.",
+          "validators": []
+        },
+        {
+          "name": "errors",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "Errors encountered during parsing or classification. Non-empty does not mean total failure.",
+          "validators": []
+        },
+        {
+          "name": "warnings",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "Non-fatal warnings (e.g., unknown file extensions, very large hunks truncated).",
+          "validators": []
+        },
+        {
+          "name": "hunk_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Total number of successfully parsed and classified hunks.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": ">=0",
+              "error_message": "Hunk count must be non-negative."
+            }
+          ]
+        },
+        {
+          "name": "classified_hunk_count",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of hunks that received at least one non-NONE classification.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": ">=0",
+              "error_message": "Classified hunk count must be non-negative."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Frozen Pydantic model wrapping the complete output of run_intake. Supports partial success: some hunks may parse successfully while others produce errors.",
+      "owner_component": ""
+    },
+    {
+      "name": "ReviewRequest",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique review request identifier.",
+          "validators": []
+        },
+        {
+          "name": "source",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Source identifier (e.g., file path, PR URL, stdin).",
+          "validators": []
+        },
+        {
+          "name": "hunks",
+          "type_ref": "list[DiffHunk]",
+          "required": true,
+          "default": "",
+          "description": "Parsed and classified diff hunks.",
+          "validators": []
+        },
+        {
+          "name": "file_paths",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "",
+          "description": "Deduplicated list of all file paths in the diff.",
+          "validators": []
+        },
+        {
+          "name": "created_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of when the request was created.",
+          "validators": []
+        },
+        {
+          "name": "metadata",
+          "type_ref": "dict[str, str]",
+          "required": true,
+          "default": "{}",
+          "description": "Arbitrary key-value metadata (PR number, branch, author, etc.).",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "The output of intake: a complete review request containing parsed and classified hunks.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "DiffSource",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "kind",
+          "type_ref": "DiffSourceKind",
+          "required": true,
+          "default": "",
+          "description": "Discriminator indicating file or stdin source.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "runtime_checkable Protocol with a single async read() -> str method. Concrete implementations: FileDiffSource (reads from Path) and StdinDiffSource (reads from sys.stdin). This type represents the Protocol interface; implementations are not separate contract types.",
+      "owner_component": ""
+    },
+    {
+      "name": "EventEmitter",
+      "kind": "struct",
+      "fields": [],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "runtime_checkable Protocol for Chronicler event emission. Single method: async emit(event: ChroniclerEvent) -> None. Used in fire-and-forget pattern — emission failures must not block intake processing.",
+      "owner_component": ""
+    },
+    {
+      "name": "ChroniclerEvent",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "event_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique event identifier.",
+          "validators": []
+        },
+        {
+          "name": "event_type",
+          "type_ref": "ChroniclerEventType",
+          "required": true,
+          "default": "",
+          "description": "Well-known event type.",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the ReviewRequest this event relates to.",
+          "validators": []
+        },
+        {
+          "name": "timestamp",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of when the event occurred.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "Optional[ReviewStage]",
+          "required": false,
+          "default": "null",
+          "description": "Review stage this event relates to, if applicable.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Reviewer agent ID if this event is reviewer-specific.",
+          "validators": []
+        },
+        {
+          "name": "payload",
+          "type_ref": "dict[str, str]",
+          "required": true,
+          "default": "{}",
+          "description": "Arbitrary structured data associated with the event.",
+          "validators": []
+        },
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable description of the event.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A structured event emitted at review lifecycle boundaries for audit trail and story assembly.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "LedgerConfig",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "rules",
+          "type_ref": "list[LedgerFieldRule]",
+          "required": true,
+          "default": "",
+          "description": "Ordered list of classification rules. First match wins per label category.",
+          "validators": []
+        },
+        {
+          "name": "default_label",
+          "type_ref": "ClassificationLabel",
+          "required": true,
+          "default": "public",
+          "description": "Default label when no rule matches.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Configuration for Ledger field classification: rules for detecting secrets, PII, and internal APIs.",
+      "owner_component": "config"
+    },
+    {
+      "name": "ReviewStage",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "security",
+        "correctness",
+        "style",
+        "architecture"
+      ],
+      "inner_types": [],
+      "description": "Named stage in the review circuit pipeline.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ChroniclerEventType",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "review.started",
+        "stage.started",
+        "stage.complete",
+        "assessment.merged",
+        "report.sealed",
+        "review.complete",
+        "policy.violation",
+        "pattern.detected",
+        "learning.recorded"
+      ],
+      "inner_types": [],
+      "description": "Well-known Chronicler event types emitted throughout the review lifecycle.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "LedgerFieldRule",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "pattern",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Regex pattern to match against diff hunk content.",
+          "validators": []
+        },
+        {
+          "name": "label",
+          "type_ref": "ClassificationLabel",
+          "required": true,
+          "default": "",
+          "description": "Classification label to apply when pattern matches.",
+          "validators": []
+        },
+        {
+          "name": "description",
+          "type_ref": "str",
+          "required": false,
+          "default": "",
+          "description": "Human-readable description of what this rule detects.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single Ledger classification rule: a regex pattern mapped to a classification label.",
+      "owner_component": "config"
+    }
+  ],
+  "functions": [
+    {
+      "name": "parse_diff",
+      "description": "Pure parsing of unified diff text into DiffHunk records. Deterministic: same input always produces identical output. No classification is applied (classifications field will be empty list). Handles malformed input gracefully by returning partial results alongside IntakeError records. Language detection is applied via EXTENSION_LANGUAGE_MAP during file path extraction. Hunk IDs are generated deterministically via SHA-256. This is the first phase of the two-phase intake architecture.",
+      "inputs": [
+        {
+          "name": "raw",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Raw unified diff text to parse. May be empty, may contain malformed sections.",
+          "validators": []
+        }
+      ],
+      "output_type": "tuple[list[DiffHunk], list[IntakeError]]",
+      "error_cases": [
+        {
+          "name": "empty_input",
+          "condition": "raw is an empty string",
+          "error_type": "none",
+          "error_data": {
+            "behavior": "Returns ([], []) — no hunks, no errors. Not considered an error."
+          }
+        },
+        {
+          "name": "no_diff_headers",
+          "condition": "raw contains text but no recognizable '---'/'+++' or 'diff --git' headers",
+          "error_type": "IntakeError",
+          "error_data": {
+            "phase": "parse",
+            "message": "No diff headers found in input. Expected unified diff format."
+          }
+        },
+        {
+          "name": "malformed_hunk_header",
+          "condition": "A @@ line cannot be parsed as a valid hunk range",
+          "error_type": "IntakeError",
+          "error_data": {
+            "phase": "parse",
+            "message": "Malformed hunk header: could not extract line ranges."
+          }
+        },
+        {
+          "name": "truncated_hunk",
+          "condition": "Diff ends mid-hunk without another header or EOF marker",
+          "error_type": "IntakeError",
+          "error_data": {
+            "phase": "parse",
+            "message": "Hunk appears truncated — fewer lines than header declares."
+          }
+        },
+        {
+          "name": "binary_file_marker",
+          "condition": "Diff contains 'Binary files ... differ' marker",
+          "error_type": "IntakeError",
+          "error_data": {
+            "phase": "parse",
+            "message": "Binary file diff detected; cannot parse as text hunk."
+          }
+        },
+        {
+          "name": "invalid_utf8",
+          "condition": "Input contains byte sequences that are not valid UTF-8 after decoding",
+          "error_type": "IntakeError",
+          "error_data": {
+            "phase": "parse",
+            "message": "Input contains invalid character sequences."
+          }
+        }
+      ],
+      "preconditions": [
+        "raw is a str (may be empty)",
+        "No external state is read or mutated"
+      ],
+      "postconditions": [
+        "Every returned DiffHunk has a deterministic id derived from SHA-256(file_path + raw_header + added_lines)",
+        "DiffHunk.classifications is always an empty list (classification happens in classify_hunks)",
+        "DiffHunk.classification_evidence is always an empty list",
+        "If raw is empty string, returns ([], []) with no errors",
+        "Every DiffHunk.file_path is non-empty and uses forward slashes",
+        "Every DiffHunk.language is populated from EXTENSION_LANGUAGE_MAP or 'unknown'",
+        "Line numbers in HunkMetadata are consistent with actual line counts",
+        "Each IntakeError has phase='parse' and a non-empty message",
+        "The union of successfully parsed hunks and errors accounts for all hunk-like sections in the input"
+      ],
+      "idempotent": true,
+      "is_async": true,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure function — no side effects. Async wrapper exists solely for interface consistency with run_intake pipeline."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 200,
+        "max_memory_mb": 128,
+        "complexity": "O(n) where n is the number of lines in raw diff text"
+      }
+    },
+    {
+      "name": "classify_hunks",
+      "description": "Applies Ledger field classification rules to a list of DiffHunks. For each hunk, scans only the added_lines against pre-compiled regex patterns from LedgerConfig to detect secrets, PII, and internal API references. Returns new frozen DiffHunk instances with classifications and classification_evidence populated. Sync function because it is CPU-bound regex matching with no I/O. This is the second phase of the two-phase intake architecture.",
+      "inputs": [
+        {
+          "name": "hunks",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "List of DiffHunk records from parse_diff with empty classifications. Item type: DiffHunk.",
+          "validators": []
+        },
+        {
+          "name": "config",
+          "type_ref": "LedgerConfig",
+          "required": true,
+          "default": "",
+          "description": "Ledger classification configuration containing regex patterns for each classification label.",
+          "validators": []
+        }
+      ],
+      "output_type": "list[DiffHunk]",
+      "error_cases": [
+        {
+          "name": "invalid_regex_pattern",
+          "condition": "A pattern in LedgerConfig fails to compile as a valid regex",
+          "error_type": "ValueError",
+          "error_data": {
+            "message": "Ledger config contains invalid regex pattern: <pattern>"
+          }
+        },
+        {
+          "name": "empty_hunks_list",
+          "condition": "hunks is an empty list",
+          "error_type": "none",
+          "error_data": {
+            "behavior": "Returns empty list. Not considered an error."
+          }
+        }
+      ],
+      "preconditions": [
+        "All input hunks have empty classifications lists (fresh from parse_diff)",
+        "config.secret_patterns, config.pii_patterns, config.internal_api_patterns are valid regex strings",
+        "Regex patterns in config have been validated at config load time"
+      ],
+      "postconditions": [
+        "Output list has same length as input hunks list",
+        "Output hunks have same id, file_path, metadata, raw_header, context_lines, added_lines, removed_lines as input",
+        "Each output hunk's classifications contains zero or more ClassificationLabel values (no duplicates per hunk)",
+        "classification_evidence has same length as classifications for each hunk",
+        "Classification is based solely on added_lines content — removed_lines and context_lines are not scanned",
+        "A hunk with no pattern matches has classifications=[] and classification_evidence=[]",
+        "Order of output hunks matches order of input hunks"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure function — applies regex patterns to in-memory data, no side effects."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 500,
+        "max_memory_mb": 256,
+        "complexity": "O(h * l * p) where h=number of hunks, l=average added lines per hunk, p=total pattern count"
+      }
+    },
+    {
+      "name": "run_intake",
+      "description": "Top-level async orchestrator for the intake module. Reads diff text from a DiffSource, invokes parse_diff, then classify_hunks, assembles a ReviewRequest with a UUID4-based id, and returns an IntakeResult. Emits three Chronicler events via the optional EventEmitter: 'review.intake.started' before reading, 'review.intake.parsed' after parse phase, 'review.intake.classified' after classification. Event emission uses fire-and-forget pattern — emission failures are caught and logged as warnings, never blocking intake processing. PACT key embedded for Sentinel attribution.",
+      "inputs": [
+        {
+          "name": "source",
+          "type_ref": "DiffSource",
+          "required": true,
+          "default": "",
+          "description": "Protocol-conforming diff source to read from (file or stdin).",
+          "validators": []
+        },
+        {
+          "name": "config",
+          "type_ref": "LedgerConfig",
+          "required": true,
+          "default": "",
+          "description": "Ledger classification configuration.",
+          "validators": []
+        },
+        {
+          "name": "emit",
+          "type_ref": "EventEmitter",
+          "required": false,
+          "default": "",
+          "description": "Optional Chronicler event emitter. If None, no events are emitted.",
+          "validators": []
+        }
+      ],
+      "output_type": "IntakeResult",
+      "error_cases": [
+        {
+          "name": "source_read_failure",
+          "condition": "source.read() raises an IOError, FileNotFoundError, or PermissionError",
+          "error_type": "IntakeError",
+          "error_data": {
+            "phase": "read",
+            "message": "Failed to read diff from source: <detail>"
+          }
+        },
+        {
+          "name": "source_read_timeout",
+          "condition": "source.read() does not complete within a reasonable time (e.g., stdin with no input and no EOF)",
+          "error_type": "IntakeError",
+          "error_data": {
+            "phase": "read",
+            "message": "Timed out reading from source."
+          }
+        },
+        {
+          "name": "totally_unparseable",
+          "condition": "parse_diff returns zero hunks and one or more errors",
+          "error_type": "none",
+          "error_data": {
+            "behavior": "Returns IntakeResult with empty hunks list and all errors. Not raised as exception."
+          }
+        },
+        {
+          "name": "emitter_failure",
+          "condition": "EventEmitter.emit() raises any exception",
+          "error_type": "none",
+          "error_data": {
+            "behavior": "Exception is caught, logged as warning in IntakeResult.warnings, intake continues."
+          }
+        },
+        {
+          "name": "config_regex_failure",
+          "condition": "classify_hunks raises ValueError due to invalid regex in config",
+          "error_type": "IntakeError",
+          "error_data": {
+            "phase": "classify",
+            "message": "Classification failed: invalid regex pattern in Ledger config."
+          }
+        }
+      ],
+      "preconditions": [
+        "source conforms to DiffSource protocol (has async read() -> str method)",
+        "config is a valid LedgerConfig with compilable regex patterns",
+        "If emit is provided, it conforms to EventEmitter protocol"
+      ],
+      "postconditions": [
+        "IntakeResult.review_request.id starts with 'req-' and contains a UUID4 hex string",
+        "IntakeResult.review_request.hunks contains only fully classified DiffHunks",
+        "IntakeResult.hunk_count == len(IntakeResult.review_request.hunks)",
+        "IntakeResult.classified_hunk_count <= IntakeResult.hunk_count",
+        "IntakeResult.errors collects all IntakeErrors from both parse and classify phases plus any read errors",
+        "IntakeResult.review_request.source_kind matches source.kind",
+        "IntakeResult.review_request.created_at is a valid ISO 8601 UTC timestamp",
+        "If emit is provided, exactly 3 Chronicler events were attempted (started, parsed, classified)",
+        "Emission failures appear as warnings in IntakeResult.warnings, not as errors"
+      ],
+      "idempotent": false,
+      "is_async": true,
+      "side_effects": [
+        "Reads from file system or stdin via DiffSource",
+        "Emits up to 3 Chronicler events via EventEmitter (fire-and-forget)",
+        "Generates UUID4 for ReviewRequest ID (non-deterministic)"
+      ],
+      "structured_side_effects": [
+        {
+          "kind": "reads_file",
+          "target": "DiffSource (file path or stdin)",
+          "description": "Reads raw diff text from the configured source. FileDiffSource reads a file at a given path; StdinDiffSource reads from sys.stdin."
+        },
+        {
+          "kind": "network_call",
+          "target": "EventEmitter (Chronicler)",
+          "description": "Emits review.intake.started, review.intake.parsed, review.intake.classified events via the EventEmitter protocol. Fire-and-forget — failures do not block processing."
+        },
+        {
+          "kind": "logging",
+          "target": "warnings list in IntakeResult",
+          "description": "Any emission failures or non-fatal issues are captured as warnings in the result."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 1000,
+        "max_memory_mb": 256,
+        "complexity": "O(n + h*l*p) where n=diff lines, h=hunks, l=avg added lines, p=patterns"
+      }
+    },
+    {
+      "name": "generate_hunk_id",
+      "description": "Internal helper that generates a deterministic hunk identifier by computing SHA-256 over the concatenation of file_path, raw_header, and joined added_lines, then truncating to 12 hex characters and prefixing with 'hunk-'. Exposed in contract for testability and specification clarity.",
+      "inputs": [
+        {
+          "name": "file_path",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Relative file path of the hunk.",
+          "validators": []
+        },
+        {
+          "name": "raw_header",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "The raw @@ header line.",
+          "validators": []
+        },
+        {
+          "name": "added_lines",
+          "type_ref": "list",
+          "required": true,
+          "default": "",
+          "description": "The added lines of the hunk (prefix stripped). Item type: str.",
+          "validators": []
+        }
+      ],
+      "output_type": "HunkId",
+      "error_cases": [
+        {
+          "name": "empty_file_path",
+          "condition": "file_path is empty string",
+          "error_type": "ValueError",
+          "error_data": {
+            "message": "file_path must not be empty for hunk ID generation."
+          }
+        }
+      ],
+      "preconditions": [
+        "file_path is a non-empty string",
+        "raw_header is a non-empty string"
+      ],
+      "postconditions": [
+        "Result starts with 'hunk-'",
+        "Result after prefix is exactly 12 lowercase hexadecimal characters",
+        "Same inputs always produce same output (deterministic)",
+        "Different inputs produce different outputs with overwhelming probability (SHA-256 collision resistance)"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure function — SHA-256 hash computation only."
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "generate_request_id",
+      "description": "Internal helper that generates a ReviewRequest identifier by creating a UUID4 and prefixing it with 'req-'. Non-deterministic due to UUID4 randomness.",
+      "inputs": [],
+      "output_type": "ReviewRequestId",
+      "error_cases": [],
+      "preconditions": [],
+      "postconditions": [
+        "Result starts with 'req-'",
+        "Result after prefix is a valid 32-character hexadecimal UUID4 string (no hyphens)",
+        "Each call returns a unique value with overwhelming probability"
+      ],
+      "idempotent": false,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Generates a UUID4 using system entropy. No external side effects."
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "detect_language",
+      "description": "Internal helper that maps a file path's extension to a programming language name using the module-level EXTENSION_LANGUAGE_MAP constant. Returns 'unknown' for unrecognized extensions or files without extensions.",
+      "inputs": [
+        {
+          "name": "file_path",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Relative file path from which to extract the extension.",
+          "validators": []
+        }
+      ],
+      "output_type": "str",
+      "error_cases": [
+        {
+          "name": "empty_path",
+          "condition": "file_path is empty string",
+          "error_type": "ValueError",
+          "error_data": {
+            "message": "file_path must not be empty for language detection."
+          }
+        }
+      ],
+      "preconditions": [
+        "file_path is a non-empty string"
+      ],
+      "postconditions": [
+        "Result is a lowercase language name string from EXTENSION_LANGUAGE_MAP or 'unknown'",
+        "Matching is case-insensitive on the file extension",
+        "Dotfiles without a secondary extension return 'unknown'"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure function — dict lookup only."
+        }
+      ],
+      "performance_budget": null
+    }
+  ],
+  "dependencies": [
+    "schemas",
+    "config",
+    "chronicle"
+  ],
+  "dependency_contracts": {
+    "schemas": [
+      "DiffHunk",
+      "ReviewRequest",
+      "ClassificationLabel",
+      "HunkMetadata",
+      "LineRange",
+      "ChroniclerEvent"
+    ],
+    "config": [
+      "LedgerConfig",
+      "LedgerRule"
+    ],
+    "chronicle": [
+      "EventEmitter"
+    ]
+  },
+  "invariants": [
+    "All DiffHunk instances are frozen Pydantic models (immutable after creation)",
+    "All IntakeError instances are frozen Pydantic models (immutable after creation)",
+    "All IntakeResult instances are frozen Pydantic models (immutable after creation)",
+    "Hunk IDs are deterministic: identical (file_path, raw_header, added_lines) always produce identical HunkId",
+    "Classification is applied exclusively to added_lines — removed_lines and context_lines are never scanned for classification",
+    "parse_diff is a pure function: no side effects, deterministic output for identical input",
+    "classify_hunks is a pure function: no side effects, deterministic output for identical input and config",
+    "EventEmitter failures never block or abort intake processing (fire-and-forget pattern)",
+    "PACT keys are embedded in all public function signatures for Sentinel attribution",
+    "EXTENSION_LANGUAGE_MAP is a module-level constant dict and never mutated at runtime",
+    "Partial success is the default: malformed sections produce IntakeErrors while valid sections produce DiffHunks",
+    "Regex patterns from LedgerConfig are pre-compiled once per classify_hunks call and reused across all hunks",
+    "All timestamps use ISO 8601 UTC format"
+  ],
+  "requires": [
+    "schemas",
+    "config",
+    "chronicle"
+  ],
+  "processing_register": "rigorous-analytical",
+  "data_access": {
+    "reads": [
+      "PUBLIC",
+      "PII",
+      "INTERNAL"
+    ],
+    "writes": [
+      "PUBLIC"
+    ],
+    "rationale": "Reads raw diff text from file system or stdin which may contain any classification tier of data: PUBLIC (normal code changes), PII (if diff includes changes to files containing personal data such as email addresses, SSNs, or names), or INTERNAL (internal API endpoints, infrastructure URLs). Classification phase scans added_lines to detect and label these tiers. Writes are PUBLIC only: the IntakeResult and ReviewRequest are structured metadata about the diff, with classification labels indicating what was detected but not exposing the raw sensitive content beyond what was already in the input diff.",
+    "side_effects": [
+      {
+        "type": "file_read",
+        "classification": "PII",
+        "fields": [
+          "DiffHunk.added_lines",
+          "DiffHunk.removed_lines",
+          "DiffHunk.context_lines"
+        ],
+        "rationale": "Reads raw diff text from a file path which may contain PII in code changes (e.g., hardcoded email addresses, test fixtures with personal data). The raw lines are stored in DiffHunk fields for downstream review."
+      },
+      {
+        "type": "stdin_read",
+        "classification": "PII",
+        "fields": [
+          "DiffHunk.added_lines",
+          "DiffHunk.removed_lines",
+          "DiffHunk.context_lines"
+        ],
+        "rationale": "Reads raw diff text from stdin (piped from git diff or CI) which may contain PII in code changes. Same exposure as file_read."
+      },
+      {
+        "type": "secret_detection",
+        "classification": "INTERNAL",
+        "fields": [
+          "DiffHunk.classifications",
+          "DiffHunk.classification_evidence"
+        ],
+        "rationale": "Scans added_lines with Ledger secret-detection regex patterns. Matched evidence strings may contain partial secret values (e.g., truncated API key prefixes) stored in classification_evidence for reviewer context."
+      },
+      {
+        "type": "event_emission",
+        "classification": "PUBLIC",
+        "fields": [
+          "ChroniclerEvent.payload"
+        ],
+        "rationale": "Emits Chronicler events containing aggregate metadata (hunk_count, error_count, request_id). No PII or secrets are included in event payloads — only counts and identifiers."
+      }
+    ]
+  },
+  "authority": {
+    "domains": [
+      "diff_parsing",
+      "diff_hunk_identity",
+      "field_classification"
+    ],
+    "rationale": "The intake module is the single authoritative source for: (1) diff_parsing — it is the only component that transforms raw unified diff text into structured DiffHunk records, defining the canonical parsing rules and hunk boundary detection; (2) diff_hunk_identity — it owns the deterministic HunkId generation algorithm (SHA-256 of file_path + raw_header + added_lines, truncated to 12 hex), ensuring hunk identity is consistent across the entire system; (3) field_classification — it is the sole component that applies Ledger classification rules to diff content, determining which hunks contain secrets, PII, or internal API references. No other component may independently parse diffs or assign classification labels."
+  }
+}

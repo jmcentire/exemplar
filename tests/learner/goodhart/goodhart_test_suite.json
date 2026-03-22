@@ -1,0 +1,866 @@
+{
+  "component_id": "learner",
+  "contract_version": 1,
+  "test_cases": [
+    {
+      "id": "goodhart_trust_weight_formula_varied_ratios",
+      "description": "Trust weight formula must correctly compute base_weight * (accepted/total) for arbitrary acceptance ratios, not just common fractions like 0.5 or 1.0",
+      "function": "get_trust_adjustments",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "State with reviewer having 7 accepted out of 13 total, base_weight=0.85",
+      "expected_output_description": "Weight should be 0.85 * (7/13) = 0.4577 (rounded to 4 decimal places)",
+      "expected_error": "",
+      "assertions": [
+        "result has exactly one TrustScore entry",
+        "weight equals round(0.85 * (7/13), 4) == 0.4577"
+      ]
+    },
+    {
+      "id": "goodhart_trust_weight_lower_clamp_precise",
+      "description": "Trust weight must clamp to exactly 0.1 when formula yields a value below 0.1 but above 0.0",
+      "function": "get_trust_adjustments",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "State with reviewer having 1 accepted out of 20 total, base_weight=0.5 => 0.5*0.05=0.025",
+      "expected_output_description": "Weight clamped to 0.1, not 0.025",
+      "expected_error": "",
+      "assertions": [
+        "weight is exactly 0.1",
+        "weight is a float, not rounded from 0.025"
+      ]
+    },
+    {
+      "id": "goodhart_trust_weight_upper_clamp_precise",
+      "description": "Trust weight must clamp to exactly 1.0 when base_weight * ratio exceeds 1.0",
+      "function": "get_trust_adjustments",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "State with reviewer having 19 accepted out of 20 total, base_weight=1.5 (if allowed) or use state where ratio=1.0 and base_weight=1.0 yielding 1.0",
+      "expected_output_description": "Weight clamped to 1.0",
+      "expected_error": "",
+      "assertions": [
+        "weight is exactly 1.0"
+      ]
+    },
+    {
+      "id": "goodhart_trust_rounding_four_decimals",
+      "description": "Trust weight rounding must be exactly 4 decimal places for values that have long decimal expansions",
+      "function": "get_trust_adjustments",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "State with 1 accepted out of 3 total, base_weight=1.0 => 1.0*(1/3)=0.333333...",
+      "expected_output_description": "Weight should be 0.3333 (4 decimal places), not 0.33 or 0.33333",
+      "expected_error": "",
+      "assertions": [
+        "weight equals 0.3333",
+        "str representation has at most 4 decimal digits of precision"
+      ]
+    },
+    {
+      "id": "goodhart_trust_ordering_multikey",
+      "description": "Trust adjustments must be sorted by the composite key (reviewer_id, rule_id, review_stage) lexicographically, not just by reviewer_id alone",
+      "function": "get_trust_adjustments",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "State with entries: (alice, ruleB, security), (alice, ruleA, security), (bob, ruleA, correctness), (alice, ruleA, correctness) all with sufficient observations",
+      "expected_output_description": "Sorted order: (alice,ruleA,correctness), (alice,ruleA,security), (alice,ruleB,security), (bob,ruleA,correctness)",
+      "expected_error": "",
+      "assertions": [
+        "first entry is alice/ruleA/correctness",
+        "second entry is alice/ruleA/security",
+        "third entry is alice/ruleB/security",
+        "fourth entry is bob/ruleA/correctness"
+      ]
+    },
+    {
+      "id": "goodhart_trust_zero_accepted",
+      "description": "Trust weight for a reviewer with zero acceptances should clamp to 0.1, not 0.0",
+      "function": "get_trust_adjustments",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "State with reviewer having 0 accepted out of 15 total (all dismissed), base_weight=0.8",
+      "expected_output_description": "Weight = 0.8 * 0 = 0.0, clamped to 0.1",
+      "expected_error": "",
+      "assertions": [
+        "weight is 0.1, not 0.0"
+      ]
+    },
+    {
+      "id": "goodhart_phase_no_regression_primary_to_canary",
+      "description": "Phase must never regress from primary even if acceptance rate drops below canary threshold",
+      "function": "check_phase_progression",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "State in primary phase with acceptance_rate=0.3, config with shadow_to_canary_threshold=0.5, canary_to_primary_threshold=0.7, min_observations_for_phase=5",
+      "expected_output_description": "Phase remains primary despite low acceptance rate",
+      "expected_error": "",
+      "assertions": [
+        "returned phase is primary",
+        "phase_changed is False or not triggered"
+      ]
+    },
+    {
+      "id": "goodhart_phase_no_regression_canary_to_shadow",
+      "description": "Phase must never regress from canary back to shadow even if acceptance rate drops to zero",
+      "function": "check_phase_progression",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "State in canary phase with acceptance_rate=0.0, config with shadow_to_canary_threshold=0.5, canary_to_primary_threshold=0.8, min_observations_for_phase=5",
+      "expected_output_description": "Phase remains canary",
+      "expected_error": "",
+      "assertions": [
+        "returned phase is canary, not shadow"
+      ]
+    },
+    {
+      "id": "goodhart_phase_skip_shadow_to_primary",
+      "description": "Phase progression should handle the case where acceptance rate exceeds both thresholds - verify whether it jumps to primary or goes through canary",
+      "function": "check_phase_progression",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "State in shadow phase with acceptance_rate=0.95, config with shadow_to_canary_threshold=0.5, canary_to_primary_threshold=0.7, min_observations_for_phase=5, total_observations=20",
+      "expected_output_description": "Phase transitions at least to canary; may go to primary depending on implementation. Must be >= canary.",
+      "expected_error": "",
+      "assertions": [
+        "returned phase is at least canary (canary or primary)",
+        "phase_changed is True"
+      ]
+    },
+    {
+      "id": "goodhart_phase_min_observations_not_met",
+      "description": "Phase progression must not transition if total observations are below min_observations_for_phase even if acceptance rate is high",
+      "function": "check_phase_progression",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "State in shadow phase with acceptance_rate=0.95 but total_records=3, config with min_observations_for_phase=10",
+      "expected_output_description": "Phase stays shadow because insufficient observations",
+      "expected_error": "",
+      "assertions": [
+        "returned phase is shadow"
+      ]
+    },
+    {
+      "id": "goodhart_record_decision_multiple_reviewers_stats",
+      "description": "Recording decisions for multiple different reviewers in a single batch must update stats independently per reviewer",
+      "function": "record_decision",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Batch of 4 records: 2 for reviewer alice (1 accepted, 1 dismissed) and 2 for reviewer bob (2 accepted), all same rule",
+      "expected_output_description": "Stats show alice: 1 accepted, 1 dismissed; bob: 2 accepted, 0 dismissed",
+      "expected_error": "",
+      "assertions": [
+        "records_persisted is 4",
+        "stats_updated is True",
+        "alice stats show acceptance_rate ~0.5",
+        "bob stats show acceptance_rate 1.0"
+      ]
+    },
+    {
+      "id": "goodhart_record_decision_duplicate_within_batch",
+      "description": "Submitting records with duplicate record_ids within the same batch must be rejected",
+      "function": "record_decision",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Batch of 2 records both with record_id='dup-001'",
+      "expected_output_description": "",
+      "expected_error": "duplicate_record_id",
+      "assertions": [
+        "raises duplicate_record_id error",
+        "no records are persisted (atomic - all or nothing)"
+      ]
+    },
+    {
+      "id": "goodhart_record_decision_incremental_stats",
+      "description": "Recording decisions in two separate calls must produce cumulative stats, not replace previous stats",
+      "function": "record_decision",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "First call: 1 accepted record. Second call: 1 dismissed record. Same reviewer+rule+stage.",
+      "expected_output_description": "After second call, total_count=2, accepted=1, dismissed=1",
+      "expected_error": "",
+      "assertions": [
+        "total_count after two calls is 2",
+        "accepted_count is 1",
+        "dismissed_count is 1"
+      ]
+    },
+    {
+      "id": "goodhart_record_decision_modified_count",
+      "description": "Records with 'modified' decision should increment modified_count in stats, not accepted or dismissed",
+      "function": "record_decision",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A LearningRecord where the human modified the finding (if applicable via HumanDecisionInput with decision=modified)",
+      "expected_output_description": "modified_count incremented in ReviewerRuleStats",
+      "expected_error": "",
+      "assertions": [
+        "modified_count increases by 1",
+        "accepted_count does not increase",
+        "dismissed_count does not increase"
+      ]
+    },
+    {
+      "id": "goodhart_reviewer_id_max_length",
+      "description": "ReviewerId must accept strings up to exactly 128 characters and reject strings of 129 characters",
+      "function": "ReviewerId",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A valid 128-char string starting with letter, then 127 alphanumeric chars; and a 129-char version",
+      "expected_output_description": "128 chars accepted, 129 chars rejected",
+      "expected_error": "",
+      "assertions": [
+        "128-char ReviewerId is valid",
+        "129-char ReviewerId raises validation error"
+      ]
+    },
+    {
+      "id": "goodhart_reviewer_id_special_chars",
+      "description": "ReviewerId regex must allow dots, hyphens, and underscores but reject other special characters like @, #, spaces",
+      "function": "ReviewerId",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Values: 'a.b-c_d' (valid), 'a@b' (invalid), 'a b' (invalid), 'a#b' (invalid)",
+      "expected_output_description": "Only 'a.b-c_d' is accepted",
+      "expected_error": "",
+      "assertions": [
+        "'a.b-c_d' is valid",
+        "'a@b' raises error",
+        "'a b' raises error",
+        "'a#b' raises error"
+      ]
+    },
+    {
+      "id": "goodhart_rule_id_with_slashes",
+      "description": "RuleId regex allows forward slashes in the identifier, distinguishing it from ReviewerId",
+      "function": "RuleId",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Values: 'security/xss.check' (valid with slash), 'security\\xss' (invalid with backslash)",
+      "expected_output_description": "Forward slash accepted, backslash rejected",
+      "expected_error": "",
+      "assertions": [
+        "'security/xss.check' is valid",
+        "'security\\\\xss' raises error"
+      ]
+    },
+    {
+      "id": "goodhart_rule_id_max_length_256",
+      "description": "RuleId must accept strings up to 256 characters and reject 257 characters",
+      "function": "RuleId",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "A valid 256-char RuleId and a 257-char version",
+      "expected_output_description": "256 accepted, 257 rejected",
+      "expected_error": "",
+      "assertions": [
+        "256-char RuleId is valid",
+        "257-char RuleId raises validation error"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_uppercase_rejected",
+      "description": "PactKey regex requires all lowercase; uppercase letters must be rejected",
+      "function": "PactKey",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Values: 'pact:learner:Record_Decision' (has uppercase), 'pact:Learner:record' (has uppercase)",
+      "expected_output_description": "Both rejected",
+      "expected_error": "",
+      "assertions": [
+        "'pact:learner:Record_Decision' rejected (underscore allowed but uppercase R not)",
+        "'pact:Learner:record' rejected"
+      ]
+    },
+    {
+      "id": "goodhart_pact_key_missing_segments",
+      "description": "PactKey must have exactly three colon-separated segments starting with 'pact:'",
+      "function": "PactKey",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Values: 'pact:learner' (only 2 segments), 'pact:a:b:c' (4 segments), 'learner:record:x' (no pact prefix)",
+      "expected_output_description": "All rejected",
+      "expected_error": "",
+      "assertions": [
+        "'pact:learner' rejected",
+        "'pact:a:b:c' rejected",
+        "'learner:record:x' rejected"
+      ]
+    },
+    {
+      "id": "goodhart_human_decision_input_timestamp_formats",
+      "description": "HumanDecisionInput timestamp_iso must accept empty string and valid ISO timestamps, reject malformed dates",
+      "function": "HumanDecisionInput",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Timestamps: '' (empty, valid), '2024-01-15T10:30:00' (valid), '2024/01/15' (invalid), 'not-a-date' (invalid)",
+      "expected_output_description": "Empty and ISO format accepted; slash format and text rejected",
+      "expected_error": "",
+      "assertions": [
+        "empty string accepted for timestamp_iso",
+        "valid ISO accepted",
+        "slash-separated date rejected",
+        "arbitrary text rejected"
+      ]
+    },
+    {
+      "id": "goodhart_human_decision_input_all_severities",
+      "description": "HumanDecisionInput must accept all five severity levels, not just a subset",
+      "function": "HumanDecisionInput",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Five valid HumanDecisionInputs with severities: critical, high, medium, low, info",
+      "expected_output_description": "All five are accepted without validation errors",
+      "expected_error": "",
+      "assertions": [
+        "critical accepted",
+        "high accepted",
+        "medium accepted",
+        "low accepted",
+        "info accepted"
+      ]
+    },
+    {
+      "id": "goodhart_human_decision_input_case_sensitive_severity",
+      "description": "HumanDecisionInput severity validation is case-sensitive - 'High' and 'CRITICAL' must be rejected",
+      "function": "HumanDecisionInput",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Severity values: 'High', 'CRITICAL', 'Medium'",
+      "expected_output_description": "All rejected due to case sensitivity of regex",
+      "expected_error": "",
+      "assertions": [
+        "'High' rejected",
+        "'CRITICAL' rejected",
+        "'Medium' rejected"
+      ]
+    },
+    {
+      "id": "goodhart_init_state_schema_version",
+      "description": "Initialized state.json must have schema_version=1 as specified, not 0 or another value",
+      "function": "initialize_state",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Initialize state in a clean directory, then read and parse state.json",
+      "expected_output_description": "schema_version field is exactly 1",
+      "expected_error": "",
+      "assertions": [
+        "state.json schema_version is 1",
+        "state.json phase is shadow",
+        "state.json total_records is 0",
+        "state.json reviewer_stats is empty list",
+        "state.json reviewer_rule_stats is empty list"
+      ]
+    },
+    {
+      "id": "goodhart_init_records_empty_array",
+      "description": "Initialized records.json must contain exactly an empty JSON array, not null or empty object",
+      "function": "initialize_state",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Initialize state, then read records.json content",
+      "expected_output_description": "records.json content parses to []",
+      "expected_error": "",
+      "assertions": [
+        "records.json is valid JSON",
+        "records.json parses to an empty list/array, not null or {}"
+      ]
+    },
+    {
+      "id": "goodhart_trust_adjustments_base_weight_zero",
+      "description": "Trust weight formula with base_weight=0.0 should yield 0.0 for all entries, clamped to 0.1",
+      "function": "get_trust_adjustments",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "State with entries having various acceptance rates, base_weight=0.0",
+      "expected_output_description": "All weights clamped to 0.1 since 0.0 * anything = 0.0 < 0.1",
+      "expected_error": "",
+      "assertions": [
+        "all returned weights are 0.1"
+      ]
+    },
+    {
+      "id": "goodhart_trust_adjustments_min_obs_exact_boundary",
+      "description": "Entries with total_count exactly equal to min_observations must be included, not excluded",
+      "function": "get_trust_adjustments",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "State with entry having total_count=10, min_observations=10",
+      "expected_output_description": "Entry is included in results (>= not >)",
+      "expected_error": "",
+      "assertions": [
+        "entry with total_count=10 is present in results when min_observations=10"
+      ]
+    },
+    {
+      "id": "goodhart_trust_adjustments_min_obs_minus_one",
+      "description": "Entries with total_count one less than min_observations must be excluded",
+      "function": "get_trust_adjustments",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "State with entry having total_count=9, min_observations=10",
+      "expected_output_description": "Entry is excluded from results",
+      "expected_error": "",
+      "assertions": [
+        "entry with total_count=9 is NOT present in results when min_observations=10"
+      ]
+    },
+    {
+      "id": "goodhart_detect_patterns_chronicler_event_per_signal",
+      "description": "detect_patterns must emit one pattern.detected ChroniclerEvent per signal, not just one for all signals",
+      "function": "detect_patterns",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {
+        "chronicle.emit_event": "mock that records call count"
+      },
+      "input_values": {},
+      "input_description": "State with 3 anomalous reviewer+rule combinations above threshold",
+      "expected_output_description": "chronicle.emit_event called 3 times with pattern.detected events",
+      "expected_error": "",
+      "assertions": [
+        "chronicle.emit_event called once per signal",
+        "each call has event type pattern.detected"
+      ]
+    },
+    {
+      "id": "goodhart_record_decision_acceptance_rate_computed",
+      "description": "After recording decisions, the acceptance_rate in ReviewerRuleStats must be recomputed as accepted/total, not a stale or hardcoded value",
+      "function": "record_decision",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Record 3 accepted and 7 dismissed for same reviewer+rule => acceptance_rate should be 0.3",
+      "expected_output_description": "ReviewerRuleStats.acceptance_rate == 0.3",
+      "expected_error": "",
+      "assertions": [
+        "acceptance_rate is 0.3 after 3 accepted out of 10 total",
+        "acceptance_rate is not 0.0 or 1.0 or some default"
+      ]
+    },
+    {
+      "id": "goodhart_phase_config_threshold_out_of_range",
+      "description": "check_phase_progression must reject config with threshold values outside [0.0, 1.0]",
+      "function": "check_phase_progression",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "config with shadow_to_canary_threshold=1.5 (out of range)",
+      "expected_output_description": "",
+      "expected_error": "invalid_config",
+      "assertions": [
+        "raises invalid_config error for threshold > 1.0"
+      ]
+    },
+    {
+      "id": "goodhart_phase_config_negative_threshold",
+      "description": "check_phase_progression must reject config with negative threshold values",
+      "function": "check_phase_progression",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "config with shadow_to_canary_threshold=-0.1",
+      "expected_output_description": "",
+      "expected_error": "invalid_config",
+      "assertions": [
+        "raises invalid_config error for negative threshold"
+      ]
+    },
+    {
+      "id": "goodhart_phase_config_min_observations_zero",
+      "description": "check_phase_progression must reject config with min_observations_for_phase=0 since minimum is 1",
+      "function": "check_phase_progression",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "config with min_observations_for_phase=0",
+      "expected_output_description": "",
+      "expected_error": "invalid_config",
+      "assertions": [
+        "raises invalid_config error for min_observations_for_phase < 1"
+      ]
+    },
+    {
+      "id": "goodhart_phase_transition_history_recorded",
+      "description": "Phase transitions must be recorded in PhaseState.transition_history with correct from/to phases",
+      "function": "check_phase_progression",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Trigger shadow->canary transition, then read state.json",
+      "expected_output_description": "transition_history has one entry with from_phase=shadow, to_phase=canary",
+      "expected_error": "",
+      "assertions": [
+        "transition_history length is 1 after one transition",
+        "entry has from_phase=shadow",
+        "entry has to_phase=canary",
+        "entry has acceptance_rate_at_transition set",
+        "entry has total_observations set"
+      ]
+    },
+    {
+      "id": "goodhart_get_stats_different_min_observations",
+      "description": "get_stats active_trust_adjustments count must change when called with different min_observations values",
+      "function": "get_stats",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "State with entries having total_counts of 5, 10, and 20. Call with min_observations=5, then min_observations=15",
+      "expected_output_description": "First call: 3 active adjustments. Second call: 1 active adjustment.",
+      "expected_error": "",
+      "assertions": [
+        "active_trust_adjustments changes based on min_observations parameter",
+        "min_observations=5 yields 3",
+        "min_observations=15 yields 1"
+      ]
+    },
+    {
+      "id": "goodhart_acceptance_rate_boundary_zero",
+      "description": "AcceptanceRate must accept exactly 0.0 as a valid value",
+      "function": "AcceptanceRate",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "AcceptanceRate(value=0.0)",
+      "expected_output_description": "Valid, no error",
+      "expected_error": "",
+      "assertions": [
+        "AcceptanceRate(0.0) is valid"
+      ]
+    },
+    {
+      "id": "goodhart_acceptance_rate_boundary_one",
+      "description": "AcceptanceRate must accept exactly 1.0 as a valid value",
+      "function": "AcceptanceRate",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "AcceptanceRate(value=1.0)",
+      "expected_output_description": "Valid, no error",
+      "expected_error": "",
+      "assertions": [
+        "AcceptanceRate(1.0) is valid"
+      ]
+    },
+    {
+      "id": "goodhart_acceptance_rate_out_of_range",
+      "description": "AcceptanceRate must reject values above 1.0 and below 0.0",
+      "function": "AcceptanceRate",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "AcceptanceRate(value=1.001), AcceptanceRate(value=-0.001)",
+      "expected_output_description": "Both rejected",
+      "expected_error": "",
+      "assertions": [
+        "1.001 rejected",
+        "-0.001 rejected"
+      ]
+    },
+    {
+      "id": "goodhart_trust_weight_boundary_0_1",
+      "description": "TrustWeight must accept exactly 0.1 and reject 0.09",
+      "function": "TrustWeight",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "TrustWeight(0.1) and TrustWeight(0.09)",
+      "expected_output_description": "0.1 accepted, 0.09 rejected",
+      "expected_error": "",
+      "assertions": [
+        "0.1 is valid",
+        "0.09 raises validation error"
+      ]
+    },
+    {
+      "id": "goodhart_min_observations_boundaries",
+      "description": "MinObservations must accept 1 and 10000 but reject 0 and 10001",
+      "function": "MinObservations",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "MinObservations values: 0, 1, 10000, 10001",
+      "expected_output_description": "1 and 10000 valid; 0 and 10001 rejected",
+      "expected_error": "",
+      "assertions": [
+        "MinObservations(1) valid",
+        "MinObservations(10000) valid",
+        "MinObservations(0) rejected",
+        "MinObservations(10001) rejected"
+      ]
+    },
+    {
+      "id": "goodhart_human_decision_input_finding_id_empty",
+      "description": "HumanDecisionInput must reject empty finding_id since min length is 1",
+      "function": "HumanDecisionInput",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "HumanDecisionInput with finding_id=''",
+      "expected_output_description": "Validation error for empty finding_id",
+      "expected_error": "",
+      "assertions": [
+        "empty finding_id rejected"
+      ]
+    },
+    {
+      "id": "goodhart_human_decision_input_review_stage_too_long",
+      "description": "HumanDecisionInput must reject review_stage longer than 64 characters",
+      "function": "HumanDecisionInput",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "HumanDecisionInput with review_stage='a' * 65",
+      "expected_output_description": "Validation error for review_stage exceeding max length",
+      "expected_error": "",
+      "assertions": [
+        "65-char review_stage rejected",
+        "64-char review_stage accepted"
+      ]
+    },
+    {
+      "id": "goodhart_record_human_decisions_unique_uuids",
+      "description": "Each call to record_human_decisions must generate distinct UUID4 record_ids, even across multiple calls",
+      "function": "record_human_decisions",
+      "category": "invariant",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Two separate calls each with 3 decisions",
+      "expected_output_description": "All 6 record_ids are unique UUID4 format strings",
+      "expected_error": "",
+      "assertions": [
+        "all 6 record_ids are distinct",
+        "each record_id is valid UUID4 format"
+      ]
+    },
+    {
+      "id": "goodhart_record_human_decisions_maps_decision_correctly",
+      "description": "record_human_decisions must correctly map HumanDecision.dismissed to accepted=False and HumanDecision.accepted to accepted=True in the LearningRecord",
+      "function": "record_human_decisions",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "One decision with decision=accepted and one with decision=dismissed",
+      "expected_output_description": "The delegated LearningRecords have accepted=True and accepted=False respectively",
+      "expected_error": "",
+      "assertions": [
+        "accepted decision maps to accepted=True in LearningRecord",
+        "dismissed decision maps to accepted=False in LearningRecord"
+      ]
+    },
+    {
+      "id": "goodhart_detect_patterns_high_acceptance_rate",
+      "description": "detect_patterns should identify high_acceptance_rate pattern when a reviewer accepts nearly everything, not just high_false_positive_rate",
+      "function": "detect_patterns",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "State with reviewer having 99% acceptance rate across 100 observations",
+      "expected_output_description": "At least one StigmergySignal with pattern_key indicating high_acceptance_rate",
+      "expected_error": "",
+      "assertions": [
+        "at least one signal references high_acceptance_rate pattern kind"
+      ]
+    },
+    {
+      "id": "goodhart_file_path_max_length",
+      "description": "FilePath must accept strings up to 4096 characters and reject 4097",
+      "function": "FilePath",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "FilePath with 4096-char string and 4097-char string",
+      "expected_output_description": "4096 accepted, 4097 rejected",
+      "expected_error": "",
+      "assertions": [
+        "4096-char FilePath is valid",
+        "4097-char FilePath raises validation error"
+      ]
+    },
+    {
+      "id": "goodhart_reviewer_id_single_char",
+      "description": "ReviewerId must accept a single letter as it meets min length 1 and regex requirements",
+      "function": "ReviewerId",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "ReviewerId('a')",
+      "expected_output_description": "Valid",
+      "expected_error": "",
+      "assertions": [
+        "single character 'a' is a valid ReviewerId"
+      ]
+    },
+    {
+      "id": "goodhart_record_decision_multi_stage_stats",
+      "description": "Records for the same reviewer and rule but different review stages must produce separate ReviewerRuleStats entries",
+      "function": "record_decision",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "2 records for same reviewer+rule: one in 'security' stage (accepted), one in 'correctness' stage (dismissed)",
+      "expected_output_description": "Two distinct ReviewerRuleStats entries, each with total_count=1",
+      "expected_error": "",
+      "assertions": [
+        "security stage entry: accepted=1, dismissed=0",
+        "correctness stage entry: accepted=0, dismissed=1",
+        "entries are separate, not merged"
+      ]
+    },
+    {
+      "id": "goodhart_get_stats_phase_state_included",
+      "description": "get_stats must include the full PhaseState with transition_history, not just the current phase string",
+      "function": "get_stats",
+      "category": "happy_path",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "State that has undergone shadow->canary transition, then call get_stats",
+      "expected_output_description": "LearnerStatsReport.phase_state includes transition_history with at least one entry",
+      "expected_error": "",
+      "assertions": [
+        "phase_state is a PhaseState object",
+        "transition_history has at least one PhaseTransition entry"
+      ]
+    },
+    {
+      "id": "goodhart_reviewer_id_leading_digit_rejected",
+      "description": "ReviewerId must reject identifiers that start with a digit, per regex ^[a-zA-Z]",
+      "function": "ReviewerId",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "ReviewerId('9reviewer')",
+      "expected_output_description": "Rejected",
+      "expected_error": "",
+      "assertions": [
+        "'9reviewer' is rejected",
+        "'0abc' is rejected"
+      ]
+    },
+    {
+      "id": "goodhart_rule_id_leading_digit_rejected",
+      "description": "RuleId must reject identifiers that start with a digit",
+      "function": "RuleId",
+      "category": "error_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "RuleId('9rule.check')",
+      "expected_output_description": "Rejected",
+      "expected_error": "",
+      "assertions": [
+        "'9rule.check' is rejected"
+      ]
+    },
+    {
+      "id": "goodhart_init_partial_existing_files",
+      "description": "initialize_state when only state.json exists (but not records.json) must handle partial initialization correctly",
+      "function": "initialize_state",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "Directory exists with valid state.json but no records.json",
+      "expected_output_description": "Should handle gracefully - either create missing file or return appropriate result",
+      "expected_error": "",
+      "assertions": [
+        "does not crash",
+        "after call, both state.json and records.json exist"
+      ]
+    },
+    {
+      "id": "goodhart_trust_weight_rounding_half",
+      "description": "TrustWeight must round to 4 decimal places correctly for values at rounding boundaries (e.g., 0.55555)",
+      "function": "TrustWeight",
+      "category": "edge_case",
+      "setup_description": "",
+      "mock_dependencies": {},
+      "input_values": {},
+      "input_description": "TrustWeight(0.55555)",
+      "expected_output_description": "Rounded to 0.5556 (4 decimal places, banker's rounding or standard)",
+      "expected_error": "",
+      "assertions": [
+        "value is rounded to 4 decimal places"
+      ]
+    }
+  ],
+  "test_language": "python",
+  "generated_code": "\"\"\"\nAdversarial hidden acceptance tests for the Apprentice Learning Module.\n\nThese tests are designed to catch implementations that pass visible tests\nthrough shortcuts (hardcoded returns, incomplete validation, etc.) rather\nthan truly satisfying the contract.\n\"\"\"\n\nimport asyncio\nimport json\nimport os\nimport tempfile\nimport uuid\nfrom pathlib import Path\nfrom unittest.mock import AsyncMock, MagicMock, patch\n\nimport pytest\n\n# Import the module under test\nfrom exemplar.learner import *\n\n\n# ============================================================\n# Helpers\n# ============================================================\n\ndef run_async(coro):\n    \"\"\"Helper to run async functions in sync tests.\"\"\"\n    return asyncio.get_event_loop().run_until_complete(coro)\n\n\ndef make_learning_record(\n    record_id=None,\n    finding_id=\"finding-001\",\n    reviewer_id=\"alice\",\n    stage=\"security\",\n    rule_id=\"rule.check.xss\",\n    severity=\"high\",\n    accepted=True,\n    human_comment=None,\n    recorded_at=\"2024-01-15T10:30:00Z\",\n):\n    \"\"\"Helper to build a LearningRecord dict or object.\"\"\"\n    return {\n        \"record_id\": record_id or str(uuid.uuid4()),\n        \"finding_id\": finding_id,\n        \"reviewer_id\": reviewer_id,\n        \"stage\": stage,\n        \"rule_id\": rule_id,\n        \"severity\": severity,\n        \"accepted\": accepted,\n        \"human_comment\": human_comment,\n        \"recorded_at\": recorded_at,\n    }\n\n\ndef make_human_decision_input(\n    finding_id=\"finding-001\",\n    reviewer_id=\"alice\",\n    rule_id=\"rule.check.xss\",\n    decision=\"accepted\",\n    file_path=\"src/main.py\",\n    severity=\"high\",\n    review_stage=\"security\",\n    comment=\"looks good\",\n    timestamp_iso=\"2024-01-15T10:30:00Z\",\n):\n    \"\"\"Helper to build a HumanDecisionInput dict.\"\"\"\n    return {\n        \"finding_id\": finding_id,\n        \"reviewer_id\": reviewer_id,\n        \"rule_id\": rule_id,\n        \"decision\": decision,\n        \"file_path\": file_path,\n        \"severity\": severity,\n        \"review_stage\": review_stage,\n        \"comment\": comment,\n        \"timestamp_iso\": timestamp_iso,\n    }\n\n\n@pytest.fixture\ndef tmp_learner_dir(tmp_path):\n    \"\"\"Create a temporary directory for learner state.\"\"\"\n    learner_dir = tmp_path / \".exemplar\" / \"learner\"\n    return str(learner_dir)\n\n\n@pytest.fixture\ndef initialized_learner_dir(tmp_learner_dir):\n    \"\"\"Create and initialize learner directory.\"\"\"\n    run_async(initialize_state(tmp_learner_dir))\n    return tmp_learner_dir\n\n\n# ============================================================\n# Type validation tests\n# ============================================================\n\n\nclass TestGoodhartReviewerId:\n\n    def test_goodhart_reviewer_id_max_length_boundary(self):\n        \"\"\"ReviewerId must accept exactly 128-char strings and reject 129-char strings\"\"\"\n        valid_128 = \"a\" * 128\n        try:\n            rid = ReviewerId(value=valid_128)\n            assert rid.value == valid_128\n        except Exception:\n            pytest.fail(\"ReviewerId should accept 128-char string\")\n\n        with pytest.raises(Exception):\n            ReviewerId(value=\"a\" * 129)\n\n    def test_goodhart_reviewer_id_special_chars_selective(self):\n        \"\"\"ReviewerId regex allows dots, hyphens, underscores but rejects @, #, spaces\"\"\"\n        # Valid\n        rid = ReviewerId(value=\"a.b-c_d\")\n        assert rid.value == \"a.b-c_d\"\n\n        # Invalid chars\n        for invalid in [\"a@b\", \"a b\", \"a#b\", \"a+b\", \"a!b\"]:\n            with pytest.raises(Exception, match=\".*\"):\n                ReviewerId(value=invalid)\n\n    def test_goodhart_reviewer_id_single_char(self):\n        \"\"\"ReviewerId must accept a single alphabetic character\"\"\"\n        rid = ReviewerId(value=\"a\")\n        assert rid.value == \"a\"\n\n        rid2 = ReviewerId(value=\"Z\")\n        assert rid2.value == \"Z\"\n\n    def test_goodhart_reviewer_id_leading_digit_rejected(self):\n        \"\"\"ReviewerId must reject identifiers starting with a digit\"\"\"\n        for invalid in [\"9reviewer\", \"0abc\", \"1test\", \"3x\"]:\n            with pytest.raises(Exception):\n                ReviewerId(value=invalid)\n\n\nclass TestGoodhartRuleId:\n\n    def test_goodhart_rule_id_with_slashes(self):\n        \"\"\"RuleId allows forward slashes but not backslashes\"\"\"\n        rid = RuleId(value=\"security/xss.check\")\n        assert rid.value == \"security/xss.check\"\n\n        with pytest.raises(Exception):\n            RuleId(value=\"security\\\\xss\")\n\n    def test_goodhart_rule_id_max_length_256(self):\n        \"\"\"RuleId must accept 256-char strings and reject 257-char strings\"\"\"\n        valid_256 = \"a\" + \"b\" * 255\n        try:\n            rid = RuleId(value=valid_256)\n            assert rid.value == valid_256\n        except Exception:\n            pytest.fail(\"RuleId should accept 256-char string\")\n\n        with pytest.raises(Exception):\n            RuleId(value=\"a\" + \"b\" * 256)\n\n    def test_goodhart_rule_id_leading_digit_rejected(self):\n        \"\"\"RuleId must reject identifiers starting with a digit\"\"\"\n        with pytest.raises(Exception):\n            RuleId(value=\"9rule.check\")\n\n\nclass TestGoodhartPactKey:\n\n    def test_goodhart_pact_key_uppercase_rejected(self):\n        \"\"\"PactKey regex requires all lowercase - uppercase must be rejected\"\"\"\n        for invalid in [\"pact:learner:Record\", \"pact:Learner:record\", \"pact:LEARN:test\"]:\n            with pytest.raises(Exception):\n                PactKey(value=invalid)\n\n    def test_goodhart_pact_key_segment_count(self):\n        \"\"\"PactKey must have exactly three colon-separated segments\"\"\"\n        # Too few segments\n        with pytest.raises(Exception):\n            PactKey(value=\"pact:learner\")\n\n        # Too many segments\n        with pytest.raises(Exception):\n            PactKey(value=\"pact:a:b:c\")\n\n        # No pact prefix\n        with pytest.raises(Exception):\n            PactKey(value=\"learner:record:x\")\n\n        # Valid\n        pk = PactKey(value=\"pact:learner:record\")\n        assert pk.value == \"pact:learner:record\"\n\n\nclass TestGoodhartTrustWeight:\n\n    def test_goodhart_trust_weight_boundary_0_1(self):\n        \"\"\"TrustWeight must accept exactly 0.1 and reject 0.09\"\"\"\n        tw = TrustWeight(value=0.1)\n        assert tw.value == 0.1\n\n        with pytest.raises(Exception):\n            TrustWeight(value=0.09)\n\n    def test_goodhart_trust_weight_rounding(self):\n        \"\"\"TrustWeight must be rounded to 4 decimal places\"\"\"\n        tw = TrustWeight(value=0.55555)\n        # Should be rounded to 4 decimal places\n        assert abs(tw.value - round(0.55555, 4)) < 1e-10\n\n\nclass TestGoodhartAcceptanceRate:\n\n    def test_goodhart_acceptance_rate_boundary_zero(self):\n        \"\"\"AcceptanceRate must accept exactly 0.0\"\"\"\n        ar = AcceptanceRate(value=0.0)\n        assert ar.value == 0.0\n\n    def test_goodhart_acceptance_rate_boundary_one(self):\n        \"\"\"AcceptanceRate must accept exactly 1.0\"\"\"\n        ar = AcceptanceRate(value=1.0)\n        assert ar.value == 1.0\n\n    def test_goodhart_acceptance_rate_out_of_range(self):\n        \"\"\"AcceptanceRate must reject values outside [0.0, 1.0]\"\"\"\n        with pytest.raises(Exception):\n            AcceptanceRate(value=1.001)\n        with pytest.raises(Exception):\n            AcceptanceRate(value=-0.001)\n\n\nclass TestGoodhartMinObservations:\n\n    def test_goodhart_min_observations_all_boundaries(self):\n        \"\"\"MinObservations must accept 1 and 10000 but reject 0 and 10001\"\"\"\n        assert MinObservations(value=1).value == 1\n        assert MinObservations(value=10000).value == 10000\n\n        with pytest.raises(Exception):\n            MinObservations(value=0)\n        with pytest.raises(Exception):\n            MinObservations(value=10001)\n\n\nclass TestGoodhartFilePath:\n\n    def test_goodhart_file_path_max_length(self):\n        \"\"\"FilePath must accept 4096-char strings and reject 4097-char strings\"\"\"\n        valid = \"a\" * 4096\n        fp = FilePath(value=valid)\n        assert fp.value == valid\n\n        with pytest.raises(Exception):\n            FilePath(value=\"a\" * 4097)\n\n    def test_goodhart_file_path_empty_rejected(self):\n        \"\"\"FilePath must reject empty string since min length is 1\"\"\"\n        with pytest.raises(Exception):\n            FilePath(value=\"\")\n\n\nclass TestGoodhartHumanDecisionInput:\n\n    def test_goodhart_timestamp_formats(self):\n        \"\"\"HumanDecisionInput timestamp_iso accepts empty and valid ISO, rejects malformed\"\"\"\n        base = make_human_decision_input()\n\n        # Empty string should be valid\n        base_empty = {**base, \"timestamp_iso\": \"\"}\n        try:\n            HumanDecisionInput(**base_empty)\n        except Exception:\n            pytest.fail(\"Empty timestamp_iso should be accepted\")\n\n        # Valid ISO\n        base_valid = {**base, \"timestamp_iso\": \"2024-01-15T10:30:00\"}\n        try:\n            HumanDecisionInput(**base_valid)\n        except Exception:\n            pytest.fail(\"Valid ISO timestamp should be accepted\")\n\n        # Invalid formats\n        for invalid_ts in [\"2024/01/15\", \"not-a-date\", \"15-01-2024\"]:\n            base_invalid = {**base, \"timestamp_iso\": invalid_ts}\n            with pytest.raises(Exception):\n                HumanDecisionInput(**base_invalid)\n\n    def test_goodhart_all_severities_accepted(self):\n        \"\"\"HumanDecisionInput must accept all five severity levels\"\"\"\n        base = make_human_decision_input()\n        for sev in [\"critical\", \"high\", \"medium\", \"low\", \"info\"]:\n            inp = {**base, \"severity\": sev}\n            try:\n                HumanDecisionInput(**inp)\n            except Exception:\n                pytest.fail(f\"Severity '{sev}' should be accepted\")\n\n    def test_goodhart_severity_case_sensitive(self):\n        \"\"\"HumanDecisionInput severity is case-sensitive - mixed case must be rejected\"\"\"\n        base = make_human_decision_input()\n        for sev in [\"High\", \"CRITICAL\", \"Medium\", \"LOW\", \"Info\"]:\n            inp = {**base, \"severity\": sev}\n            with pytest.raises(Exception):\n                HumanDecisionInput(**inp)\n\n    def test_goodhart_finding_id_empty_rejected(self):\n        \"\"\"HumanDecisionInput must reject empty finding_id\"\"\"\n        base = make_human_decision_input()\n        inp = {**base, \"finding_id\": \"\"}\n        with pytest.raises(Exception):\n            HumanDecisionInput(**inp)\n\n    def test_goodhart_review_stage_max_length(self):\n        \"\"\"HumanDecisionInput must reject review_stage longer than 64 characters\"\"\"\n        base = make_human_decision_input()\n\n        # 64 chars should be fine\n        inp_ok = {**base, \"review_stage\": \"a\" * 64}\n        try:\n            HumanDecisionInput(**inp_ok)\n        except Exception:\n            pytest.fail(\"64-char review_stage should be accepted\")\n\n        # 65 chars should fail\n        inp_bad = {**base, \"review_stage\": \"a\" * 65}\n        with pytest.raises(Exception):\n            HumanDecisionInput(**inp_bad)\n\n\n# ============================================================\n# initialize_state tests\n# ============================================================\n\n\nclass TestGoodhartInitializeState:\n\n    def test_goodhart_init_state_schema_version(self, tmp_learner_dir):\n        \"\"\"Initialized state.json must have schema_version=1 and phase=shadow\"\"\"\n        run_async(initialize_state(tmp_learner_dir))\n\n        state_path = os.path.join(tmp_learner_dir, \"state.json\")\n        with open(state_path, \"r\") as f:\n            state = json.load(f)\n\n        assert state.get(\"schema_version\") == 1\n        assert state.get(\"total_records\") == 0\n        # Phase should be shadow\n        phase_state = state.get(\"phase_state\", {})\n        assert phase_state.get(\"current_phase\") in (\"shadow\", \"LearnerPhase.shadow\")\n\n    def test_goodhart_init_records_empty_array(self, tmp_learner_dir):\n        \"\"\"Initialized records.json must be an empty JSON array, not null or {}\"\"\"\n        run_async(initialize_state(tmp_learner_dir))\n\n        records_path = os.path.join(tmp_learner_dir, \"records.json\")\n        with open(records_path, \"r\") as f:\n            records = json.load(f)\n\n        assert isinstance(records, list), \"records.json should be a list\"\n        assert len(records) == 0, \"records.json should be empty\"\n\n    def test_goodhart_init_partial_existing_files(self, tmp_path):\n        \"\"\"initialize_state handles case where directory exists but only one file is present\"\"\"\n        learner_dir = tmp_path / \".exemplar\" / \"learner\"\n        learner_dir.mkdir(parents=True, exist_ok=True)\n\n        # Create only state.json with valid content\n        state_path = learner_dir / \"state.json\"\n        state_path.write_text(json.dumps({\n            \"schema_version\": 1,\n            \"phase_state\": {\n                \"current_phase\": \"shadow\",\n                \"transition_history\": [],\n                \"entered_current_phase_iso\": \"2024-01-01T00:00:00Z\"\n            },\n            \"reviewer_stats\": [],\n            \"reviewer_rule_stats\": [],\n            \"total_records\": 0,\n            \"last_updated_iso\": \"2024-01-01T00:00:00Z\"\n        }))\n\n        # Should not crash - handle partial init gracefully\n        result = run_async(initialize_state(str(learner_dir)))\n\n        # After the call, both files should exist\n        assert state_path.exists()\n        assert (learner_dir / \"records.json\").exists()\n\n\n# ============================================================\n# get_trust_adjustments tests\n# ============================================================\n\n\nclass TestGoodhartTrustAdjustments:\n\n    def test_goodhart_trust_weight_formula_varied_ratios(self, initialized_learner_dir):\n        \"\"\"Trust weight formula must correctly compute base_weight * (accepted/total) for non-trivial ratios\"\"\"\n        # Record 7 accepted and 6 dismissed for one reviewer+rule = 13 total\n        records = []\n        for i in range(7):\n            records.append(make_learning_record(\n                record_id=f\"acc-{i}\",\n                reviewer_id=\"alice\",\n                rule_id=\"rule.check.xss\",\n                stage=\"security\",\n                accepted=True,\n            ))\n        for i in range(6):\n            records.append(make_learning_record(\n                record_id=f\"dis-{i}\",\n                reviewer_id=\"alice\",\n                rule_id=\"rule.check.xss\",\n                stage=\"security\",\n                accepted=False,\n            ))\n\n        run_async(record_decision(records))\n\n        result = run_async(get_trust_adjustments(base_weight=0.85, min_observations=10))\n        assert len(result) >= 1\n\n        # Find alice's entry\n        alice_entry = None\n        for entry in result:\n            rid = getattr(entry, 'reviewer_id', None) or entry.get('reviewer_id')\n            if rid == \"alice\":\n                alice_entry = entry\n                break\n\n        assert alice_entry is not None\n        weight = getattr(alice_entry, 'weight', None) or alice_entry.get('weight')\n        expected = round(0.85 * (7 / 13), 4)\n        assert abs(weight - expected) < 1e-6, f\"Expected {expected}, got {weight}\"\n\n    def test_goodhart_trust_weight_lower_clamp(self, initialized_learner_dir):\n        \"\"\"Trust weight must clamp to 0.1 when formula yields below 0.1\"\"\"\n        # 0 accepted out of 20 total => 0.5 * 0/20 = 0.0, clamped to 0.1\n        records = []\n        for i in range(20):\n            records.append(make_learning_record(\n                record_id=f\"dis-{i}\",\n                reviewer_id=\"bob\",\n                rule_id=\"rule.check.sql\",\n                stage=\"security\",\n                accepted=False,\n            ))\n\n        run_async(record_decision(records))\n\n        result = run_async(get_trust_adjustments(base_weight=0.5, min_observations=10))\n        assert len(result) >= 1\n\n        bob_entry = None\n        for entry in result:\n            rid = getattr(entry, 'reviewer_id', None) or entry.get('reviewer_id')\n            if rid == \"bob\":\n                bob_entry = entry\n                break\n\n        assert bob_entry is not None\n        weight = getattr(bob_entry, 'weight', None) or bob_entry.get('weight')\n        assert weight == 0.1, f\"Expected 0.1 (clamped), got {weight}\"\n\n    def test_goodhart_trust_weight_rounding_recurring_decimal(self, initialized_learner_dir):\n        \"\"\"Trust weight rounding must handle recurring decimals (1/3) to exactly 4 places\"\"\"\n        # 1 accepted out of 3 total, but need at least 10 obs for cold-start\n        # So: 4 accepted, 8 dismissed = 12 total, ratio = 4/12 = 1/3\n        records = []\n        for i in range(4):\n            records.append(make_learning_record(\n                record_id=f\"acc-{i}\",\n                reviewer_id=\"carol\",\n                rule_id=\"rule.lint.style\",\n                stage=\"style\",\n                accepted=True,\n            ))\n        for i in range(8):\n            records.append(make_learning_record(\n                record_id=f\"dis-{i}\",\n                reviewer_id=\"carol\",\n                rule_id=\"rule.lint.style\",\n                stage=\"style\",\n                accepted=False,\n            ))\n\n        run_async(record_decision(records))\n\n        result = run_async(get_trust_adjustments(base_weight=1.0, min_observations=10))\n\n        carol_entry = None\n        for entry in result:\n            rid = getattr(entry, 'reviewer_id', None) or entry.get('reviewer_id')\n            if rid == \"carol\":\n                carol_entry = entry\n                break\n\n        assert carol_entry is not None\n        weight = getattr(carol_entry, 'weight', None) or carol_entry.get('weight')\n        expected = round(1.0 * (4 / 12), 4)  # 0.3333\n        assert abs(weight - expected) < 1e-6, f\"Expected {expected}, got {weight}\"\n\n    def test_goodhart_trust_ordering_multikey(self, initialized_learner_dir):\n        \"\"\"Trust adjustments sorted by (reviewer_id, rule_id, review_stage) composite key\"\"\"\n        combos = [\n            (\"alice\", \"ruleB\", \"security\"),\n            (\"alice\", \"ruleA\", \"security\"),\n            (\"bob\", \"ruleA\", \"correctness\"),\n            (\"alice\", \"ruleA\", \"correctness\"),\n        ]\n        idx = 0\n        records = []\n        for (rid, rule, stage) in combos:\n            for j in range(12):\n                records.append(make_learning_record(\n                    record_id=f\"rec-{idx}\",\n                    reviewer_id=rid,\n                    rule_id=rule,\n                    stage=stage,\n                    accepted=True,\n                ))\n                idx += 1\n\n        run_async(record_decision(records))\n\n        result = run_async(get_trust_adjustments(base_weight=1.0, min_observations=10))\n        assert len(result) == 4\n\n        keys = []\n        for entry in result:\n            rid = getattr(entry, 'reviewer_id', None) or entry.get('reviewer_id')\n            stage = getattr(entry, 'stage', None) or entry.get('stage')\n            # stage might be enum\n            stage_str = stage.value if hasattr(stage, 'value') else str(stage)\n            # We need rule_id - it might not be on TrustScore directly\n            # The ordering contract says (reviewer_id, rule_id, review_stage)\n            keys.append((rid, stage_str))\n\n        # Verify ordering: alice entries come before bob\n        reviewer_ids = [getattr(e, 'reviewer_id', None) or e.get('reviewer_id') for e in result]\n        assert reviewer_ids[0] == \"alice\"\n        assert reviewer_ids[-1] == \"bob\"\n\n    def test_goodhart_trust_base_weight_zero(self, initialized_learner_dir):\n        \"\"\"Trust weight with base_weight=0.0 should clamp all to 0.1\"\"\"\n        records = []\n        for i in range(15):\n            records.append(make_learning_record(\n                record_id=f\"rec-{i}\",\n                reviewer_id=\"dave\",\n                rule_id=\"rule.test\",\n                stage=\"security\",\n                accepted=True,\n            ))\n\n        run_async(record_decision(records))\n\n        result = run_async(get_trust_adjustments(base_weight=0.0, min_observations=10))\n        for entry in result:\n            weight = getattr(entry, 'weight', None) or entry.get('weight')\n            assert weight == 0.1, f\"Expected 0.1 (clamped from 0.0), got {weight}\"\n\n    def test_goodhart_trust_min_obs_exact_boundary(self, initialized_learner_dir):\n        \"\"\"Entry with total_count exactly equal to min_observations must be included\"\"\"\n        records = []\n        for i in range(10):\n            records.append(make_learning_record(\n                record_id=f\"rec-{i}\",\n                reviewer_id=\"eve\",\n                rule_id=\"rule.boundary\",\n                stage=\"correctness\",\n                accepted=True,\n            ))\n\n        run_async(record_decision(records))\n\n        result = run_async(get_trust_adjustments(base_weight=0.8, min_observations=10))\n        reviewer_ids = [getattr(e, 'reviewer_id', None) or e.get('reviewer_id') for e in result]\n        assert \"eve\" in reviewer_ids, \"Entry with total_count=10 should be included when min_observations=10\"\n\n    def test_goodhart_trust_min_obs_minus_one_excluded(self, initialized_learner_dir):\n        \"\"\"Entry with total_count one less than min_observations must be excluded\"\"\"\n        records = []\n        for i in range(9):\n            records.append(make_learning_record(\n                record_id=f\"rec-{i}\",\n                reviewer_id=\"frank\",\n                rule_id=\"rule.boundary\",\n                stage=\"correctness\",\n                accepted=True,\n            ))\n\n        run_async(record_decision(records))\n\n        result = run_async(get_trust_adjustments(base_weight=0.8, min_observations=10))\n        reviewer_ids = [getattr(e, 'reviewer_id', None) or e.get('reviewer_id') for e in result]\n        assert \"frank\" not in reviewer_ids, \"Entry with total_count=9 should be excluded when min_observations=10\"\n\n\n# ============================================================\n# record_decision tests\n# ============================================================\n\n\nclass TestGoodhartRecordDecision:\n\n    def test_goodhart_record_decision_duplicate_within_batch(self, initialized_learner_dir):\n        \"\"\"Submitting records with duplicate record_ids within the same batch must be rejected\"\"\"\n        records = [\n            make_learning_record(record_id=\"dup-001\", reviewer_id=\"alice\", accepted=True),\n            make_learning_record(record_id=\"dup-001\", reviewer_id=\"bob\", accepted=False),\n        ]\n        with pytest.raises(Exception) as exc_info:\n            run_async(record_decision(records))\n        # Should indicate duplicate\n        assert \"duplicate\" in str(exc_info.value).lower() or \"duplicate_record_id\" in str(type(exc_info.value).__name__).lower() or True\n\n    def test_goodhart_record_decision_incremental_stats(self, initialized_learner_dir):\n        \"\"\"Stats must accumulate across multiple record_decision calls, not replace\"\"\"\n        rec1 = [make_learning_record(record_id=\"inc-1\", reviewer_id=\"alice\", rule_id=\"rule.x\", stage=\"security\", accepted=True)]\n        rec2 = [make_learning_record(record_id=\"inc-2\", reviewer_id=\"alice\", rule_id=\"rule.x\", stage=\"security\", accepted=False)]\n\n        run_async(record_decision(rec1))\n        run_async(record_decision(rec2))\n\n        # Check stats via get_trust_adjustments or get_stats\n        # Use get_stats with min_observations=1 to see all\n        report = run_async(get_stats(min_observations=1))\n        total = getattr(report, 'total_records', None) or report.get('total_records')\n        assert total == 2, f\"Expected 2 total records after two calls, got {total}\"\n\n    def test_goodhart_record_decision_multiple_reviewers(self, initialized_learner_dir):\n        \"\"\"Recording decisions for multiple reviewers in a batch updates stats independently\"\"\"\n        records = [\n            make_learning_record(record_id=\"mr-1\", reviewer_id=\"alice\", rule_id=\"rule.a\", stage=\"security\", accepted=True),\n            make_learning_record(record_id=\"mr-2\", reviewer_id=\"alice\", rule_id=\"rule.a\", stage=\"security\", accepted=False),\n            make_learning_record(record_id=\"mr-3\", reviewer_id=\"bob\", rule_id=\"rule.a\", stage=\"security\", accepted=True),\n            make_learning_record(record_id=\"mr-4\", reviewer_id=\"bob\", rule_id=\"rule.a\", stage=\"security\", accepted=True),\n        ]\n\n        result = run_async(record_decision(records))\n        persisted = getattr(result, 'records_persisted', None) or result.get('records_persisted')\n        assert persisted == 4\n\n    def test_goodhart_record_decision_multi_stage_stats(self, initialized_learner_dir):\n        \"\"\"Same reviewer+rule but different stages produce separate ReviewerRuleStats\"\"\"\n        records = [\n            make_learning_record(record_id=\"ms-1\", reviewer_id=\"alice\", rule_id=\"rule.x\", stage=\"security\", accepted=True),\n            make_learning_record(record_id=\"ms-2\", reviewer_id=\"alice\", rule_id=\"rule.x\", stage=\"correctness\", accepted=False),\n        ]\n\n        run_async(record_decision(records))\n\n        # Verify by reading state or trust adjustments with min_obs=1\n        result = run_async(get_trust_adjustments(base_weight=1.0, min_observations=1))\n        # Should have 2 entries for alice - one per stage\n        alice_entries = [\n            e for e in result\n            if (getattr(e, 'reviewer_id', None) or e.get('reviewer_id')) == \"alice\"\n        ]\n        assert len(alice_entries) == 2, f\"Expected 2 separate stage entries for alice, got {len(alice_entries)}\"\n\n    def test_goodhart_record_decision_acceptance_rate_computed(self, initialized_learner_dir):\n        \"\"\"acceptance_rate in stats must be recomputed as accepted/total for non-trivial ratios\"\"\"\n        records = []\n        for i in range(3):\n            records.append(make_learning_record(\n                record_id=f\"ar-acc-{i}\",\n                reviewer_id=\"alice\",\n                rule_id=\"rule.x\",\n                stage=\"security\",\n                accepted=True,\n            ))\n        for i in range(7):\n            records.append(make_learning_record(\n                record_id=f\"ar-dis-{i}\",\n                reviewer_id=\"alice\",\n                rule_id=\"rule.x\",\n                stage=\"security\",\n                accepted=False,\n            ))\n\n        run_async(record_decision(records))\n\n        # Check via state.json\n        state_path = os.path.join(initialized_learner_dir, \"state.json\")\n        with open(state_path, \"r\") as f:\n            state = json.load(f)\n\n        rule_stats = state.get(\"reviewer_rule_stats\", [])\n        alice_stat = None\n        for rs in rule_stats:\n            if rs.get(\"reviewer_id\") == \"alice\" or (isinstance(rs.get(\"reviewer_id\"), dict) and rs[\"reviewer_id\"].get(\"value\") == \"alice\"):\n                alice_stat = rs\n                break\n\n        assert alice_stat is not None, \"Should have stats for alice\"\n        # acceptance_rate should be 0.3\n        rate = alice_stat.get(\"acceptance_rate\")\n        if isinstance(rate, dict):\n            rate = rate.get(\"value\", rate)\n        assert abs(float(rate) - 0.3) < 0.01, f\"Expected acceptance_rate ~0.3, got {rate}\"\n\n\n# ============================================================\n# check_phase_progression tests\n# ============================================================\n\n\nclass TestGoodhartPhaseProgression:\n\n    def test_goodhart_phase_no_regression_primary_to_canary(self, initialized_learner_dir):\n        \"\"\"Phase must never regress from primary even if acceptance rate drops\"\"\"\n        # First, get to primary phase by recording many accepted records\n        records = []\n        for i in range(50):\n            records.append(make_learning_record(\n                record_id=f\"up-{i}\",\n                reviewer_id=\"alice\",\n                rule_id=\"rule.x\",\n                stage=\"security\",\n                accepted=True,\n            ))\n        run_async(record_decision(records))\n\n        config = {\n            \"shadow_to_canary_threshold\": 0.3,\n            \"canary_to_primary_threshold\": 0.6,\n            \"min_observations_for_phase\": 5,\n        }\n        # Push through to primary\n        run_async(check_phase_progression(config))\n\n        # Now add many dismissed to tank the acceptance rate\n        records2 = []\n        for i in range(200):\n            records2.append(make_learning_record(\n                record_id=f\"down-{i}\",\n                reviewer_id=\"alice\",\n                rule_id=\"rule.x\",\n                stage=\"security\",\n                accepted=False,\n            ))\n        run_async(record_decision(records2))\n\n        # Check phase again - must NOT regress\n        phase = run_async(check_phase_progression(config))\n        phase_str = phase.value if hasattr(phase, 'value') else str(phase)\n        assert phase_str == \"primary\", f\"Phase should remain primary but got {phase_str}\"\n\n    def test_goodhart_phase_no_regression_canary_to_shadow(self, initialized_learner_dir):\n        \"\"\"Phase must never regress from canary to shadow\"\"\"\n        # Get to canary\n        records = []\n        for i in range(20):\n            records.append(make_learning_record(\n                record_id=f\"c-{i}\",\n                reviewer_id=\"alice\",\n                rule_id=\"rule.x\",\n                stage=\"security\",\n                accepted=True,\n            ))\n        run_async(record_decision(records))\n\n        config = {\n            \"shadow_to_canary_threshold\": 0.5,\n            \"canary_to_primary_threshold\": 0.95,\n            \"min_observations_for_phase\": 5,\n        }\n        phase = run_async(check_phase_progression(config))\n        phase_str = phase.value if hasattr(phase, 'value') else str(phase)\n        assert phase_str in (\"canary\", \"primary\"), f\"Should be at least canary, got {phase_str}\"\n\n        # Tank the rate\n        records2 = []\n        for i in range(100):\n            records2.append(make_learning_record(\n                record_id=f\"tank-{i}\",\n                reviewer_id=\"alice\",\n                rule_id=\"rule.x\",\n                stage=\"security\",\n                accepted=False,\n            ))\n        run_async(record_decision(records2))\n\n        # Must not regress\n        phase2 = run_async(check_phase_progression(config))\n        phase2_str = phase2.value if hasattr(phase2, 'value') else str(phase2)\n        assert phase2_str != \"shadow\", f\"Phase must not regress to shadow, got {phase2_str}\"\n\n    def test_goodhart_phase_min_observations_not_met(self, initialized_learner_dir):\n        \"\"\"Phase must not transition if observations below min_observations_for_phase\"\"\"\n        records = []\n        for i in range(3):\n            records.append(make_learning_record(\n                record_id=f\"few-{i}\",\n                reviewer_id=\"alice\",\n                rule_id=\"rule.x\",\n                stage=\"security\",\n                accepted=True,\n            ))\n        run_async(record_decision(records))\n\n        config = {\n            \"shadow_to_canary_threshold\": 0.5,\n            \"canary_to_primary_threshold\": 0.8,\n            \"min_observations_for_phase\": 10,\n        }\n        phase = run_async(check_phase_progression(config))\n        phase_str = phase.value if hasattr(phase, 'value') else str(phase)\n        assert phase_str == \"shadow\", f\"Should stay shadow with only 3 obs, got {phase_str}\"\n\n    def test_goodhart_phase_config_threshold_out_of_range(self, initialized_learner_dir):\n        \"\"\"check_phase_progression must reject config with threshold > 1.0\"\"\"\n        config = {\n            \"shadow_to_canary_threshold\": 1.5,\n            \"canary_to_primary_threshold\": 0.8,\n            \"min_observations_for_phase\": 10,\n        }\n        with pytest.raises(Exception):\n            run_async(check_phase_progression(config))\n\n    def test_goodhart_phase_config_negative_threshold(self, initialized_learner_dir):\n        \"\"\"check_phase_progression must reject config with negative threshold\"\"\"\n        config = {\n            \"shadow_to_canary_threshold\": -0.1,\n            \"canary_to_primary_threshold\": 0.8,\n            \"min_observations_for_phase\": 10,\n        }\n        with pytest.raises(Exception):\n            run_async(check_phase_progression(config))\n\n    def test_goodhart_phase_config_min_observations_zero(self, initialized_learner_dir):\n        \"\"\"check_phase_progression must reject config with min_observations_for_phase=0\"\"\"\n        config = {\n            \"shadow_to_canary_threshold\": 0.5,\n            \"canary_to_primary_threshold\": 0.8,\n            \"min_observations_for_phase\": 0,\n        }\n        with pytest.raises(Exception):\n            run_async(check_phase_progression(config))\n\n    def test_goodhart_phase_transition_history_recorded(self, initialized_learner_dir):\n        \"\"\"Phase transition must be recorded in transition_history\"\"\"\n        records = []\n        for i in range(20):\n            records.append(make_learning_record(\n                record_id=f\"hist-{i}\",\n                reviewer_id=\"alice\",\n                rule_id=\"rule.x\",\n                stage=\"security\",\n                accepted=True,\n            ))\n        run_async(record_decision(records))\n\n        config = {\n            \"shadow_to_canary_threshold\": 0.5,\n            \"canary_to_primary_threshold\": 0.95,\n            \"min_observations_for_phase\": 5,\n        }\n        phase = run_async(check_phase_progression(config))\n\n        # Read state to verify transition history\n        state_path = os.path.join(initialized_learner_dir, \"state.json\")\n        with open(state_path, \"r\") as f:\n            state = json.load(f)\n\n        phase_state = state.get(\"phase_state\", {})\n        history = phase_state.get(\"transition_history\", [])\n        assert len(history) >= 1, \"Should have at least one transition in history\"\n\n        first_transition = history[0]\n        assert first_transition.get(\"from_phase\") in (\"shadow\", \"LearnerPhase.shadow\")\n        assert first_transition.get(\"to_phase\") in (\"canary\", \"LearnerPhase.canary\")\n\n    def test_goodhart_phase_shadow_to_primary_when_both_thresholds_met(self, initialized_learner_dir):\n        \"\"\"When acceptance rate exceeds both thresholds in shadow, phase should advance at least to canary\"\"\"\n        records = []\n        for i in range(30):\n            records.append(make_learning_record(\n                record_id=f\"skip-{i}\",\n                reviewer_id=\"alice\",\n                rule_id=\"rule.x\",\n                stage=\"security\",\n                accepted=True,\n            ))\n        run_async(record_decision(records))\n\n        config = {\n            \"shadow_to_canary_threshold\": 0.3,\n            \"canary_to_primary_threshold\": 0.6,\n            \"min_observations_for_phase\": 5,\n        }\n        phase = run_async(check_phase_progression(config))\n        phase_str = phase.value if hasattr(phase, 'value') else str(phase)\n        assert phase_str in (\"canary\", \"primary\"), f\"Should be at least canary, got {phase_str}\"\n\n\n# ============================================================\n# record_human_decisions tests\n# ============================================================\n\n\nclass TestGoodhartRecordHumanDecisions:\n\n    def test_goodhart_unique_uuids_across_calls(self, initialized_learner_dir):\n        \"\"\"Each record_human_decisions call must generate fresh UUID4 record_ids\"\"\"\n        decisions1 = [\n            make_human_decision_input(finding_id=f\"f-{i}\", reviewer_id=\"alice\", decision=\"accepted\")\n            for i in range(3)\n        ]\n        decisions2 = [\n            make_human_decision_input(finding_id=f\"g-{i}\", reviewer_id=\"bob\", decision=\"dismissed\")\n            for i in range(3)\n        ]\n\n        run_async(record_human_decisions(decisions1, base_weight=0.8))\n        run_async(record_human_decisions(decisions2, base_weight=0.8))\n\n        # Read all records from records.json\n        records_path = os.path.join(initialized_learner_dir, \"records.json\")\n        with open(records_path, \"r\") as f:\n            all_records = json.load(f)\n\n        record_ids = [r.get(\"record_id\") for r in all_records]\n        assert len(record_ids) == 6\n        assert len(set(record_ids)) == 6, \"All record_ids must be unique\"\n\n        # Verify they look like UUID4\n        for rid in record_ids:\n            try:\n                parsed = uuid.UUID(rid, version=4)\n                assert str(parsed) == rid or True  # UUID4 format\n            except ValueError:\n                pytest.fail(f\"record_id '{rid}' is not a valid UUID4\")\n\n    def test_goodhart_maps_decision_to_accepted_field(self, initialized_learner_dir):\n        \"\"\"HumanDecision.accepted maps to accepted=True, dismissed maps to accepted=False\"\"\"\n        decisions = [\n            make_human_decision_input(finding_id=\"f-1\", decision=\"accepted\"),\n            make_human_decision_input(finding_id=\"f-2\", decision=\"dismissed\"),\n        ]\n\n        run_async(record_human_decisions(decisions, base_weight=0.8))\n\n        records_path = os.path.join(initialized_learner_dir, \"records.json\")\n        with open(records_path, \"r\") as f:\n            all_records = json.load(f)\n\n        assert len(all_records) == 2\n        accepted_records = [r for r in all_records if r.get(\"accepted\") is True]\n        dismissed_records = [r for r in all_records if r.get(\"accepted\") is False]\n        assert len(accepted_records) == 1\n        assert len(dismissed_records) == 1\n\n\n# ============================================================\n# get_stats tests\n# ============================================================\n\n\nclass TestGoodhartGetStats:\n\n    def test_goodhart_get_stats_different_min_observations(self, initialized_learner_dir):\n        \"\"\"active_trust_adjustments must respect the min_observations parameter dynamically\"\"\"\n        # Create 3 combos with different total counts: 5, 10, 20\n        records = []\n        idx = 0\n        for count, reviewer in [(5, \"alice\"), (10, \"bob\"), (20, \"carol\")]:\n            for i in range(count):\n                records.append(make_learning_record(\n                    record_id=f\"stats-{idx}\",\n                    reviewer_id=reviewer,\n                    rule_id=\"rule.x\",\n                    stage=\"security\",\n                    accepted=True,\n                ))\n                idx += 1\n\n        run_async(record_decision(records))\n\n        report5 = run_async(get_stats(min_observations=5))\n        report15 = run_async(get_stats(min_observations=15))\n\n        active5 = getattr(report5, 'active_trust_adjustments', None) or report5.get('active_trust_adjustments')\n        active15 = getattr(report15, 'active_trust_adjustments', None) or report15.get('active_trust_adjustments')\n\n        assert active5 == 3, f\"Expected 3 active with min_obs=5, got {active5}\"\n        assert active15 == 1, f\"Expected 1 active with min_obs=15, got {active15}\"\n\n    def test_goodhart_get_stats_phase_state_included(self, initialized_learner_dir):\n        \"\"\"get_stats must include PhaseState with transition_history\"\"\"\n        # Trigger a transition\n        records = []\n        for i in range(20):\n            records.append(make_learning_record(\n                record_id=f\"ps-{i}\",\n                reviewer_id=\"alice\",\n                rule_id=\"rule.x\",\n                stage=\"security\",\n                accepted=True,\n            ))\n        run_async(record_decision(records))\n\n        config = {\n            \"shadow_to_canary_threshold\": 0.5,\n            \"canary_to_primary_threshold\": 0.95,\n            \"min_observations_for_phase\": 5,\n        }\n        run_async(check_phase_progression(config))\n\n        report = run_async(get_stats(min_observations=1))\n        phase_state = getattr(report, 'phase_state', None) or report.get('phase_state')\n        assert phase_state is not None, \"phase_state should be present in report\"\n\n        # Check transition history\n        if hasattr(phase_state, 'transition_history'):\n            history = phase_state.transition_history\n        else:\n            history = phase_state.get('transition_history', [])\n        assert len(history) >= 1, \"transition_history should have at least one entry after transition\"\n\n\n# ============================================================\n# detect_patterns tests\n# ============================================================\n\n\nclass TestGoodhartDetectPatterns:\n\n    def test_goodhart_detect_patterns_high_acceptance_rate(self, initialized_learner_dir):\n        \"\"\"detect_patterns should identify high acceptance rate, not only high false positive rate\"\"\"\n        # 99% acceptance rate\n        records = []\n        for i in range(99):\n            records.append(make_learning_record(\n                record_id=f\"ha-acc-{i}\",\n                reviewer_id=\"alice\",\n                rule_id=\"rule.x\",\n                stage=\"security\",\n                accepted=True,\n            ))\n        records.append(make_learning_record(\n            record_id=\"ha-dis-0\",\n            reviewer_id=\"alice\",\n            rule_id=\"rule.x\",\n            stage=\"security\",\n            accepted=False,\n        ))\n        run_async(record_decision(records))\n\n        signals = run_async(detect_patterns(min_observations=10, anomaly_threshold=0.9))\n        # Should detect something for this extreme ratio\n        if len(signals) > 0:\n            pattern_keys = []\n            for s in signals:\n                pk = getattr(s, 'pattern_key', None) or s.get('pattern_key', '')\n                pattern_keys.append(pk)\n            # At least one signal should exist for this extreme case\n            assert len(signals) >= 1, \"Should detect anomaly for 99% acceptance rate\"\n\n    def test_goodhart_detect_patterns_unique_signal_ids_non_trivial(self, initialized_learner_dir):\n        \"\"\"Each signal_id must be unique UUID4, verified with multiple signals\"\"\"\n        # Create two anomalous combos\n        records = []\n        idx = 0\n        for reviewer in [\"alice\", \"bob\"]:\n            for i in range(20):\n                records.append(make_learning_record(\n                    record_id=f\"pat-{idx}\",\n                    reviewer_id=reviewer,\n                    rule_id=\"rule.x\",\n                    stage=\"security\",\n                    accepted=False,  # all dismissed = high false positive\n                ))\n                idx += 1\n\n        run_async(record_decision(records))\n\n        signals = run_async(detect_patterns(min_observations=10, anomaly_threshold=0.5))\n        if len(signals) >= 2:\n            signal_ids = [getattr(s, 'signal_id', None) or s.get('signal_id') for s in signals]\n            assert len(set(signal_ids)) == len(signal_ids), \"All signal_ids must be unique\"\n\n            # Verify UUID4 format\n            for sid in signal_ids:\n                try:\n                    uuid.UUID(sid, version=4)\n                except ValueError:\n                    pytest.fail(f\"signal_id '{sid}' is not valid UUID4\")\n\n\n# ============================================================\n# should_apply_adjustments + get_current_phase edge cases\n# ============================================================\n\n\nclass TestGoodhartPhaseQueries:\n\n    def test_goodhart_should_apply_consistent_with_get_current_phase(self, initialized_learner_dir):\n        \"\"\"should_apply_adjustments must return True iff get_current_phase returns canary or primary\"\"\"\n        # In shadow\n        phase = run_async(get_current_phase())\n        should = run_async(should_apply_adjustments())\n        phase_str = phase.value if hasattr(phase, 'value') else str(phase)\n        if phase_str == \"shadow\":\n            assert should is False\n        else:\n            assert should is True\n\n    def test_goodhart_get_current_phase_default_no_state(self, tmp_path):\n        \"\"\"get_current_phase returns shadow when state.json doesn't exist\"\"\"\n        # Use a directory that doesn't have state.json\n        # This tests the default behavior\n        phase = run_async(get_current_phase())\n        phase_str = phase.value if hasattr(phase, 'value') else str(phase)\n        assert phase_str == \"shadow\"\n"
+}

@@ -1,0 +1,1276 @@
+{
+  "component_id": "circuit",
+  "name": "Baton Circuit Router",
+  "description": "Async circuit routing engine. Takes classified DiffHunks and routes them through configured review stages per CircuitConfig. Supports parallel execution of independent stages via asyncio.gather, sequential execution where ordering matters. Implements circuit-breaker pattern: a failing/timing-out reviewer produces a degraded Assessment (recorded as partial result) rather than crashing the pipeline. Emits Chronicler events at stage boundaries (stage.started, stage.complete). Returns ordered list of Assessments from all stages. Configurable timeout per stage. Deterministic output ordering matches CircuitConfig.stages list regardless of parallel execution timing.",
+  "version": 1,
+  "types": [
+    {
+      "name": "ReviewStage",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "security",
+        "correctness",
+        "style",
+        "architecture"
+      ],
+      "inner_types": [],
+      "description": "Named stage in the review circuit pipeline.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "StageTimeoutMs",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Timeout duration in milliseconds.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "100 <= value <= 300000",
+              "error_message": "Stage timeout must be between 100ms and 300000ms (5 minutes)."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Timeout in milliseconds for a single reviewer stage invocation. Must be a positive integer between 100ms and 300000ms (5 minutes).",
+      "owner_component": ""
+    },
+    {
+      "name": "ParallelGroup",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "stages",
+          "type_ref": "list[ReviewStage]",
+          "required": true,
+          "default": "",
+          "description": "Stages in this parallel group. Must contain at least 2 stages (a single stage needs no parallelism). All must be members of CircuitConfig.stages.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "len(stages) >= 2",
+              "error_message": "A parallel group must contain at least 2 stages."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A group of ReviewStage values that may execute concurrently via asyncio.gather. All stages in a group must be present in CircuitConfig.stages. Frozen Pydantic model.",
+      "owner_component": ""
+    },
+    {
+      "name": "CircuitConfig",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "stages",
+          "type_ref": "list[ReviewStage]",
+          "required": true,
+          "default": "['security', 'correctness', 'style', 'architecture']",
+          "description": "Ordered list of review stages to execute.",
+          "validators": []
+        },
+        {
+          "name": "parallel_stages",
+          "type_ref": "list[list[ReviewStage]]",
+          "required": true,
+          "default": "[['security', 'correctness'], ['style', 'architecture']]",
+          "description": "Groups of stages that can run in parallel. Each inner list runs concurrently.",
+          "validators": []
+        },
+        {
+          "name": "stage_timeout_ms",
+          "type_ref": "int",
+          "required": true,
+          "default": "30000",
+          "description": "Default timeout per stage in milliseconds.",
+          "validators": [
+            {
+              "kind": "range",
+              "expression": "value > 0",
+              "error_message": "Stage timeout must be positive."
+            }
+          ]
+        },
+        {
+          "name": "block_threshold",
+          "type_ref": "int",
+          "required": true,
+          "default": "1",
+          "description": "Minimum number of critical/high findings to trigger a block decision.",
+          "validators": []
+        },
+        {
+          "name": "warn_threshold",
+          "type_ref": "int",
+          "required": true,
+          "default": "3",
+          "description": "Minimum number of medium findings to trigger a warn decision.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Configuration for Baton circuit routing: stage ordering, parallelism, and timeouts.",
+      "owner_component": "config"
+    },
+    {
+      "name": "ExecutionStep",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "stages",
+          "type_ref": "list[ReviewStage]",
+          "required": true,
+          "default": "",
+          "description": "One or more stages to execute in this step. If len > 1, stages execute concurrently via asyncio.gather.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "len(stages) >= 1",
+              "error_message": "An execution step must contain at least one stage."
+            }
+          ]
+        },
+        {
+          "name": "is_parallel",
+          "type_ref": "bool",
+          "required": true,
+          "default": "",
+          "description": "True if this step executes its stages concurrently.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single step in the resolved execution plan. Either a single sequential stage or a parallel group. Internal type built at construction time.",
+      "owner_component": "circuit"
+    },
+    {
+      "name": "ExecutionPlan",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "steps",
+          "type_ref": "list[ExecutionStep]",
+          "required": true,
+          "default": "",
+          "description": "Ordered execution steps. Steps execute sequentially; stages within a parallel step execute concurrently.",
+          "validators": [
+            {
+              "kind": "length",
+              "expression": "len(steps) >= 1",
+              "error_message": "Execution plan must have at least one step."
+            }
+          ]
+        },
+        {
+          "name": "stage_order",
+          "type_ref": "list[ReviewStage]",
+          "required": true,
+          "default": "",
+          "description": "Canonical ordering of all stages, matching CircuitConfig.stages. Used to sort final Assessment list deterministically.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "The resolved execution plan: an ordered list of ExecutionSteps derived from CircuitConfig at construction time. Frozen Pydantic model.",
+      "owner_component": "circuit"
+    },
+    {
+      "name": "ChroniclerEventType",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "review.started",
+        "stage.started",
+        "stage.complete",
+        "assessment.merged",
+        "report.sealed",
+        "review.complete",
+        "policy.violation",
+        "pattern.detected",
+        "learning.recorded"
+      ],
+      "inner_types": [],
+      "description": "Well-known Chronicler event types emitted throughout the review lifecycle.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ChroniclerEvent",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "event_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique event identifier.",
+          "validators": []
+        },
+        {
+          "name": "event_type",
+          "type_ref": "ChroniclerEventType",
+          "required": true,
+          "default": "",
+          "description": "Well-known event type.",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the ReviewRequest this event relates to.",
+          "validators": []
+        },
+        {
+          "name": "timestamp",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of when the event occurred.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "Optional[ReviewStage]",
+          "required": false,
+          "default": "null",
+          "description": "Review stage this event relates to, if applicable.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Reviewer agent ID if this event is reviewer-specific.",
+          "validators": []
+        },
+        {
+          "name": "payload",
+          "type_ref": "dict[str, str]",
+          "required": true,
+          "default": "{}",
+          "description": "Arbitrary structured data associated with the event.",
+          "validators": []
+        },
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable description of the event.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A structured event emitted at review lifecycle boundaries for audit trail and story assembly.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ChroniclerEmitter",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "emit",
+          "type_ref": "Callable[[ChroniclerEvent], Awaitable[None]]",
+          "required": true,
+          "default": "",
+          "description": "Async method to emit a ChroniclerEvent. Implementations should be fire-and-forget safe.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Protocol (runtime_checkable) for Chronicler event emission. Implementations must provide an async emit method. Defined in circuit.py for decoupling from chronicle module.",
+      "owner_component": "circuit"
+    },
+    {
+      "name": "ClockProvider",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "now_utc",
+          "type_ref": "Callable[[], str]",
+          "required": true,
+          "default": "",
+          "description": "Returns current UTC timestamp as ISO 8601 string ending in Z.",
+          "validators": []
+        },
+        {
+          "name": "monotonic_ms",
+          "type_ref": "Callable[[], int]",
+          "required": true,
+          "default": "",
+          "description": "Returns monotonic clock value in milliseconds for duration measurement.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Protocol (runtime_checkable) for injectable time and ID generation. Allows deterministic testing by replacing real clocks with fixed values.",
+      "owner_component": "circuit"
+    },
+    {
+      "name": "CircuitConfigError",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "message",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Human-readable description of the configuration error.",
+          "validators": []
+        },
+        {
+          "name": "missing_reviewers",
+          "type_ref": "list[ReviewStage]",
+          "required": false,
+          "default": "[]",
+          "description": "Stages in config that have no registered reviewer. Empty if the error is not about missing reviewers.",
+          "validators": []
+        },
+        {
+          "name": "invalid_parallel_stages",
+          "type_ref": "list[ReviewStage]",
+          "required": false,
+          "default": "[]",
+          "description": "Parallel group stages not found in config.stages. Empty if the error is not about parallel subset violation.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Exception raised at BatonCircuitRouter construction time when CircuitConfig validation fails. Subclass of Exception.",
+      "owner_component": "circuit"
+    },
+    {
+      "name": "ReviewRequest",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique review request identifier.",
+          "validators": []
+        },
+        {
+          "name": "source",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Source identifier (e.g., file path, PR URL, stdin).",
+          "validators": []
+        },
+        {
+          "name": "hunks",
+          "type_ref": "list[DiffHunk]",
+          "required": true,
+          "default": "",
+          "description": "Parsed and classified diff hunks.",
+          "validators": []
+        },
+        {
+          "name": "file_paths",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "",
+          "description": "Deduplicated list of all file paths in the diff.",
+          "validators": []
+        },
+        {
+          "name": "created_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of when the request was created.",
+          "validators": []
+        },
+        {
+          "name": "metadata",
+          "type_ref": "dict[str, str]",
+          "required": true,
+          "default": "{}",
+          "description": "Arbitrary key-value metadata (PR number, branch, author, etc.).",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "The output of intake: a complete review request containing parsed and classified hunks.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "DiffHunk",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique identifier for this hunk (deterministic from content).",
+          "validators": []
+        },
+        {
+          "name": "file_path",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Relative file path the hunk belongs to.",
+          "validators": []
+        },
+        {
+          "name": "start_line_old",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Starting line number in the old file.",
+          "validators": []
+        },
+        {
+          "name": "count_old",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of lines in the old file span.",
+          "validators": []
+        },
+        {
+          "name": "start_line_new",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Starting line number in the new file.",
+          "validators": []
+        },
+        {
+          "name": "count_new",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Number of lines in the new file span.",
+          "validators": []
+        },
+        {
+          "name": "context_before",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Context lines before the change.",
+          "validators": []
+        },
+        {
+          "name": "added_lines",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Lines added in this hunk.",
+          "validators": []
+        },
+        {
+          "name": "removed_lines",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Lines removed in this hunk.",
+          "validators": []
+        },
+        {
+          "name": "context_after",
+          "type_ref": "list[str]",
+          "required": true,
+          "default": "[]",
+          "description": "Context lines after the change.",
+          "validators": []
+        },
+        {
+          "name": "raw_header",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Original @@ header line from the diff.",
+          "validators": []
+        },
+        {
+          "name": "classifications",
+          "type_ref": "list[ClassificationLabel]",
+          "required": true,
+          "default": "[]",
+          "description": "Ledger classification labels applied to this hunk.",
+          "validators": []
+        },
+        {
+          "name": "language",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Detected programming language of the file, if known.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single parsed hunk from a unified diff, with metadata and classification labels.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "Severity",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ],
+      "inner_types": [],
+      "description": "Severity level of a review finding, ordered from most to least critical.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "FindingCategory",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "SECURITY",
+        "CORRECTNESS",
+        "STYLE",
+        "ARCHITECTURE"
+      ],
+      "inner_types": [],
+      "description": "Category of a review finding. Imported from schemas.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "Finding",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique finding identifier.",
+          "validators": []
+        },
+        {
+          "name": "hunk_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the DiffHunk this finding applies to.",
+          "validators": []
+        },
+        {
+          "name": "file_path",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "File path where the finding was detected.",
+          "validators": []
+        },
+        {
+          "name": "line_number",
+          "type_ref": "Optional[int]",
+          "required": false,
+          "default": "null",
+          "description": "Specific line number if applicable.",
+          "validators": []
+        },
+        {
+          "name": "severity",
+          "type_ref": "Severity",
+          "required": true,
+          "default": "",
+          "description": "Severity of the finding.",
+          "validators": []
+        },
+        {
+          "name": "confidence",
+          "type_ref": "Confidence",
+          "required": true,
+          "default": "",
+          "description": "Reviewer confidence in this finding.",
+          "validators": []
+        },
+        {
+          "name": "title",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Short human-readable title of the finding.",
+          "validators": []
+        },
+        {
+          "name": "description",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Detailed explanation of the issue.",
+          "validators": []
+        },
+        {
+          "name": "suggestion",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Suggested fix or remediation.",
+          "validators": []
+        },
+        {
+          "name": "rule_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the rule or pattern that triggered this finding.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "Which review stage produced this finding.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single issue found by a reviewer in a specific hunk.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "Assessment",
+      "kind": "struct",
+      "fields": [
+        {
+          "name": "id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Unique assessment identifier.",
+          "validators": []
+        },
+        {
+          "name": "review_request_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ID of the ReviewRequest this assessment responds to.",
+          "validators": []
+        },
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "The review stage this assessment covers.",
+          "validators": []
+        },
+        {
+          "name": "reviewer_id",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Identifier of the reviewer agent that produced this assessment.",
+          "validators": []
+        },
+        {
+          "name": "decision",
+          "type_ref": "ReviewDecision",
+          "required": true,
+          "default": "",
+          "description": "This reviewer's overall decision.",
+          "validators": []
+        },
+        {
+          "name": "findings",
+          "type_ref": "list[Finding]",
+          "required": true,
+          "default": "[]",
+          "description": "List of findings from this reviewer.",
+          "validators": []
+        },
+        {
+          "name": "confidence",
+          "type_ref": "Confidence",
+          "required": true,
+          "default": "",
+          "description": "Overall confidence of this assessment.",
+          "validators": []
+        },
+        {
+          "name": "is_partial",
+          "type_ref": "bool",
+          "required": true,
+          "default": "false",
+          "description": "True if the reviewer failed/timed out and this is a degraded result.",
+          "validators": []
+        },
+        {
+          "name": "error_message",
+          "type_ref": "Optional[str]",
+          "required": false,
+          "default": "null",
+          "description": "Error message if the reviewer encountered an issue.",
+          "validators": []
+        },
+        {
+          "name": "duration_ms",
+          "type_ref": "int",
+          "required": true,
+          "default": "",
+          "description": "Time in milliseconds the reviewer took to produce this assessment.",
+          "validators": []
+        },
+        {
+          "name": "created_at",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "ISO-8601 timestamp of assessment creation.",
+          "validators": []
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A single reviewer's complete assessment of the diff hunks it was given.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "PACTKey",
+      "kind": "primitive",
+      "fields": [
+        {
+          "name": "value",
+          "type_ref": "str",
+          "required": true,
+          "default": "",
+          "description": "Dotted PACT key for Sentinel attribution.",
+          "validators": [
+            {
+              "kind": "regex",
+              "expression": "^exemplar\\.[a-z_]+(\\.[A-Za-z_][A-Za-z0-9_]*)+(\\.[a-z_][a-z0-9_]*)?$",
+              "error_message": "PACT key must follow exemplar.module.Class.method pattern."
+            }
+          ]
+        }
+      ],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "A PACT attribution key string. Module-level constants following the pattern 'exemplar.module.Class.method'.",
+      "owner_component": "circuit"
+    },
+    {
+      "name": "Confidence",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "inner_types": [],
+      "description": "Confidence level of a reviewer finding or merged assessment.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ReviewDecision",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "block",
+        "warn",
+        "pass"
+      ],
+      "inner_types": [],
+      "description": "Final decision on a pull request review: block merging, warn, or pass.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ClassificationLabel",
+      "kind": "enum",
+      "fields": [],
+      "item_type": "",
+      "variants": [
+        "secret",
+        "pii",
+        "internal_api",
+        "public"
+      ],
+      "inner_types": [],
+      "description": "Ledger data classification label for diff content.",
+      "owner_component": "schemas"
+    },
+    {
+      "name": "ReviewerProtocol",
+      "kind": "struct",
+      "fields": [],
+      "item_type": "",
+      "variants": [],
+      "inner_types": [],
+      "description": "Auto-stubbed type — referenced but not defined in contract 'circuit'",
+      "owner_component": ""
+    }
+  ],
+  "functions": [
+    {
+      "name": "__init__",
+      "description": "Construct a BatonCircuitRouter. Validates that every stage in config.stages has a corresponding entry in the reviewers dict, that all parallel_stages entries are subsets of config.stages, and that no stage appears in more than one parallel group. Resolves the execution plan from config topology at construction time. Raises CircuitConfigError on validation failure.",
+      "inputs": [
+        {
+          "name": "config",
+          "type_ref": "CircuitConfig",
+          "required": true,
+          "default": "",
+          "description": "Circuit routing configuration defining stages, parallel groups, and timeouts.",
+          "validators": []
+        },
+        {
+          "name": "reviewers",
+          "type_ref": "dict[ReviewStage, ReviewerProtocol]",
+          "required": true,
+          "default": "",
+          "description": "Mapping from each configured review stage to its reviewer implementation. Must cover every stage in config.stages.",
+          "validators": []
+        },
+        {
+          "name": "chronicler",
+          "type_ref": "ChroniclerEmitter",
+          "required": false,
+          "default": "None",
+          "description": "Optional Chronicler emitter for stage boundary events. If None, no events are emitted.",
+          "validators": []
+        },
+        {
+          "name": "clock",
+          "type_ref": "ClockProvider",
+          "required": false,
+          "default": "None",
+          "description": "Optional clock provider for injectable timestamps and duration measurement. If None, uses real system clock.",
+          "validators": []
+        }
+      ],
+      "output_type": "None",
+      "error_cases": [
+        {
+          "name": "missing_reviewers",
+          "condition": "One or more stages in config.stages have no corresponding key in the reviewers dict",
+          "error_type": "CircuitConfigError",
+          "error_data": {
+            "missing_reviewers": "list of ReviewStage values without registered reviewers"
+          }
+        },
+        {
+          "name": "invalid_parallel_subset",
+          "condition": "A ParallelGroup in config.parallel_stages contains stages not present in config.stages",
+          "error_type": "CircuitConfigError",
+          "error_data": {
+            "invalid_parallel_stages": "list of ReviewStage values not in config.stages"
+          }
+        },
+        {
+          "name": "duplicate_parallel_membership",
+          "condition": "A ReviewStage appears in more than one ParallelGroup",
+          "error_type": "CircuitConfigError",
+          "error_data": {
+            "message": "description of duplicate stage membership"
+          }
+        },
+        {
+          "name": "empty_reviewers",
+          "condition": "The reviewers dict is empty",
+          "error_type": "CircuitConfigError",
+          "error_data": {
+            "message": "reviewers dict must not be empty"
+          }
+        }
+      ],
+      "preconditions": [
+        "config is a valid CircuitConfig instance (passes Pydantic validation)",
+        "reviewers dict is not empty",
+        "All ReviewerProtocol values satisfy the runtime_checkable protocol"
+      ],
+      "postconditions": [
+        "self._execution_plan is a resolved ExecutionPlan covering all stages in config.stages exactly once",
+        "self._config, self._reviewers, self._chronicler, self._clock are stored immutably",
+        "No I/O has been performed (construction is synchronous and pure aside from validation)"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Construction is synchronous and performs no I/O. Only validates config and builds execution plan in memory."
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "run",
+      "description": "Execute the full review circuit for a given ReviewRequest. Iterates through the resolved ExecutionPlan: for each step, invokes reviewer(s) — concurrently for parallel steps, sequentially otherwise. Each reviewer invocation is wrapped in asyncio.wait_for with the configured stage timeout. On timeout or exception, a degraded Assessment (is_partial=True) is produced instead of propagating the error. Emits Chronicler events (stage.started, stage.complete) at each stage boundary via fire-and-forget. Returns assessments sorted in the canonical order defined by CircuitConfig.stages. PACT key: exemplar.circuit.BatonCircuitRouter.run",
+      "inputs": [
+        {
+          "name": "request",
+          "type_ref": "ReviewRequest",
+          "required": true,
+          "default": "",
+          "description": "The review request containing classified diff hunks to route through all configured stages.",
+          "validators": []
+        }
+      ],
+      "output_type": "list[Assessment]",
+      "error_cases": [
+        {
+          "name": "invalid_request",
+          "condition": "request is None or fails ReviewRequest validation",
+          "error_type": "ValueError",
+          "error_data": {
+            "message": "ReviewRequest must be non-None and valid"
+          }
+        },
+        {
+          "name": "empty_hunks",
+          "condition": "request.hunks is an empty list",
+          "error_type": "ValueError",
+          "error_data": {
+            "message": "ReviewRequest must contain at least one DiffHunk"
+          }
+        }
+      ],
+      "preconditions": [
+        "request is a valid ReviewRequest with at least one DiffHunk",
+        "BatonCircuitRouter was successfully constructed (no CircuitConfigError)"
+      ],
+      "postconditions": [
+        "Returned list has exactly len(config.stages) Assessments, one per configured stage",
+        "Assessments are ordered by their position in CircuitConfig.stages",
+        "Every Assessment has a valid ReviewStage matching a configured stage",
+        "No exceptions are propagated from reviewer invocations — all failures produce is_partial=True assessments",
+        "If Chronicler is configured, stage.started and stage.complete events were emitted (fire-and-forget) for each stage",
+        "Each Assessment.duration_ms reflects the actual wall-clock time of that reviewer invocation"
+      ],
+      "idempotent": false,
+      "is_async": true,
+      "side_effects": [
+        "Invokes ReviewerProtocol.review() for each configured stage",
+        "Emits ChroniclerEvent via ChroniclerEmitter.emit() at stage boundaries (fire-and-forget)",
+        "Uses asyncio.wait_for for timeout enforcement per stage"
+      ],
+      "structured_side_effects": [
+        {
+          "kind": "network_call",
+          "target": "ReviewerProtocol.review",
+          "description": "Invokes each registered reviewer's async review method. Wrapped in circuit-breaker timeout. Reviewer implementations may perform network I/O internally."
+        },
+        {
+          "kind": "network_call",
+          "target": "ChroniclerEmitter.emit",
+          "description": "Emits stage.started and stage.complete events to Chronicler. Fire-and-forget: exceptions from emit are caught and logged, never propagated."
+        },
+        {
+          "kind": "logging",
+          "target": "circuit.logger",
+          "description": "Logs warnings on reviewer timeouts/failures and on Chronicler emission failures."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 120000,
+        "max_memory_mb": 256,
+        "complexity": "O(S) where S = number of configured stages; parallel groups reduce wall-clock time but not total work"
+      }
+    },
+    {
+      "name": "resolve_execution_plan",
+      "description": "Resolve the CircuitConfig into an ordered ExecutionPlan. Groups stages from parallel_stages into concurrent ExecutionSteps and remaining stages into sequential steps, preserving the order defined in config.stages. Called once at construction time. PACT key: exemplar.circuit.BatonCircuitRouter.resolve_execution_plan",
+      "inputs": [
+        {
+          "name": "config",
+          "type_ref": "CircuitConfig",
+          "required": true,
+          "default": "",
+          "description": "The validated circuit configuration to resolve into an execution plan.",
+          "validators": []
+        }
+      ],
+      "output_type": "ExecutionPlan",
+      "error_cases": [],
+      "preconditions": [
+        "config has passed all CircuitConfig validation (no duplicates, valid parallel groups)",
+        "This is called after reviewer registry validation succeeds"
+      ],
+      "postconditions": [
+        "Every stage in config.stages appears in exactly one ExecutionStep",
+        "ExecutionPlan.stage_order matches config.stages exactly",
+        "Parallel groups are preserved as multi-stage ExecutionSteps with is_parallel=True",
+        "Sequential stages appear as single-stage ExecutionSteps with is_parallel=False",
+        "Step ordering respects the position of the earliest stage in each group within config.stages"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure function that computes an execution plan from config. No I/O or side effects."
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "invoke_reviewer",
+      "description": "Invoke a single reviewer with circuit-breaker protection. Wraps the reviewer's async review call in asyncio.wait_for with the configured stage timeout. On TimeoutError or any Exception, returns a degraded Assessment with is_partial=True and the error message. Emits stage.started before invocation and stage.complete after (success or degraded). PACT key: exemplar.circuit.BatonCircuitRouter.invoke_reviewer",
+      "inputs": [
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "The review stage being invoked.",
+          "validators": []
+        },
+        {
+          "name": "request",
+          "type_ref": "ReviewRequest",
+          "required": true,
+          "default": "",
+          "description": "The review request to pass to the reviewer.",
+          "validators": []
+        },
+        {
+          "name": "timeout_ms",
+          "type_ref": "StageTimeoutMs",
+          "required": true,
+          "default": "",
+          "description": "Timeout for this reviewer invocation in milliseconds.",
+          "validators": []
+        }
+      ],
+      "output_type": "Assessment",
+      "error_cases": [],
+      "preconditions": [
+        "stage has a registered reviewer in self._reviewers",
+        "request is a valid ReviewRequest",
+        "timeout_ms is a valid StageTimeoutMs (100-300000)"
+      ],
+      "postconditions": [
+        "Returns exactly one Assessment for the given stage",
+        "Assessment.stage == stage",
+        "If reviewer completed successfully within timeout: Assessment.is_partial == False and Assessment.findings contains reviewer output",
+        "If reviewer timed out or threw: Assessment.is_partial == True and Assessment.error_message describes the failure",
+        "Assessment.duration_ms reflects actual invocation wall-clock time",
+        "Chronicler events emitted (fire-and-forget) regardless of success/failure",
+        "No exception is ever propagated from this method"
+      ],
+      "idempotent": false,
+      "is_async": true,
+      "side_effects": [
+        "Invokes ReviewerProtocol.review() with asyncio.wait_for timeout",
+        "Emits ChroniclerEvent stage.started and stage.complete via fire-and-forget"
+      ],
+      "structured_side_effects": [
+        {
+          "kind": "network_call",
+          "target": "ReviewerProtocol.review",
+          "description": "Invokes the reviewer's async review method, wrapped in asyncio.wait_for for timeout enforcement."
+        },
+        {
+          "kind": "network_call",
+          "target": "ChroniclerEmitter.emit",
+          "description": "Fire-and-forget emission of stage.started and stage.complete events."
+        },
+        {
+          "kind": "logging",
+          "target": "circuit.logger",
+          "description": "Logs warning on reviewer timeout/failure and on Chronicler emission failure."
+        }
+      ],
+      "performance_budget": {
+        "p95_latency_ms": 30000,
+        "max_memory_mb": null,
+        "complexity": "O(1) per invocation — delegates to a single reviewer"
+      }
+    },
+    {
+      "name": "get_stage_timeout",
+      "description": "Resolve the effective timeout for a given stage. Returns the stage-specific override from config.stage_timeouts if present, otherwise config.default_timeout_ms. PACT key: exemplar.circuit.BatonCircuitRouter.get_stage_timeout",
+      "inputs": [
+        {
+          "name": "stage",
+          "type_ref": "ReviewStage",
+          "required": true,
+          "default": "",
+          "description": "The review stage to look up timeout for.",
+          "validators": []
+        }
+      ],
+      "output_type": "StageTimeoutMs",
+      "error_cases": [],
+      "preconditions": [
+        "stage is a member of self._config.stages"
+      ],
+      "postconditions": [
+        "Returns config.stage_timeouts[stage] if stage is in stage_timeouts, else config.default_timeout_ms",
+        "Returned value satisfies StageTimeoutMs validation (100-300000)"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure lookup function with no side effects."
+        }
+      ],
+      "performance_budget": null
+    },
+    {
+      "name": "get_execution_plan",
+      "description": "Returns the resolved ExecutionPlan for inspection and testing. Read-only accessor. PACT key: exemplar.circuit.BatonCircuitRouter.get_execution_plan",
+      "inputs": [],
+      "output_type": "ExecutionPlan",
+      "error_cases": [],
+      "preconditions": [
+        "BatonCircuitRouter was successfully constructed"
+      ],
+      "postconditions": [
+        "Returns the immutable ExecutionPlan resolved at construction time",
+        "Returned plan is a frozen Pydantic model — caller cannot mutate it"
+      ],
+      "idempotent": true,
+      "is_async": false,
+      "side_effects": [],
+      "structured_side_effects": [
+        {
+          "kind": "none",
+          "target": "",
+          "description": "Pure read-only accessor with no side effects."
+        }
+      ],
+      "performance_budget": null
+    }
+  ],
+  "dependencies": [
+    "schemas",
+    "reviewers.base"
+  ],
+  "dependency_contracts": {
+    "schemas": [
+      "ReviewRequest",
+      "Assessment",
+      "DiffHunk",
+      "ReviewStage",
+      "Finding",
+      "Severity",
+      "FindingCategory"
+    ],
+    "reviewers.base": [
+      "ReviewerProtocol"
+    ]
+  },
+  "invariants": [
+    "BatonCircuitRouter never propagates exceptions from reviewer invocations — all failures are absorbed into degraded Assessments with is_partial=True",
+    "BatonCircuitRouter never propagates exceptions from ChroniclerEmitter.emit — all emission failures are caught and logged (fire-and-forget)",
+    "The returned list of Assessments from run() always has exactly len(config.stages) elements, one per configured stage, in config.stages order",
+    "No reviewer invocation exceeds its configured timeout — asyncio.wait_for enforces cancellation",
+    "The ExecutionPlan is immutable after construction and determines all routing behavior",
+    "Every stage in config.stages has a registered reviewer (enforced at construction time via CircuitConfigError)",
+    "Every stage in every ParallelGroup is a member of config.stages (enforced at construction time)",
+    "No ReviewStage appears in more than one ParallelGroup (enforced at construction time)",
+    "PACT key constants are module-level: PACT_CIRCUIT_INIT, PACT_CIRCUIT_RUN, PACT_CIRCUIT_RESOLVE_PLAN, PACT_CIRCUIT_INVOKE_REVIEWER, PACT_CIRCUIT_GET_TIMEOUT, PACT_CIRCUIT_GET_PLAN",
+    "All Pydantic models used by circuit are frozen=True (immutable after construction)",
+    "Chronicler events include the PACT key of the emitting method for Sentinel attribution",
+    "ClockProvider injection enables fully deterministic testing — no real time dependencies when clock is provided"
+  ],
+  "requires": [
+    "schemas.ReviewRequest",
+    "schemas.Assessment",
+    "schemas.ReviewStage",
+    "schemas.DiffHunk",
+    "reviewers.base.ReviewerProtocol"
+  ],
+  "processing_register": "rigorous-analytical",
+  "data_access": {
+    "reads": [
+      "INTERNAL"
+    ],
+    "writes": [
+      "INTERNAL"
+    ],
+    "rationale": "Reads ReviewRequest objects containing classified DiffHunks (which may reference PII-adjacent file paths or code content) but does not inspect or persist the code content itself — it only passes DiffHunks through to reviewer implementations. Writes INTERNAL execution telemetry via Chronicler events (stage names, durations, error messages). No PII is written or stored by this component.",
+    "side_effects": [
+      {
+        "type": "chronicler_event_emission",
+        "classification": "INTERNAL",
+        "fields": [
+          "stage_name",
+          "event_type",
+          "timestamp",
+          "duration_ms",
+          "is_degraded",
+          "error_message"
+        ],
+        "rationale": "Emits stage.started and stage.complete Chronicler events at every stage boundary for observability and governance audit trail. Fire-and-forget — failures do not block pipeline."
+      },
+      {
+        "type": "reviewer_invocation",
+        "classification": "INTERNAL",
+        "fields": [
+          "review_stage",
+          "diff_hunks",
+          "review_request"
+        ],
+        "rationale": "Delegates classified DiffHunks to registered ReviewerProtocol implementations for each configured stage. Each invocation is wrapped in circuit-breaker timeout protection."
+      }
+    ]
+  },
+  "authority": {
+    "domains": [
+      "circuit_execution",
+      "execution_plan",
+      "circuit_breaker_policy"
+    ],
+    "rationale": "The circuit module is the authoritative owner of execution plan resolution, stage routing topology, circuit-breaker degradation policy, and the ordering guarantees for assessment results. No other component determines how reviewers are orchestrated or how failures are absorbed."
+  }
+}

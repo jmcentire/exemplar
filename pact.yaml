@@ -1,0 +1,6 @@
+budget: 30.0
+plan_only: false
+build_mode: hierarchy
+shaping: false
+package_namespace: "exemplar"
+backend: anthropic

@@ -1,0 +1,83 @@
+system_constraints:
+  runtime:
+    python_version: ">=3.12"
+    async_required: true
+    offline_capable: true
+    network_optional: true
+
+  dependencies:
+    core:
+      - "pydantic>=2.0"
+      - "PyYAML>=6.0"
+      - "aiohttp>=3.9"
+    optional:
+      - "mcp>=1.0"
+
+  architecture:
+    models: "frozen_immutable"
+    plugins: "protocol_based"
+    io_patterns: "async_concurrent"
+    error_handling: "fire_and_forget_for_integrations"
+    routing: "circuit_pattern"
+
+  cli_behavior:
+    exit_codes:
+      success: 0
+      review_issues_found: 1
+      config_error: 2
+    commands: ["review", "trust", "history", "adopt"]
+    output_formats: ["json", "markdown", "github"]
+
+  governance_integration:
+    pact:
+      integration: "pact_keys_in_all_public_methods"
+      purpose: "production_attribution"
+    constrain:
+      integration: "artifacts_define_project_boundaries"
+      purpose: "specification_before_code"
+    baton:
+      integration: "circuit_routing_through_review_stages"
+      purpose: "topology_first_orchestration"
+    sentinel:
+      integration: "monitors_review_quality_drift"
+      purpose: "production_contract_tightening"
+    ledger:
+      integration: "field_classification_on_diff_hunks"
+      purpose: "data_governance"
+    arbiter:
+      integration: "trust_scoring_reviewer_outputs"
+      purpose: "conflicting_assessment_resolution"
+    chronicler:
+      integration: "events_at_every_stage_boundary"
+      purpose: "story_assembly"
+    stigmergy:
+      integration: "signals_from_review_patterns"
+      purpose: "organizational_pattern_discovery"
+    apprentice:
+      integration: "shadow_compare_ai_vs_human_review"
+      purpose: "model_distillation"
+    kindex:
+      integration: "review_patterns_as_knowledge_nodes"
+      purpose: "persistent_memory"
+    cartographer:
+      integration: "discover_existing_review_config"
+      purpose: "stack_adoption"
+    agent_safe:
+      integration: "policy_tokens_scope_reviewer_access"
+      purpose: "authorization"
+    signet:
+      integration: "reviewer_agent_credentials"
+      purpose: "identity"
+    tessera:
+      integration: "hash_chain_sealed_review_reports"
+      purpose: "tamper_proof_audit"
+
+quality_constraints:
+  testing:
+    framework: "pytest"
+    output: "deterministic"
+    coverage: "one_test_file_per_module"
+  reliability:
+    config_validation: "fail_fast"
+    schema_enforcement: "frozen_models"
+    integration_failure: "graceful_degradation"

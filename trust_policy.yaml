@@ -1,0 +1,49 @@
+trust_boundaries:
+  internal:
+    review_pipeline:
+      trust_level: "high"
+      validation: "pydantic_frozen_models"
+      components: ["intake", "circuit", "assessor", "reporter"]
+
+    reviewer_agents:
+      trust_level: "medium"
+      authorization: "agent_safe_policy_tokens"
+      identity: "signet_credentials"
+      scope: "per_reviewer_per_repo"
+      note: "Reviewers are plugins — their output is trust-scored, not trusted implicitly"
+
+    governance_stack:
+      trust_level: "high"
+      validation: "schema_enforced"
+      failure_mode: "fire_and_forget"
+      components:
+        - chronicler
+        - stigmergy
+        - apprentice
+        - kindex
+        - sentinel
+
+  external:
+    diff_input:
+      trust_level: "low"
+      validation: "strict_parsing"
+      sanitization: "no_code_execution"
+      note: "Diffs come from users — never eval, never exec"
+
+    user_config:
+      trust_level: "low"
+      validation: "yaml_schema_fail_fast"
+      sanitization: "strict"
+
+  verification:
+    output_integrity:
+      mechanism: "tessera_hash_chain"
+      purpose: "tamper_proof_review_reports"
+
+    reviewer_authority:
+      mechanism: "arbiter_trust_scoring"
+      purpose: "weight_conflicting_assessments"
+
+    data_classification:
+      mechanism: "ledger_field_rules"
+      purpose: "classify_diff_hunks_for_pii_secrets_internal_apis"
