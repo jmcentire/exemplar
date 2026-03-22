@@ -13,18 +13,19 @@ No single tool solves this. It requires a stack — each tool with one job, comp
 Every governed project moves through these phases:
 
 ```
-DEFINE ──→ DECOMPOSE ──→ BUILD ──→ DEPLOY ──→ MONITOR ──→ LEARN
-  │            │            │         │          │           │
-Constrain    Pact         Pact      Baton    Sentinel    Apprentice
-              │                                │         Stigmergy
-           Ledger                          Chronicler
-           Arbiter                            │
-                                           Kindex
+DEFINE ──→ DECOMPOSE ──→ BUILD ──→ PREFLIGHT ──→ DEPLOY ──→ MONITOR ──→ LEARN
+  │            │            │          │            │          │           │
+Constrain    Pact         Pact    Signet-Eval    Baton    Sentinel    Apprentice
+              │                                             │         Stigmergy
+           Ledger                                       Chronicler
+           Arbiter                                          │
+                                                         Kindex
 ```
 
 **Define**: What can this system do? What must it NOT do? What data does it touch? Who do we trust?
 **Decompose**: Break it into components. Define contracts. Generate tests. Before any code exists.
 **Build**: Implement each component. Verify against contracts. Catch gaming with hidden tests.
+**Preflight**: Before implementation begins, establish red lines and contingency plans. Commitments made before goal pressure exists.
 **Deploy**: Route traffic through circuits. Classify data fields. Score trust.
 **Monitor**: Watch production. Attribute errors. Detect drift. Assemble stories.
 **Learn**: Discover patterns. Distill models. Remember everything.
@@ -220,6 +221,25 @@ Constrain    Pact         Pact      Baton    Sentinel    Apprentice
 
 ---
 
+### Signet-Eval Preflight — Operational Red Lines
+
+**What it does**: Before an agent implements a component, it establishes inviolable constraints and contingency plans — red lines and plan Bs. Submitted via MCP, HMAC-signed, time-locked. 5+ violations escalates to ASK-everything mode. Human override requires vault passphrase.
+
+**Key concepts**:
+- **Red lines**: Commitments made before goal pressure exists (no test deletion, no contract modification, no eval())
+- **Plan Bs**: When a rule fires, redirect instead of just block (rm → trash, force-push → force-with-lease)
+- **Timed lockout**: Plan is immutable for a configurable duration after submission
+- **Escalation**: 5+ violations → agent must ask permission for everything
+- **Kindex integration**: Previous run failures inform the next preflight
+
+**Why it exists**: AI agents have get-there-itis. The fix isn't better judgment under pressure — it's commitments made before the pressure exists. Like a pilot's preflight checklist.
+
+**In Exemplar**: `governance.py` includes preflight submission. Before any component is implemented, Pact's preflight phase queries Kindex for lessons, establishes red lines, and submits the plan to signet-eval.
+
+**MCP tools**: signet_preflight_submit, signet_preflight_active, signet_preflight_history, signet_preflight_violations, signet_preflight_test
+
+---
+
 ### Signet — Personal Sovereign Agent Stack
 
 **What it does**: Sovereign identity for AI agents. Encrypted vault, steward agent, ZK proofs for selective disclosure.
@@ -260,6 +280,7 @@ Both are documented patterns, not yet implemented in Exemplar v0.1.0.
 |------|-----|-----------|--------|
 | Constrain | Pact | Project boundaries | YAML artifacts |
 | Pact | Implementation | Typed contracts | Interface stubs + tests |
+| Signet-Eval Preflight | Implementation agents | Red lines + contingencies | PreflightPlan JSON |
 | Ledger | Everyone | Field classifications | Schema registry |
 | Baton | Services | Routed requests | Circuit config |
 | Sentinel | Pact | Tightened contracts | Contract JSON |
@@ -281,6 +302,7 @@ Both are documented patterns, not yet implemented in Exemplar v0.1.0.
 6. **Everything is remembered.** Kindex captures across sessions.
 7. **Patterns emerge from signals.** Stigmergy discovers, not searches.
 8. **Models get cheaper over time.** Apprentice replaces API calls with local inference.
+9. **Agents declare constraints before execution.** Preflight plans are established at task-specification time, not under goal pressure.
 
 ## Reading the Code
 
@@ -302,12 +324,13 @@ Both are documented patterns, not yet implemented in Exemplar v0.1.0.
 1. **Start with Constrain.** `constrain new` — answer the interview. Get your artifacts.
 2. **Feed them to Pact.** `pact run <dir>` — interviews, decomposes, contracts, tests.
 3. **Implement.** Let Pact's code_author implement, or implement manually against contracts.
-4. **Add Ledger classifications.** Annotate models with field-level classifications.
-5. **Wire Baton.** Define your circuit — stages, order, fallbacks.
-6. **Embed PACT keys.** Add attribution to public functions.
-7. **Emit Chronicler events.** Structured events at stage boundaries.
-8. **Configure Sentinel.** Point it at your logs.
-9. **Let the rest emerge.** Stigmergy discovers patterns. Apprentice learns. Kindex remembers. Arbiter scores. They activate as data flows.
+4. **Run preflight.** Before implementation begins, submit red lines and plan Bs to signet-eval. Query Kindex for lessons from previous runs.
+5. **Add Ledger classifications.** Annotate models with field-level classifications.
+6. **Wire Baton.** Define your circuit — stages, order, fallbacks.
+7. **Embed PACT keys.** Add attribution to public functions.
+8. **Emit Chronicler events.** Structured events at stage boundaries.
+9. **Configure Sentinel.** Point it at your logs.
+10. **Let the rest emerge.** Stigmergy discovers patterns. Apprentice learns. Kindex remembers. Arbiter scores. They activate as data flows.
 
 You don't need all 17 projects on day one. Start with Constrain + Pact. Add Baton when you deploy. Add Sentinel when you monitor. The rest follows naturally.
 

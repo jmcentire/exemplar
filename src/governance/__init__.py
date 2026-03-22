@@ -32,6 +32,8 @@ from governance.governance import (
     KindexEntry,
     CircuitConfig,
     FilterResult,
+    PreflightPlan,
+    PreflightViolation,
     # Classes
     TesseraSealer,
     Chronicler,
@@ -41,6 +43,7 @@ from governance.governance import (
     LedgerClassifier,
     StigmergyStore,
     KindexStore,
+    PreflightManager,
     Governance,
     # Functions
     seal,

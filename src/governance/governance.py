@@ -443,6 +443,35 @@ class FilterResult(BaseModel):
     violations: List[str] = []
 
 
+class PreflightPlan(BaseModel):
+    """A preflight plan declaring red lines and contingencies for a component."""
+
+    model_config = {"frozen": True}
+
+    plan_id: str
+    component_id: str
+    red_lines: List[str]
+    contingencies: Dict[str, str] = {}
+    lockout_minutes: int = 30
+    created_at: str = ""
+    expires_at: str = ""
+
+
+class PreflightViolation(BaseModel):
+    """A recorded violation against an active preflight plan."""
+
+    model_config = {"frozen": True}
+
+    violation_id: str
+    plan_id: str
+    component_id: str
+    tool_name: str
+    tool_input: Dict[str, Any] = {}
+    matched_red_line: str
+    alternative: Optional[str] = None
+    recorded_at: str = ""
+
+
 # ---------------------------------------------------------------------------
 # PACT keys (class-level constants)
 # ---------------------------------------------------------------------------
@@ -454,6 +483,7 @@ PACT_KEY_ARBITER = "governance.arbiter"
 PACT_KEY_LEDGER = "governance.ledger"
 PACT_KEY_STIGMERGY = "governance.stigmergy"
 PACT_KEY_KINDEX = "governance.kindex"
+PACT_KEY_PREFLIGHT = "governance.preflight"
 
 
 # ---------------------------------------------------------------------------
@@ -1470,6 +1500,234 @@ async def kindex_query_by_tags(tags: List[str]) -> List[KindexEntry]:
     except Exception:
         logger.exception("Failed to read kindex store")
     return results
+
+
+# ---------------------------------------------------------------------------
+# PreflightManager — red-line enforcement before tool execution
+# ---------------------------------------------------------------------------
+_PREFLIGHT_DIR = Path(".exemplar") / "preflight"
+
+
+class PreflightManager:
+    """Pre-flight red-line enforcement for component tool calls.
+
+    Stores preflight plans locally in .exemplar/preflight/ and attempts
+    fire-and-forget submission to a signet_preflight_submit MCP tool when
+    available.  Plans define red lines (glob patterns matched against
+    tool_name) and contingencies (alternative tool suggestions).
+
+    Violations are recorded locally and can be queried per component.
+    """
+
+    def __init__(self, base_dir: Optional[Path] = None):
+        self._base = Path(base_dir) if base_dir else _PREFLIGHT_DIR
+        self._violations: Dict[str, List[PreflightViolation]] = {}
+
+    # -- storage helpers ----------------------------------------------------
+
+    def _plan_path(self, component_id: str) -> Path:
+        return self._base / f"{component_id}.json"
+
+    def _violations_path(self, component_id: str) -> Path:
+        return self._base / f"{component_id}_violations.json"
+
+    def _ensure_dir(self) -> None:
+        self._base.mkdir(parents=True, exist_ok=True)
+
+    def _atomic_write(self, path: Path, data: Any) -> None:
+        """Write JSON atomically via temp file + os.replace."""
+        self._ensure_dir()
+        fd, tmp = tempfile.mkstemp(dir=str(self._base), suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(data, f, sort_keys=True, indent=2)
+            os.replace(tmp, str(path))
+        except Exception:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+            raise
+
+    # -- public API ---------------------------------------------------------
+
+    def submit_preflight(
+        self,
+        component_id: str,
+        red_lines: List[str],
+        contingencies: Optional[Dict[str, str]] = None,
+        lockout_minutes: int = 30,
+    ) -> PreflightPlan:
+        """Create a PreflightPlan and persist it.
+
+        Attempts fire-and-forget submission via signet_preflight_submit MCP
+        tool, falls back to local JSON storage in .exemplar/preflight/.
+
+        Args:
+            component_id: Identifier for the governed component.
+            red_lines: Glob patterns for tool names that are forbidden.
+            contingencies: Mapping of red-line pattern -> suggested alternative.
+            lockout_minutes: How long the plan stays active (default 30).
+
+        Returns:
+            The created PreflightPlan.
+
+        Raises:
+            GovernanceError: If component_id or red_lines are empty.
+        """
+        if not component_id or not component_id.strip():
+            raise GovernanceError("component_id must not be empty.")
+        if not red_lines:
+            raise GovernanceError("red_lines must not be empty.")
+
+        now = datetime.now(timezone.utc)
+        plan = PreflightPlan(
+            plan_id=_uuid4_hex(),
+            component_id=component_id,
+            red_lines=red_lines,
+            contingencies=contingencies or {},
+            lockout_minutes=lockout_minutes,
+            created_at=now.isoformat(),
+            expires_at=(now + timedelta(minutes=lockout_minutes)).isoformat(),
+        )
+
+        # Persist locally
+        self._atomic_write(self._plan_path(component_id), plan.model_dump())
+
+        # Fire-and-forget MCP submission (best-effort, never raises)
+        try:
+            self._try_mcp_submit(plan)
+        except Exception:
+            logger.debug("MCP preflight submit unavailable; local-only.")
+
+        return plan
+
+    def get_active_preflight(self, component_id: str) -> Optional[PreflightPlan]:
+        """Read the active preflight plan for *component_id*.
+
+        Returns None if no plan exists or the plan has expired.
+        """
+        path = self._plan_path(component_id)
+        if not path.exists():
+            return None
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            plan = PreflightPlan(**data)
+            # Check expiry
+            expires = datetime.fromisoformat(plan.expires_at)
+            if datetime.now(timezone.utc) > expires:
+                return None
+            return plan
+        except Exception:
+            logger.exception("Failed to read preflight plan for %s", component_id)
+            return None
+
+    def check_violation(
+        self,
+        component_id: str,
+        tool_name: str,
+        tool_input: Optional[Dict[str, Any]] = None,
+    ) -> tuple:
+        """Test a proposed tool call against the active plan's red lines.
+
+        Returns:
+            (allowed, alternative) — allowed is True if no red line matches;
+            if blocked, alternative is the contingency string (or None).
+        """
+        plan = self.get_active_preflight(component_id)
+        if plan is None:
+            # No active plan => everything allowed
+            return (True, None)
+
+        for pattern in plan.red_lines:
+            if fnmatch(tool_name, pattern):
+                alternative = plan.contingencies.get(pattern)
+                # Record the violation
+                violation = PreflightViolation(
+                    violation_id=_uuid4_hex(),
+                    plan_id=plan.plan_id,
+                    component_id=component_id,
+                    tool_name=tool_name,
+                    tool_input=tool_input or {},
+                    matched_red_line=pattern,
+                    alternative=alternative,
+                    recorded_at=_now_iso(),
+                )
+                self._violations.setdefault(component_id, []).append(violation)
+                self._persist_violation(component_id, violation)
+                return (False, alternative)
+
+        return (True, None)
+
+    def get_violations(self, component_id: str) -> List[PreflightViolation]:
+        """Return all recorded violations for *component_id*."""
+        # Merge in-memory and on-disk
+        on_disk = self._load_violations(component_id)
+        in_memory = self._violations.get(component_id, [])
+        seen_ids = {v.violation_id for v in on_disk}
+        merged = list(on_disk)
+        for v in in_memory:
+            if v.violation_id not in seen_ids:
+                merged.append(v)
+        return merged
+
+    # -- internal -----------------------------------------------------------
+
+    def _persist_violation(
+        self, component_id: str, violation: PreflightViolation
+    ) -> None:
+        """Append a violation to the component's violations JSON."""
+        path = self._violations_path(component_id)
+        existing: List[Dict[str, Any]] = []
+        if path.exists():
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    existing = json.load(f)
+            except Exception:
+                existing = []
+        existing.append(violation.model_dump())
+        self._atomic_write(path, existing)
+
+    def _load_violations(self, component_id: str) -> List[PreflightViolation]:
+        path = self._violations_path(component_id)
+        if not path.exists():
+            return []
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return [PreflightViolation(**d) for d in data]
+        except Exception:
+            logger.exception("Failed to load violations for %s", component_id)
+            return []
+
+    @staticmethod
+    def _try_mcp_submit(plan: PreflightPlan) -> None:
+        """Attempt fire-and-forget submission via MCP tool.
+
+        In a real deployment this would call the signet_preflight_submit MCP
+        tool.  Here we attempt the import and call; if the tool isn't
+        available (typical in tests / standalone), we silently skip.
+        """
+        try:
+            # Attempt dynamic import of MCP client — not expected to exist in
+            # test/demo environments, so failure is the normal path.
+            import mcp_client  # type: ignore[import-not-found]
+
+            mcp_client.call_tool(
+                "signet_preflight_submit",
+                {
+                    "plan_id": plan.plan_id,
+                    "component_id": plan.component_id,
+                    "red_lines": plan.red_lines,
+                    "contingencies": plan.contingencies,
+                    "lockout_minutes": plan.lockout_minutes,
+                },
+            )
+        except ImportError:
+            pass  # MCP client not available — local-only mode
+        except Exception:
+            logger.debug("MCP preflight submit failed; local-only.", exc_info=True)
 
 
 # ---------------------------------------------------------------------------
