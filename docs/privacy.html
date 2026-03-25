@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — Exemplar</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --text-dim: #8b949e;
+    --accent: #58a6ff;
+    --max-w: 720px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .container { max-width: var(--max-w); margin: 0 auto; padding: 80px 24px; }
+  h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+  .updated { color: var(--text-dim); font-size: 0.875rem; margin-bottom: 40px; }
+  h2 { font-size: 1.25rem; font-weight: 600; margin: 32px 0 12px; color: #e6edf3; }
+  p { margin-bottom: 16px; }
+  ul { margin: 0 0 16px 24px; }
+  li { margin-bottom: 8px; }
+  .back { display: inline-block; margin-bottom: 32px; font-size: 0.875rem; color: var(--text-dim); }
+  .back:hover { color: var(--accent); }
+  .highlight { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; margin: 24px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="/" class="back">&larr; Back to Exemplar</a>
+  <h1>Privacy Policy</h1>
+  <p class="updated">Last updated: March 24, 2026</p>
+
+  <div class="highlight">
+    <p><strong>The short version:</strong> Exemplar is a local-only tool. Your data stays on your machine. We don't collect it, transmit it, or have access to it.</p>
+  </div>
+
+  <h2>What Exemplar Is</h2>
+  <p>Exemplar is an open-source CLI and MCP tool for governed code review. It runs entirely on your computer — there is no cloud service, no account system, and no server infrastructure. Pull request diffs are analyzed locally through a multi-stage pipeline (security, correctness, style, architecture) that produces verified review reports.</p>
+
+  <h2>Data We Collect</h2>
+  <p>None. Exemplar does not collect, transmit, store, or process any user data on external servers. All data remains on your local filesystem under your control.</p>
+
+  <h2>Data You Create</h2>
+  <p>When you use Exemplar, you create local review artifacts including:</p>
+  <ul>
+    <li>Analysis results and trust scores</li>
+    <li>Audit trails and chronicle events</li>
+    <li>Review reports sealed with hash chains</li>
+  </ul>
+  <p>This data is stored in your local project directory and never leaves your machine unless you explicitly copy, share, or publish it yourself.</p>
+
+  <h2>Third-Party Services</h2>
+  <p>Exemplar does not communicate with any third-party services for its core operation. It does not phone home, check for updates, or transmit telemetry.</p>
+  <p>If you configure optional LLM providers for AI-assisted review, those API calls are made using your own API key and are governed by that provider's terms. Exemplar does not intermediate, log, or cache these requests beyond local analysis artifacts.</p>
+
+  <h2>MCP Server Context</h2>
+  <p>When Exemplar is used as an MCP server within Claude Code or Claude Desktop, tool responses are returned to the host application. This content is processed by the host according to its own privacy policy (e.g., the <a href="https://www.anthropic.com/privacy">Anthropic Privacy Policy</a>). Exemplar has no visibility into or control over what happens after tool responses are returned to the host.</p>
+
+  <h2>Analytics and Tracking</h2>
+  <p>This website (exemplar.tools) is a static site. It does not use cookies, analytics, tracking pixels, or any third-party scripts.</p>
+
+  <h2>Data Retention and Deletion</h2>
+  <p>All data is local. Delete the project's review artifacts and everything is gone. There is nothing to request from us because we don't have anything.</p>
+
+  <h2>Children's Privacy</h2>
+  <p>Exemplar does not collect personal information from anyone, including children under 13.</p>
+
+  <h2>Changes to This Policy</h2>
+  <p>If Exemplar ever adds cloud features or data collection, this policy will be updated before those features ship. The current architecture is local-only by design, not by oversight.</p>
+
+  <h2>Contact</h2>
+  <p>Questions about this policy: <a href="mailto:jmc@cageandmirror.com">jmc@cageandmirror.com</a></p>
+  <p>Source code: <a href="https://github.com/jmcentire/exemplar">github.com/jmcentire/exemplar</a></p>
+</div>
+</body>
+</html>
