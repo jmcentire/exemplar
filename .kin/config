@@ -1,0 +1,51 @@
+name: exemplar
+audience: public
+description: >
+  Reference implementation of the FOSS governance stack. Multi-stage
+  code review pipeline with security, correctness, style, and
+  architecture analysis. Full audit trails via Tessera hash-chain sealing.
+
+domains:
+  - governance-stack
+  - code-review
+  - policy-enforcement
+  - auditing
+  - reference-implementation
+
+voice:
+  tone: precise, integrative, governance-first
+  principles:
+    - Every review finding has severity, evidence, and remediation
+    - Pipeline stages are independently testable
+    - Audit trail is append-only and tamper-evident
+    - Integrates all governance stack components as a reference
+  anti-patterns:
+    - Skipping stages in the review pipeline
+    - Findings without evidence or remediation guidance
+    - Tight coupling between review stages
+
+standards:
+  code_review:
+    - Pact contracts for all component boundaries
+    - Tessera sealing for audit artifacts
+    - Chronicler events emitted at pipeline milestones
+  documentation:
+    - Integration points documented per governance component
+
+connects_to:
+  - pact
+  - signet
+  - tessera
+  - sentinel
+  - arbiter
+  - chronicler
+  - stigmergy
+  - apprentice
+  - kindex
+  - ledger
+  - cartographer
+  - baton
+  - constrain
+  - agent-safe
+  - blinddb
+  - hermesp2p
