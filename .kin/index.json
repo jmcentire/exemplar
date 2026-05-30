@@ -1,0 +1,5160 @@
+{
+  "domains": [
+    "code",
+    "python"
+  ],
+  "node_count": 468,
+  "nodes": [
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-0c901762a782",
+      "title": "contracts/governance/interface.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-1b112e6e06f1",
+      "title": "contracts/schemas/interface.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-245faaff05b0",
+      "title": "src/cli/cli.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-2960bc8837c6",
+      "title": "src/circuit/circuit.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-3c742d80eead",
+      "title": "contracts/root/interface.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-3e1d3167a813",
+      "title": "contracts/mcp_server/interface.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-41c6e9090a26",
+      "title": "contracts/learner/interface.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-46dee676af62",
+      "title": "src/reporter/reporter.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-554870b2239f",
+      "title": "contracts/circuit/interface.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-56a7db227b8b",
+      "title": "src/mcp_server/mcp_server.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-57360c88aa30",
+      "title": "contracts/intake/interface.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-59fe7bf4281d",
+      "title": "src/reviewers/reviewers.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-5ae27f4c92ac",
+      "title": "src/governance/governance.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-819a19bd1b22",
+      "title": "src/intake/intake.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-8d587d20bee3",
+      "title": "src/assessor/__init__.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-a31c7ed5d35f",
+      "title": "conftest.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-a4005d34e48f",
+      "title": "contracts/cli/interface.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-a44cd975c290",
+      "title": "contracts/reporter/interface.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-a64f3b8b302b",
+      "title": "contracts/config/interface.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-b0edcec2b269",
+      "title": "src/learner/learner.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-bd03d4c38d6c",
+      "title": "src/schemas/schemas.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-bf7dc28cbcbb",
+      "title": "contracts/assessor/interface.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-cd20acdc3f09",
+      "title": "src/assessor/assessor.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-d79bc1bd3376",
+      "title": "src/config/config.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-ed12acda8812",
+      "title": "src/cli/__init__.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-mod-exemplar-fc94952cd9b8",
+      "title": "contracts/reviewers/interface.py",
+      "type": "artifact",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-01892df99544",
+      "title": "ReviewToolInput",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-0200c784cb8a",
+      "title": "TesseraSeal",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-0432039af27a",
+      "title": "ResolvedConfigPath",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-0459da953d40",
+      "title": "FindingSeverity",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-048f3f796119",
+      "title": "ClassificationLabel",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-07d6c945776c",
+      "title": "PipelineEvent",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-08af81275657",
+      "title": "RuleId",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-08d5bee3c8d8",
+      "title": "Assessment",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-09a35308438c",
+      "title": "Assessment",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-0c855d0bbf26",
+      "title": "ReviewerStats",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-0cf948735c8a",
+      "title": "ReviewerRuleStats",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-0d0de75b8f13",
+      "title": "Finding",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-0d403eb58398",
+      "title": "SecurityReviewer",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-0d831c14f3fd",
+      "title": "HunkMetadata",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-0dc74bc420cb",
+      "title": "ClassificationLabel",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-0e2826eae6aa",
+      "title": "McpContentBlock",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-0e8380006aa9",
+      "title": "ValidationError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-0ea85840f34b",
+      "title": "ChroniclerEventType",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-0ee702d66893",
+      "title": "FieldError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-0fb4a6c6dd51",
+      "title": "ConfigError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-0fcdec2d1718",
+      "title": "Confidence",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-11818032eae3",
+      "title": "CliExitCode",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-11ef0527f94f",
+      "title": "FormattedReport",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-122c3890df87",
+      "title": "Severity",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-134fc7539cc9",
+      "title": "TesseraSeal",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-1373b48b7a0a",
+      "title": "ReviewerId",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-13afa0e6e626",
+      "title": "DecisionDerivation",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-13ef469b0e6a",
+      "title": "KindexEntry",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-142bec37d295",
+      "title": "Severity",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-14f5e71f9322",
+      "title": "OutputFormat",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-152dc296444c",
+      "title": "ChroniclerEvent",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-15597e9da3df",
+      "title": "PactKey",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-155d6149423b",
+      "title": "TesseraSeal",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-172c04a20e0c",
+      "title": "HunkAnalysisError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-17cb2e523d44",
+      "title": "TrustScore",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-18f4053ac317",
+      "title": "ErrorSeverity",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-192775370d6a",
+      "title": "StigmergyVerb",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-1973ea3fa1a3",
+      "title": "FindingCategory",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-19b3367182b8",
+      "title": "GovernanceError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-19ce206cdb6d",
+      "title": "OutputFormat",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-1af5d86dceb7",
+      "title": "ReviewStage",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-1b4e4c99bb4c",
+      "title": "FindingCategory",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-1b563fab3418",
+      "title": "EventEmitter",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-1ca0c4ad7bc0",
+      "title": "Confidence",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-1cafd6e23503",
+      "title": "MergeContext",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-1cfd657560a4",
+      "title": "ApprenticeConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-1d17d35cdcbd",
+      "title": "ReviewToolInput",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-1d247ee7afe8",
+      "title": "ConcurrentWriteError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-1dbda72fe506",
+      "title": "ClassificationLabel",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-1e2a9e824dc4",
+      "title": "ReviewDecision",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-1e488e581bad",
+      "title": "ReviewStage",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-1ef77092e874",
+      "title": "LedgerConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-2060bd0e7c7e",
+      "title": "IntakePhase",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-208c888469ad",
+      "title": "ConfigError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-21651b5b2b1b",
+      "title": "LearningRecord",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-21aac4fa0445",
+      "title": "ReviewDecision",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-21c497b76342",
+      "title": "ReviewRequest",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-222ec11b6245",
+      "title": "ReportId",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-24a9a73d4d15",
+      "title": "PhaseTransition",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-24f028dff767",
+      "title": "StorageWriteError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-251bafabc0d2",
+      "title": "CliExitCode",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-253ed40c803b",
+      "title": "LineNumber",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-2618f7cd2f1e",
+      "title": "Finding",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-267f00568044",
+      "title": "Learner",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-268e3874e483",
+      "title": "ReviewStage",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-280245eb7314",
+      "title": "optional",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-29bc211b5553",
+      "title": "PolicyViolationError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-29f65a672c8d",
+      "title": "ReviewReport",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-2b7c30287d19",
+      "title": "ToolError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-2c22107629e3",
+      "title": "PhaseState",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-2cddbf1d3c2d",
+      "title": "ConfidenceScoreMap",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-2d1ebdfa255f",
+      "title": "CliResult",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-2d3921b96459",
+      "title": "PACTKey",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-2d6410715ddc",
+      "title": "ReviewerProtocol",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-2d7c099f21f7",
+      "title": "ReviewStage",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-2dfc9eadf320",
+      "title": "Finding",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-2e286b4f3d2e",
+      "title": "GithubCharLimit",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-2e2b42d190cc",
+      "title": "ConfigSource",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-2eedb34765f6",
+      "title": "Severity",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-2f87882bad40",
+      "title": "Confidence",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-308e4bc8d72d",
+      "title": "ExemplarConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-309057c96874",
+      "title": "PactKey",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-30a9cd67d0d4",
+      "title": "TesseraSeal",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-30af6f64137e",
+      "title": "ChroniclerEvent",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-319d1dcdc6f7",
+      "title": "Circuit",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-31c87e265dbb",
+      "title": "ReviewStage",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-32ad87bf0859",
+      "title": "ReviewRequest",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-32bb2d71cd75",
+      "title": "ReviewerCredential",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-341990166b46",
+      "title": "ReviewerRuleStats",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3452755dc687",
+      "title": "PolicyToken",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-34751a46e479",
+      "title": "ChroniclerEmitter",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-353cd2f84dc5",
+      "title": "StigmergyVerb",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-35a4a20c4e52",
+      "title": "ReviewRequest",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-368352d15955",
+      "title": "PolicyViolationError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-36ecdc99c7ef",
+      "title": "LedgerFieldRule",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-381e6ea88450",
+      "title": "FilePath",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3849ce888ff4",
+      "title": "IntakeError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-38d2a7fb27fa",
+      "title": "LearnerPhase",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-38f0c025bb0e",
+      "title": "TesseraSeal",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-38f320bc2477",
+      "title": "Finding",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-38f96c5ab3b1",
+      "title": "ReviewStage",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-397aeb8bd0e4",
+      "title": "FilePath",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3af7c8651733",
+      "title": "Assessment",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3b1650a9fd9d",
+      "title": "Assessment",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3b258c454c9b",
+      "title": "CircuitConfigError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3b560684c581",
+      "title": "SealVerificationStatus",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3b95a2572584",
+      "title": "Confidence",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3d4e9ac34a4f",
+      "title": "Confidence",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3dae9e67959e",
+      "title": "DiffHunk",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3dee81abfb4e",
+      "title": "KindexEntry",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3e18ba6a08cc",
+      "title": "TrustToolInput",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3e2f71dff33f",
+      "title": "ConflictNote",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3e70ddff4c74",
+      "title": "PipelineProtocol",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3e7a99e28d20",
+      "title": "SealVerificationResult",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3ea29664e01c",
+      "title": "SeverityScoreMap",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3f0603e8956c",
+      "title": "ReviewDecision",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3f569a8eaaf9",
+      "title": "CredentialError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3f80c0a77b72",
+      "title": "ChroniclerEvent",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3f898234b331",
+      "title": "PhaseState",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-3fde5b1273f1",
+      "title": "Assessment",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-40b2930af401",
+      "title": "ReviewStage",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-40d9fca3777c",
+      "title": "PipelineStageError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-41389b63b243",
+      "title": "ReviewDecision",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-417cb307f7c1",
+      "title": "PactKey",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-4237c0171e94",
+      "title": "ConfigSource",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-427bb03074c0",
+      "title": "ConfigParseError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-42aff5e8866e",
+      "title": "PolicyToken",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-42fecd8e26e0",
+      "title": "McpToolResult",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-43e75b460cc6",
+      "title": "Reviewers",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-440056ea0604",
+      "title": "Finding",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-444796364f28",
+      "title": "LearningRecord",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-446a565d07b3",
+      "title": "ExecutionPlan",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-44852a08b695",
+      "title": "LearnerState",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-4552d9477c16",
+      "title": "Assessment",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-457bdc4cf463",
+      "title": "ChroniclerEventType",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-45836911c155",
+      "title": "TrustScore",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-4618c5051b3e",
+      "title": "ChroniclerEventType",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-462cc2f37724",
+      "title": "Finding",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-47a28a13370e",
+      "title": "LedgerFieldRule",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-48197c186155",
+      "title": "StageTimeoutMs",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-4c2efdc4bda7",
+      "title": "LearningRecord",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-4c7949309a86",
+      "title": "DiffHunk",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-4c918f3be3d8",
+      "title": "IntakePhase",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-4ce1300d3e3d",
+      "title": "ReviewReport",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-4d6147bd957c",
+      "title": "ConfigurationError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-4e24af5aedef",
+      "title": "Intake",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-4e4e8917b15f",
+      "title": "TrustScore",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-4ea3ce3f41c5",
+      "title": "ReviewStage",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-4f9e0fbb4899",
+      "title": "HumanDecisionInput",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-5015e876cd38",
+      "title": "PreflightViolation",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-50a3cf548c3d",
+      "title": "FilteredHunksResult",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-5297d34cade9",
+      "title": "LedgerConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-52b6d995cdea",
+      "title": "SealVerificationError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-53b1c0a6248d",
+      "title": "ChroniclerEventType",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-53ccfffbfd25",
+      "title": "SealVerificationResult",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-53d5197b4b35",
+      "title": "DiffHunk",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-53e4687748b2",
+      "title": "LineRange",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-5424f13cb855",
+      "title": "ChroniclerEventType",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-55f9c9dfd307",
+      "title": "SealChainStoreProtocol",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-55fab67c2388",
+      "title": "Finding",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-56aa1479b93b",
+      "title": "IntakeError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-5702d6637147",
+      "title": "Assessment",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-575dea39a0b8",
+      "title": "CliArgs",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-5941b95311d4",
+      "title": "Assessment",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-599a37a625c4",
+      "title": "ArchitectureReviewer",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-5a63bf720c30",
+      "title": "PactAttribution",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-5a6fa75f6a3b",
+      "title": "ChroniclerEventType",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-5ace2ffbd1db",
+      "title": "OutputFormat",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-5b25bd7231d1",
+      "title": "FindingDeduplicationKey",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-5c1062fe9e0d",
+      "title": "RecordDecisionResult",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-5e87ac6ebad1",
+      "title": "TrustScore",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-5ed65691c5dc",
+      "title": "Confidence",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-5fd8b37cfbe6",
+      "title": "StigmergySignal",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-607218a20253",
+      "title": "TrustScore",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-60e7ed0c4fdc",
+      "title": "ClassificationLabel",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-61014ca10875",
+      "title": "TesseraSeal",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-610168c452ac",
+      "title": "PhaseTransition",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-61231c441a9d",
+      "title": "SubcommandDispatchTable",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-6148997e0fbb",
+      "title": "LedgerConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-621c4d129077",
+      "title": "FilterResult",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-62e95f24e409",
+      "title": "LearningOutcome",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-62f573011aff",
+      "title": "SealerId",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-630418093636",
+      "title": "ReviewerCredential",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-6385e5879d20",
+      "title": "RulePattern",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-639205a1555d",
+      "title": "ReviewDecision",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-639834141486",
+      "title": "ReviewerCredential",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-646872a43720",
+      "title": "ArbiterScorer",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-64bbafc11e09",
+      "title": "LearnerPhase",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-65e9e90d3b65",
+      "title": "SubcommandDispatchTable",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-65ea2a5bf86e",
+      "title": "LearnerStatsReport",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-674fc1d6bfcd",
+      "title": "CliResult",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-67c922d696db",
+      "title": "Config",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-6a37a0150b6f",
+      "title": "McpServer",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-6a62488176fe",
+      "title": "LearnerPhase",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-6a96d5da7057",
+      "title": "Iso8601Timestamp",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-6b365518a464",
+      "title": "LearningOutcome",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-6b422dbc2d8b",
+      "title": "ToolError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-6c144009afbc",
+      "title": "ReviewerStats",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-6c342670f95b",
+      "title": "Severity",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-6c7e8dcbdf66",
+      "title": "ReviewStage",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-6d6e877ab0e1",
+      "title": "DiffHunk",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-6d72643811ca",
+      "title": "DiffHunk",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-6e8b6b2f554a",
+      "title": "ExecutionStep",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-6ed91106f273",
+      "title": "Finding",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-701d6b19e8dd",
+      "title": "ClassificationLabel",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-70338cdb7463",
+      "title": "Finding",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-70c6936a26cb",
+      "title": "ChroniclerEventType",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-70e1ee060991",
+      "title": "ReporterSealError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-713c5da5c163",
+      "title": "AstRule",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-720bee2859eb",
+      "title": "ReviewStage",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-72b2366bb441",
+      "title": "ReviewerId",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-73330f30c8f5",
+      "title": "HunkMetadata",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-73730ba3d02e",
+      "title": "OutputFormat",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-7476e36ebf4d",
+      "title": "EventEmitter",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-753355c61217",
+      "title": "McpToolResult",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-757a53473be6",
+      "title": "LineRange",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-759823e886ee",
+      "title": "ReviewStage",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-765b840098c9",
+      "title": "StateCorruptionError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-765e3c9fe8f2",
+      "title": "KindexEntry",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-766682dd51bd",
+      "title": "ExemplarError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-775ff9ff3c6f",
+      "title": "FindingSeverity",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-78382662f52b",
+      "title": "OutputFormat",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-7894f27b295f",
+      "title": "SeverityScoreMap",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-789d4bf7726f",
+      "title": "Confidence",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-7918a355f7b0",
+      "title": "ChroniclerEvent",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-79c5f6b376f3",
+      "title": "HumanDecision",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-79f8ca4deed6",
+      "title": "ReviewerConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-7acbe78e6a36",
+      "title": "ExecutionPlan",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-7b179d17f0c2",
+      "title": "CredentialErrorReason",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-7b45c3404823",
+      "title": "PipelineProtocol",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-7c45306030af",
+      "title": "TrustWeight",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-7cd8f6cee266",
+      "title": "ConfigValidationError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-7ee05e5aa8f7",
+      "title": "TrustScore",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-7fe3acd00e0b",
+      "title": "Governance",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-805742abb1aa",
+      "title": "PactKeyConstants",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-821cec0832bf",
+      "title": "McpContentBlock",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-827603074300",
+      "title": "StigmergySignal",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-82be70b36a21",
+      "title": "Severity",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-840a8dd7f864",
+      "title": "Severity",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-846b7698477a",
+      "title": "ReviewReport",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-84e4ab9baa9d",
+      "title": "DiffSourceKind",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-85520b706d1b",
+      "title": "ParallelGroup",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-861b9db7c461",
+      "title": "Schemas",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-86b6aaff503d",
+      "title": "ReviewStage",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-86e2d72a6ce9",
+      "title": "StateNotFoundError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-88044a0c0f79",
+      "title": "Assessment",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-88240fd84d5d",
+      "title": "ReviewRequest",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-892ec0a5f632",
+      "title": "Confidence",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-8988240e75f2",
+      "title": "TrustScore",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-8a6f249aa442",
+      "title": "CircuitConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-8b1de50eec9c",
+      "title": "Severity",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-8b25d3cef03c",
+      "title": "PipelineResult",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-8b494e6f0192",
+      "title": "Severity",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-8b5b532a1cec",
+      "title": "PolicyToken",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-8b953aca4101",
+      "title": "ReporterChainStoreError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-8c1c7c1c351a",
+      "title": "ReviewerProtocol",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-8d00ab77c4c1",
+      "title": "LearnerPhase",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-8d92eed4b63d",
+      "title": "ReviewStage",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-8dabf9931a9e",
+      "title": "Severity",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-8dd59170dafe",
+      "title": "ChroniclerEmitter",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-902a05e1641e",
+      "title": "PipelineStage",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-90383889f0f3",
+      "title": "HunkAnalysisError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-90fca83712fe",
+      "title": "KindexEntry",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-917293d684f8",
+      "title": "RecordDecisionResult",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-920163f2f5c3",
+      "title": "CircuitConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-927c68b365d3",
+      "title": "ConfidenceScoreMap",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-93fbe65c7677",
+      "title": "Assessor",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-94a1764fd799",
+      "title": "AcceptanceRate",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-9538a86229b3",
+      "title": "LedgerConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-95c1afac4071",
+      "title": "HumanDecision",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-969db8a4b9de",
+      "title": "BatonCircuitRouter",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-96c291f5de70",
+      "title": "StigmergySignal",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-97adab860210",
+      "title": "PactAttribution",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-99fb3916088f",
+      "title": "ClassificationLabel",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-9a297388acce",
+      "title": "OutputFormat",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-9a8190266d61",
+      "title": "ClassificationLabel",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-9afcd2b0d0c0",
+      "title": "PolicyToken",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-9ba485c41e25",
+      "title": "ChroniclerEvent",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-9cc5ded4d0d5",
+      "title": "LedgerFieldRule",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-9e53b9e4b616",
+      "title": "ClockProvider",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-9ec3fc54838f",
+      "title": "PactKey",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-9f98376ee93f",
+      "title": "Reporter",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-9fe78c9fb918",
+      "title": "ClassificationLabel",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-a21a5037a3cf",
+      "title": "ChroniclerEvent",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-a29631d5b27e",
+      "title": "StigmergyStore",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-a3caea6f250e",
+      "title": "StigmergySignal",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-a474bb4db5c3",
+      "title": "ReporterSerializationError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-a512cb625e7a",
+      "title": "DiffHunk",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-a58d69563760",
+      "title": "ReviewDecision",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-a5b2a5f2b1c7",
+      "title": "Severity",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-a6b70a26bde4",
+      "title": "Confidence",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-a721fe26c61a",
+      "title": "ReviewerProtocol",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-a78e91e46c70",
+      "title": "RulePattern",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-a79f1ba3cb32",
+      "title": "Assessment",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-a8edc78c93d9",
+      "title": "TrustToolInput",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-a95a294606ee",
+      "title": "DiffSourceKind",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-aa86458ea217",
+      "title": "DiffHunk",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-aba81207830b",
+      "title": "RootConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-abc5c50562c5",
+      "title": "LedgerFieldRule",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-abce5c271e3b",
+      "title": "ReporterRenderError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-ac16ff2a644e",
+      "title": "ReviewDecision",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-ac54cbd0a957",
+      "title": "Confidence",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-acf85d8dc12c",
+      "title": "HumanDecisionInput",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-ae3981a0f6e5",
+      "title": "ChroniclerEvent",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-ae4da407e06b",
+      "title": "ReviewDecision",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-ae820fee6a8b",
+      "title": "PreflightManager",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-aed6fa44ed59",
+      "title": "ReviewStage",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-aedf2ea6b432",
+      "title": "ConfigProvider",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-aee877595a46",
+      "title": "PolicyToken",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-af11c5bd3b3a",
+      "title": "ChroniclerEvent",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-af1d2e139378",
+      "title": "ReviewStage",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-afff13b0f5ca",
+      "title": "ClassificationLabel",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-b08a34d87553",
+      "title": "MinObservations",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-b1dc926d4c15",
+      "title": "HistoryToolInput",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-b3902776f81a",
+      "title": "Finding",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-b409ed1a23c6",
+      "title": "ReviewReport",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-b5102ed8df17",
+      "title": "Sha256Hex",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-b587d2eb6829",
+      "title": "LearnerPhase",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-b5a91b2ad38a",
+      "title": "HistoryToolInput",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-b5d23455f9c4",
+      "title": "ConfidenceScore",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-b5f3837e68a0",
+      "title": "ReviewStage",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-b61f4beef0cb",
+      "title": "TesseraSealer",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-b78d580c9a11",
+      "title": "Finding",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-b8f47bc673d1",
+      "title": "ClassificationLabel",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-b97e43b227fe",
+      "title": "LearningRecord",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-b99a14542f71",
+      "title": "ChroniclerEvent",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-bc1290f7664a",
+      "title": "ConfigFileNotFoundError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-bc39a1812dee",
+      "title": "ChroniclerEventType",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-bc89de330d04",
+      "title": "ReviewerConfigMap",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-bd5833d3933b",
+      "title": "IntakeResult",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-bd8bf653b9dc",
+      "title": "DiffHunk",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-bd8e0df6ebc1",
+      "title": "OutputFormat",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-bf280cac46ba",
+      "title": "Finding",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-bfed1d42a9f8",
+      "title": "CircuitConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-c068eb899dfa",
+      "title": "FindingDeduplicationKey",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-c08317c38e9a",
+      "title": "AstRule",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-c14e75b69b37",
+      "title": "CorrectnessReviewer",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-c18af8461998",
+      "title": "SealChainStoreProtocol",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-c193656b05b0",
+      "title": "PreflightPlan",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-c1d46d93ba53",
+      "title": "ConflictNote",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-c2664c8df0f0",
+      "title": "StigmergySignal",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-c37d7f955311",
+      "title": "FilteredHunksResult",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-c578aea55f77",
+      "title": "LedgerConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-c7105414b900",
+      "title": "Severity",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-c73ee8a02357",
+      "title": "KindexStore",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-c7cff6693a02",
+      "title": "ImportInfo",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-c85f929af380",
+      "title": "Confidence",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-c98431cb23ba",
+      "title": "ReporterFormatError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-cac61943ad1f",
+      "title": "Confidence",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-cacd8ece8f4e",
+      "title": "DiffHunk",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-cbd198719fe7",
+      "title": "SealVerificationStatus",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-cca67d529813",
+      "title": "ReviewReport",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-ccdff0ed09f1",
+      "title": "ConfigParseError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-cff8813575df",
+      "title": "ReviewRequest",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-d0d5eb9eac26",
+      "title": "LearnerPhase",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-d0e15d2c7c12",
+      "title": "GovernanceError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-d1fea6a45868",
+      "title": "ClassificationLabel",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-d2774de04ccf",
+      "title": "PatternKind",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-d36f089573a1",
+      "title": "ReviewRequest",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-d37e389c0c7f",
+      "title": "SealVerificationError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-d43c9a1f86ea",
+      "title": "IntakeResult",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-d444122afa2a",
+      "title": "ResolvedConfigPath",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-d466d15a73a4",
+      "title": "PatternKind",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-d50788a04ba6",
+      "title": "FormattedReport",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-d512edfe64d3",
+      "title": "CredentialErrorReason",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-d7edf57f216e",
+      "title": "ReviewReport",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-d8905220ec3f",
+      "title": "MergeContext",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-d8cb94779b3f",
+      "title": "ParallelGroup",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-d8d874d7614e",
+      "title": "LearningRecord",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-da851891a65d",
+      "title": "FieldError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-db25410474a6",
+      "title": "TrustScore",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-dc0f8ffba94e",
+      "title": "DiffSource",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-dcaa8f3bd2a2",
+      "title": "CredentialError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-dce7dd8ca63b",
+      "title": "CliExitCode",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-dfb3d3e602d4",
+      "title": "ConfigProvider",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e04e25b96b69",
+      "title": "Severity",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e0b22cfe0865",
+      "title": "ClockProvider",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e13066f9a19f",
+      "title": "PipelineResult",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e172ed2ca716",
+      "title": "FilePath",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e18865b3ee6a",
+      "title": "CircuitConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e1a583fae71b",
+      "title": "CliArgs",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e2796f6f480d",
+      "title": "SubcommandName",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e2b5451bf53f",
+      "title": "LearnerState",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e2bbbf327a8d",
+      "title": "ServerConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e458e19ab90c",
+      "title": "LedgerFieldRule",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e47c1ea207d8",
+      "title": "AgentSafeEnforcer",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e59cfc25dd84",
+      "title": "OutputFormat",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e64117c61532",
+      "title": "ReviewDecision",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e798df83d047",
+      "title": "CircuitConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e7abcfabd18d",
+      "title": "ReviewStage",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e7f0579c6496",
+      "title": "ConfigFileNotFoundError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e8452d1bdacf",
+      "title": "DecisionDerivation",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e8ec459ab3fc",
+      "title": "ExecutionStep",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e8efe731944e",
+      "title": "ServerConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e8f734005a24",
+      "title": "ReviewDecision",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-e8ff3b878409",
+      "title": "Cli",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-eaa355f2bd81",
+      "title": "TesseraSeal",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-ed22a2b4dce4",
+      "title": "LedgerClassifier",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-ee080d4c8d4d",
+      "title": "CliExitCode",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-ef19e364ab96",
+      "title": "Severity",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-ef24ad3a7ebc",
+      "title": "ReviewDecision",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-ef53a6716ced",
+      "title": "StyleReviewer",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-ef5dfa67ad3f",
+      "title": "DiffSource",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-ef62e5bd11a3",
+      "title": "ReviewerConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-efb089d2152e",
+      "title": "LearningRecord",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-efcfaaa25451",
+      "title": "ApprenticeConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f0153e73ffaf",
+      "title": "ChroniclerEvent",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f03220f37f31",
+      "title": "DuplicateRecordError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f09c8e6fc81c",
+      "title": "LedgerFieldRule",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f1267e91b948",
+      "title": "ReviewStage",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f1db1a050521",
+      "title": "LedgerConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f1eb0d433b33",
+      "title": "TesseraSeal",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f2390149555d",
+      "title": "ConfigValidationError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f23f86085bf6",
+      "title": "Assessment",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f278b49f5691",
+      "title": "ChroniclerEventType",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f32cab2242d1",
+      "title": "Severity",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f34fa9e0a9a3",
+      "title": "ChroniclerEmitterProtocol",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f4186f25870c",
+      "title": "StigmergySignal",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f450303cf73e",
+      "title": "ExemplarConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f4908106d087",
+      "title": "ReviewRequestId",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f495fae5f0a0",
+      "title": "CircuitConfigError",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f498b2b00d91",
+      "title": "TrustScore",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f4a9bf39f4fd",
+      "title": "ExitCodeMapping",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f4e41ac15400",
+      "title": "ReviewerConfigMap",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f5ea963b3fcc",
+      "title": "Assessment",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f60f9ed5b521",
+      "title": "ReviewerCredential",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f65cfd0f0c51",
+      "title": "DiffHunk",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f6eb29c6badf",
+      "title": "TrustWeight",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f76664243b42",
+      "title": "Severity",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f85145a42b79",
+      "title": "SubcommandName",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f86f3e69042e",
+      "title": "ImportInfo",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f8893867d24f",
+      "title": "FilterResult",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-f9ee6bd52564",
+      "title": "SignetManager",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-fabb06a050fe",
+      "title": "Severity",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-fb63953acce2",
+      "title": "PolicyToken",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-fbc213d516ff",
+      "title": "CircuitConfig",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-fbcd8a24185e",
+      "title": "LearnerStatsReport",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-fdc9559ab947",
+      "title": "Chronicler",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-fde7461ca298",
+      "title": "TrustScore",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-ff2d3dd3f592",
+      "title": "ReviewRequestId",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-ff52211ba6c6",
+      "title": "ClassificationLabel",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    },
+    {
+      "domains": [
+        "code",
+        "python"
+      ],
+      "id": "code-sym-exemplar-ffd3b3cf7b1c",
+      "title": "RuleId",
+      "type": "concept",
+      "updated_at": "2026-05-30T14:47:51",
+      "weight": 0.5
+    }
+  ],
+  "repo": "exemplar",
+  "source_updated_at": "2026-05-30T14:47:51",
+  "version": 1
+}
