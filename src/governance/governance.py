@@ -742,6 +742,7 @@ class Chronicler:
                     results.append(evt)
         except Exception:
             logger.exception("Failed to read chronicle log")
+        results.sort(key=lambda event: event.timestamp)
         return results
 
 
@@ -788,6 +789,7 @@ async def query_events(
                 results.append(evt)
     except Exception:
         logger.exception("Failed to read chronicle log")
+    results.sort(key=lambda event: event.timestamp)
     return results
 
 
@@ -916,14 +918,26 @@ def _hmac_signature(secret: str, credential_id: str, reviewer_id: str, stage_val
 class SignetManager:
     """Create and verify reviewer credentials with HMAC-SHA256 signatures."""
 
-    def __init__(self, secret_key: Optional[str] = None):
+    def __init__(
+        self,
+        secret_key: Optional[str] = None,
+        signature_provider: Optional[Callable[[str, str, str], str]] = None,
+    ):
+        if secret_key is not None and signature_provider is not None:
+            raise GovernanceError("Configure either secret_key or signature_provider, not both.")
         self._secret = secret_key
+        self._signature_provider = signature_provider
 
     def _configured_secret(self) -> str:
         secret = self._secret if self._secret is not None else os.environ.get("EXEMPLAR_SIGNET_SECRET")
         if not secret or not secret.strip():
             raise GovernanceError("EXEMPLAR_SIGNET_SECRET must be configured before credential operations.")
         return secret
+
+    def _signature(self, credential_id: str, reviewer_id: str, stage_value: str) -> str:
+        if self._signature_provider is not None:
+            return self._signature_provider(credential_id, reviewer_id, stage_value)
+        return _hmac_signature(self._configured_secret(), credential_id, reviewer_id, stage_value)
 
     def create_credential(
         self,
@@ -939,7 +953,7 @@ class SignetManager:
 
         credential_id = _uuid4_hex()
         stage_val = stage.value if hasattr(stage, "value") else str(stage)
-        sig = _hmac_signature(self._configured_secret(), credential_id, reviewer_id, stage_val)
+        sig = self._signature(credential_id, reviewer_id, stage_val)
 
         # Encode credential_id + signature into public_key_hex for backward compat
         public_key_hex = credential_id + sig
@@ -995,7 +1009,7 @@ class SignetManager:
             )
 
         stage_val = credential.stage.value if hasattr(credential.stage, "value") else str(credential.stage)
-        expected_sig = _hmac_signature(self._configured_secret(), cred_id, credential.reviewer_id, stage_val)
+        expected_sig = self._signature(cred_id, credential.reviewer_id, stage_val)
 
         if not hmac.compare_digest(sig_hash, expected_sig):
             raise CredentialError(
@@ -1325,6 +1339,7 @@ class StigmergyStore:
                     results.append(_dict_to_signal(d))
         except Exception:
             logger.exception("Failed to read stigmergy store")
+        results.sort(key=lambda signal: signal.first_seen_at)
         return results
 
 
@@ -1362,6 +1377,7 @@ async def query_signals(pattern_key: str) -> List[StigmergySignal]:
                 results.append(_dict_to_signal(d))
     except Exception:
         logger.exception("Failed to read stigmergy store")
+    results.sort(key=lambda signal: signal.first_seen_at)
     return results
 
 

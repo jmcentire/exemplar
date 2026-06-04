@@ -431,7 +431,7 @@ class TestGoodhartSecurityReviewer:
         """A hunk with multiple distinct security issues should produce multiple findings."""
         hunk = make_hunk(
             added_lines=[
-                "API_KEY = 'sk-1234567890abcdef'",
+                "API_KEY = '<REDACTED>'",
                 "query = f'SELECT * FROM users WHERE id = {user_id}'",
                 "os.system(user_input)",
             ],
@@ -453,7 +453,7 @@ class TestGoodhartSecurityReviewer:
         hunk_removed = make_hunk(
             hunk_id="h-removed",
             added_lines=["x = 1"],
-            removed_lines=["API_KEY = 'sk-1234567890abcdef'"],
+            removed_lines=["API_KEY = '<REDACTED>'"],
             file_path="src/cleaned.py",
         )
         policy = make_policy()
@@ -464,7 +464,7 @@ class TestGoodhartSecurityReviewer:
         # Hunk with vulnerability in added lines
         hunk_added = make_hunk(
             hunk_id="h-added",
-            added_lines=["API_KEY = 'sk-1234567890abcdef'"],
+            added_lines=["API_KEY = '<REDACTED>'"],
             removed_lines=[],
             file_path="src/bad.py",
         )
@@ -481,7 +481,7 @@ class TestGoodhartSecurityReviewer:
         """Error in one hunk must not prevent analysis of other hunks."""
         good_hunk = make_hunk(
             hunk_id="good",
-            added_lines=["API_KEY = 'sk-1234567890abcdef'"],
+            added_lines=["API_KEY = '<REDACTED>'"],
             file_path="src/good.py",
         )
         # Create a hunk that might cause issues but shouldn't crash
@@ -510,7 +510,7 @@ class TestGoodhartSecurityReviewer:
         """Findings must reference the correct hunk_id and file_path."""
         hunk = make_hunk(
             hunk_id="specific-hunk-42",
-            added_lines=["API_KEY = 'sk-1234567890abcdef'"],
+            added_lines=["API_KEY = '<REDACTED>'"],
             file_path="src/specific.py",
         )
         policy = make_policy()

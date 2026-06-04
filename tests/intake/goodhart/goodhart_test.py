@@ -535,7 +535,7 @@ class TestGoodhartParseDiff:
             "+++ b/secret.py\n"
             "@@ -1,1 +1,2 @@\n"
             " x\n"
-            "+API_KEY = 'super_secret_value_12345'\n"
+            "+API_KEY = '<REDACTED>'\n"
         )
         hunks, errors = await parse_diff(diff)
         assert len(hunks) >= 1
@@ -581,7 +581,7 @@ class TestGoodhartClassifyHunks:
         """classify_hunks must not scan context_before or context_after for classification"""
         hunk = self._make_hunk(
             added_lines=["x = 1"],
-            context_before=["API_KEY = secret123"],
+            context_before=["API_KEY = <REDACTED>"],
             context_after=["SSN: 123-45-6789"],
         )
         config = make_config(rules=[
@@ -598,9 +598,9 @@ class TestGoodhartClassifyHunks:
         """classify_hunks must not produce duplicate labels even when same pattern matches multiple lines"""
         hunk = self._make_hunk(
             added_lines=[
-                "API_KEY = 'key1'",
-                "API_KEY = 'key2'",
-                "API_KEY = 'key3'",
+                "API_KEY = '<REDACTED>'",
+                "API_KEY = '<REDACTED>'",
+                "API_KEY = '<REDACTED>'",
             ]
         )
         config = make_config(rules=[
@@ -634,7 +634,7 @@ class TestGoodhartClassifyHunks:
 
     def test_goodhart_classify_preserves_id_exactly(self):
         """classify_hunks must preserve exact hunk IDs from input"""
-        hunk = self._make_hunk(added_lines=["API_KEY=secret"], file_path="id_test.py")
+        hunk = self._make_hunk(added_lines=["API_KEY=<REDACTED>"], file_path="id_test.py")
         original_id = hunk.id
         config = make_secret_config()
         result = classify_hunks([hunk], config)
@@ -854,7 +854,7 @@ class TestGoodhartRunIntake:
             "+++ b/secret.py\n"
             "@@ -1,1 +1,2 @@\n"
             " x\n"
-            "+API_KEY = 'super_secret_value'\n"
+            "+API_KEY = '<REDACTED>'\n"
         )
         source = make_mock_source(diff)
         config = make_secret_config()

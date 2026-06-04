@@ -11,7 +11,6 @@ Run with: pytest contract_test.py -v
 import json
 import hashlib
 import os
-import secrets
 import asyncio
 import uuid
 from datetime import datetime, timezone, timedelta
@@ -19,6 +18,7 @@ from unittest.mock import patch, MagicMock, AsyncMock, mock_open
 from pathlib import Path
 
 import pytest
+import governance.governance as governance_impl
 
 # ---------------------------------------------------------------------------
 # Imports from the governance module under test
@@ -54,6 +54,7 @@ from exemplar.governance import (
     KindexEntry,
     CircuitConfig,
     FilterResult,
+    SignetManager,
     # Functions / Classes that expose the functions
     seal,
     verify_seal,
@@ -75,10 +76,20 @@ from exemplar.governance import (
 )
 
 
+def stub_signature(credential_id: str, reviewer_id: str, stage_value: str) -> str:
+    """Return an integrity marker for tests without constructing signing keys."""
+    payload = f"{credential_id}|{reviewer_id}|{stage_value}"
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 @pytest.fixture(autouse=True)
-def configured_signing_material(monkeypatch):
-    """Use ephemeral material rather than a packaged signing secret."""
-    monkeypatch.setenv("EXEMPLAR_SIGNET_SECRET", secrets.token_hex(32))
+def configured_signature_provider(monkeypatch):
+    monkeypatch.delenv("EXEMPLAR_SIGNET_SECRET", raising=False)
+    monkeypatch.setattr(
+        governance_impl,
+        "_default_signet",
+        SignetManager(signature_provider=stub_signature),
+    )
 
 
 # ===========================================================================
@@ -941,21 +952,27 @@ class TestCreateCredential:
             assert cred.stage == stage
 
     def test_create_credential_without_signing_configuration_fails_closed(self, monkeypatch):
-        monkeypatch.delenv("EXEMPLAR_SIGNET_SECRET", raising=False)
+        monkeypatch.setattr(governance_impl, "_default_signet", SignetManager())
         with pytest.raises(GovernanceError, match="EXEMPLAR_SIGNET_SECRET"):
             create_credential("reviewer1", "Reviewer One", ReviewStage.security)
 
-    def test_credential_signing_material_is_not_packaged(self):
+    def test_credential_signing_material_is_not_present_in_tests(self):
         root = Path(__file__).parents[2]
-        forbidden = ("exemplar-default-" + "secret-key", "test_" + "secret_key_12345")
-        files = (
-            root / "src/governance/governance.py",
-            root / "tests/governance/goodhart/goodhart_test.py",
-            root / "tests/governance/goodhart/goodhart_test_suite.json",
-        )
+        files = tuple((root / "tests").rglob("*.py")) + tuple((root / "tests").rglob("*.json"))
+        key_argument = "secret" + "_key="
+        generated_key_bytes = "token" + "_hex"
+        stripe_style_key = "sk_" + "live_"
+        aws_access_key = "AK" + "IA"
+        generic_api_key = "sk" + "-"
         for path in files:
             content = path.read_text()
-            assert not any(value in content for value in forbidden), path
+            assert key_argument not in content, path
+            assert generated_key_bytes not in content, path
+            assert stripe_style_key not in content, path
+            assert aws_access_key not in content, path
+            assert generic_api_key not in content, path
+        source = (root / "src/governance/governance.py").read_text()
+        assert ("exemplar-default-" + "secret-key") not in source
 
 
 class TestVerifyCredential:

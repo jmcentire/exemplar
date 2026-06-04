@@ -671,8 +671,8 @@ class TestSecurityReviewer:
         """Detects hardcoded API key in added lines."""
         hunk = make_hunk(
             added_lines=[
-                "API_KEY = 'sk-1234567890abcdef1234567890abcdef'",
-                "password = 'super_secret_password123'",
+                "API_KEY = '<REDACTED>'",
+                "password = '<REDACTED>'",
             ],
         )
         assessment = await security_reviewer.review([hunk], permissive_policy, review_request_id)
@@ -721,7 +721,7 @@ class TestSecurityReviewer:
     @pytest.mark.asyncio
     async def test_all_hunks_denied(self, security_reviewer, deny_all_policy, review_request_id):
         """Returns PASS with empty findings when all hunks denied by policy."""
-        hunk = make_hunk(added_lines=["API_KEY = 'secret'"])
+        hunk = make_hunk(added_lines=["API_KEY = '<REDACTED>'"])
         assessment = await security_reviewer.review([hunk], deny_all_policy, review_request_id)
         assert len(assessment.findings) == 0
         assert assessment.decision == ReviewDecision.pass_
@@ -738,7 +738,7 @@ class TestSecurityReviewer:
         """All findings have rule_ids matching SEC-xxx pattern."""
         hunk = make_hunk(
             added_lines=[
-                "API_KEY = 'sk-1234567890abcdef'",
+                "API_KEY = '<REDACTED>'",
                 'query = f"SELECT * FROM users WHERE id = {user_id}"',
                 "import pickle; pickle.loads(data)",
             ],
@@ -761,7 +761,7 @@ class TestSecurityReviewer:
     @pytest.mark.asyncio
     async def test_idempotent(self, security_reviewer, permissive_policy, review_request_id):
         """Calling review() twice with same inputs produces identical Assessment."""
-        hunk = make_hunk(added_lines=["password = 'admin123'"])
+        hunk = make_hunk(added_lines=["password = '<REDACTED>'"])
         a1 = await security_reviewer.review([hunk], permissive_policy, review_request_id)
         a2 = await security_reviewer.review([hunk], permissive_policy, review_request_id)
         assert a1.id == a2.id
@@ -1169,7 +1169,7 @@ class TestCrossCuttingInvariants:
         # Create a hunk that's likely to trigger findings from most reviewers
         hunk = make_hunk(
             added_lines=[
-                "API_KEY = 'sk-1234567890abcdef1234567890abcdef'",
+                "API_KEY = '<REDACTED>'",
                 "def process(items=[]):",
                 "    try:",
                 "        risky()",
@@ -1255,9 +1255,9 @@ class TestEdgeCases:
         reviewer = get_reviewer_by_stage(ReviewStage.security)
         policy = make_policy(allowed_file_patterns=[], denied_file_patterns=[])
         hunks = [
-            make_hunk(id="h1", file_path="src/a.py", added_lines=["API_KEY = 'secret123'"]),
+            make_hunk(id="h1", file_path="src/a.py", added_lines=["API_KEY = '<REDACTED>'"]),
             make_hunk(id="h2", file_path="src/b.py", added_lines=["x = 1"]),
-            make_hunk(id="h3", file_path="src/c.py", added_lines=["password = 'admin'"]),
+            make_hunk(id="h3", file_path="src/c.py", added_lines=["password = '<REDACTED>'"]),
         ]
         rrid = make_review_request_id()
         assessment = await reviewer.review(hunks, policy, rrid)

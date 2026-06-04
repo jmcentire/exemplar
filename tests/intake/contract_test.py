@@ -128,7 +128,7 @@ SAMPLE_SECRET_DIFF = (
     "+++ b/src/config.py\n"
     "@@ -1,2 +1,3 @@\n"
     " # config\n"
-    "+API_KEY = 'sk-secret12345abcdef'\n"
+    "+API_KEY = '<REDACTED>'\n"
     " \n"
 )
 
@@ -148,7 +148,7 @@ SAMPLE_SECRET_AND_PII_DIFF = (
     "+++ b/src/both.py\n"
     "@@ -1,2 +1,4 @@\n"
     " # both\n"
-    "+API_KEY = 'sk-secret12345abcdef'\n"
+    "+API_KEY = '<REDACTED>'\n"
     "+email = 'user@example.com'\n"
     " \n"
 )
@@ -159,7 +159,7 @@ SAMPLE_SECRET_IN_REMOVED_ONLY_DIFF = (
     "+++ b/src/clean.py\n"
     "@@ -1,3 +1,2 @@\n"
     " # clean\n"
-    "-API_KEY = 'sk-secret12345abcdef'\n"
+    "-API_KEY = '<REDACTED>'\n"
     "+# key removed\n"
 )
 
