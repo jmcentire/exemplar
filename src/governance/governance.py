@@ -904,7 +904,6 @@ def check_token(token: PolicyToken) -> bool:
 # ---------------------------------------------------------------------------
 # SignetManager — create/verify reviewer credentials
 # ---------------------------------------------------------------------------
-_SIGNET_SECRET = os.environ.get("EXEMPLAR_SIGNET_SECRET", "exemplar-default-secret-key")
 
 
 def _hmac_signature(secret: str, credential_id: str, reviewer_id: str, stage_value: str) -> str:
@@ -918,7 +917,13 @@ class SignetManager:
     """Create and verify reviewer credentials with HMAC-SHA256 signatures."""
 
     def __init__(self, secret_key: Optional[str] = None):
-        self._secret = secret_key or _SIGNET_SECRET
+        self._secret = secret_key
+
+    def _configured_secret(self) -> str:
+        secret = self._secret if self._secret is not None else os.environ.get("EXEMPLAR_SIGNET_SECRET")
+        if not secret or not secret.strip():
+            raise GovernanceError("EXEMPLAR_SIGNET_SECRET must be configured before credential operations.")
+        return secret
 
     def create_credential(
         self,
@@ -934,7 +939,7 @@ class SignetManager:
 
         credential_id = _uuid4_hex()
         stage_val = stage.value if hasattr(stage, "value") else str(stage)
-        sig = _hmac_signature(self._secret, credential_id, reviewer_id, stage_val)
+        sig = _hmac_signature(self._configured_secret(), credential_id, reviewer_id, stage_val)
 
         # Encode credential_id + signature into public_key_hex for backward compat
         public_key_hex = credential_id + sig
@@ -990,7 +995,7 @@ class SignetManager:
             )
 
         stage_val = credential.stage.value if hasattr(credential.stage, "value") else str(credential.stage)
-        expected_sig = _hmac_signature(self._secret, cred_id, credential.reviewer_id, stage_val)
+        expected_sig = _hmac_signature(self._configured_secret(), cred_id, credential.reviewer_id, stage_val)
 
         if not hmac.compare_digest(sig_hash, expected_sig):
             raise CredentialError(

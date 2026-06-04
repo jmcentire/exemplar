@@ -11,6 +11,7 @@ Run with: pytest contract_test.py -v
 import json
 import hashlib
 import os
+import secrets
 import asyncio
 import uuid
 from datetime import datetime, timezone, timedelta
@@ -72,6 +73,12 @@ from exemplar.governance import (
     kindex_put,
     kindex_query_by_tags,
 )
+
+
+@pytest.fixture(autouse=True)
+def configured_signing_material(monkeypatch):
+    """Use ephemeral material rather than a packaged signing secret."""
+    monkeypatch.setenv("EXEMPLAR_SIGNET_SECRET", secrets.token_hex(32))
 
 
 # ===========================================================================
@@ -932,6 +939,23 @@ class TestCreateCredential:
         for stage in ReviewStage:
             cred = create_credential(f"rev_{stage}", f"Reviewer {stage}", stage)
             assert cred.stage == stage
+
+    def test_create_credential_without_signing_configuration_fails_closed(self, monkeypatch):
+        monkeypatch.delenv("EXEMPLAR_SIGNET_SECRET", raising=False)
+        with pytest.raises(GovernanceError, match="EXEMPLAR_SIGNET_SECRET"):
+            create_credential("reviewer1", "Reviewer One", ReviewStage.security)
+
+    def test_credential_signing_material_is_not_packaged(self):
+        root = Path(__file__).parents[2]
+        forbidden = ("exemplar-default-" + "secret-key", "test_" + "secret_key_12345")
+        files = (
+            root / "src/governance/governance.py",
+            root / "tests/governance/goodhart/goodhart_test.py",
+            root / "tests/governance/goodhart/goodhart_test_suite.json",
+        )
+        for path in files:
+            content = path.read_text()
+            assert not any(value in content for value in forbidden), path
 
 
 class TestVerifyCredential:

@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import re
+import secrets
 import tempfile
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
@@ -31,6 +32,10 @@ def canonical_json(data_str: str) -> str:
 
 def sha256_hex(s: str) -> str:
     return hashlib.sha256(s.encode('utf-8')).hexdigest()
+
+
+def ephemeral_signing_material() -> str:
+    return secrets.token_hex(32)
 
 
 def make_diff_hunk(
@@ -256,32 +261,32 @@ class TestGoodhartCredentials:
 
     def test_goodhart_credential_id_is_32char_hex(self):
         """create_credential() must generate credential_id as 32-char lowercase hex."""
-        mgr = SignetManager(secret_key="test_secret_key_12345")
+        mgr = SignetManager(secret_key=ephemeral_signing_material())
         cred = mgr.create_credential("reviewer1", "Test Bot", ReviewStage.security)
         assert len(cred.credential_id) == 32
         assert re.fullmatch(r'[0-9a-f]{32}', cred.credential_id)
 
     def test_goodhart_credential_display_name_preserved(self):
         """create_credential() must store and return the exact display_name provided."""
-        mgr = SignetManager(secret_key="test_secret_key_12345")
+        mgr = SignetManager(secret_key=ephemeral_signing_material())
         cred = mgr.create_credential("rev1", "Dr. Review Bot 🤖", ReviewStage.correctness)
         assert cred.display_name == "Dr. Review Bot 🤖"
 
     def test_goodhart_credential_whitespace_reviewer_id_rejected(self):
         """create_credential() must reject whitespace-only reviewer_id."""
-        mgr = SignetManager(secret_key="test_secret_key_12345")
+        mgr = SignetManager(secret_key=ephemeral_signing_material())
         with pytest.raises((GovernanceError, ValueError)):
             mgr.create_credential("  \t\n  ", "Bot", ReviewStage.style)
 
     def test_goodhart_credential_whitespace_display_name_rejected(self):
         """create_credential() must reject whitespace-only display_name."""
-        mgr = SignetManager(secret_key="test_secret_key_12345")
+        mgr = SignetManager(secret_key=ephemeral_signing_material())
         with pytest.raises((GovernanceError, ValueError)):
             mgr.create_credential("rev1", "   ", ReviewStage.architecture)
 
     def test_goodhart_credential_unique_ids(self):
         """create_credential() must generate unique credential_ids across multiple calls."""
-        mgr = SignetManager(secret_key="test_secret_key_12345")
+        mgr = SignetManager(secret_key=ephemeral_signing_material())
         ids = set()
         for i in range(10):
             cred = mgr.create_credential(f"reviewer_{i}", f"Bot {i}", ReviewStage.security)
@@ -290,7 +295,7 @@ class TestGoodhartCredentials:
 
     def test_goodhart_verify_credential_different_stage_invalid(self):
         """verify_credential() must reject a credential with tampered stage."""
-        mgr = SignetManager(secret_key="test_secret_key_12345")
+        mgr = SignetManager(secret_key=ephemeral_signing_material())
         cred = mgr.create_credential("rev1", "Bot", ReviewStage.security)
         # Tamper stage
         tampered = ReviewerCredential(
@@ -310,7 +315,7 @@ class TestGoodhartCredentials:
 
     def test_goodhart_verify_credential_error_has_credential_id(self):
         """CredentialError from verify_credential() must include the credential_id."""
-        mgr = SignetManager(secret_key="test_secret_key_12345")
+        mgr = SignetManager(secret_key=ephemeral_signing_material())
         cred = mgr.create_credential("rev1", "Bot", ReviewStage.security)
         # Tamper signature
         tampered = ReviewerCredential(
@@ -327,6 +332,11 @@ class TestGoodhartCredentials:
         with pytest.raises(CredentialError) as exc_info:
             mgr.verify_credential(tampered)
         assert exc_info.value.credential_id == cred.credential_id
+
+    def test_goodhart_credentials_require_explicit_signing_configuration(self, monkeypatch):
+        monkeypatch.delenv("EXEMPLAR_SIGNET_SECRET", raising=False)
+        with pytest.raises(GovernanceError, match="EXEMPLAR_SIGNET_SECRET"):
+            SignetManager().create_credential("rev1", "Bot", ReviewStage.security)
 
 
 # ============================================================================
