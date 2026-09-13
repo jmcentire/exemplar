@@ -141,7 +141,7 @@ class TestGoodhartSortOrder:
         ]
         trust_scores = [make_trust_score(reviewer_id="rev-1", stage="security", weight=0.9)]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, trust_scores, "req-sort")
         )
 
@@ -167,7 +167,7 @@ class TestGoodhartSortOrder:
         ]
         trust_scores = []
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, trust_scores, "req-idsort")
         )
 
@@ -190,7 +190,7 @@ class TestGoodhartSortOrder:
             )
         ]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-fp")
         )
         paths = [f.file_path for f in report.findings]
@@ -211,7 +211,7 @@ class TestGoodhartSortOrder:
             )
         ]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-ln")
         )
         line_numbers = [f.line_number for f in report.findings]
@@ -242,7 +242,7 @@ class TestGoodhartDeduplication:
             ),
         ]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-dedup")
         )
 
@@ -262,7 +262,7 @@ class TestGoodhartDeduplication:
             ),
         ]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-hunk")
         )
         assert len(report.findings) == 2, f"Expected 2 findings (different hunk_id), got {len(report.findings)}"
@@ -280,7 +280,7 @@ class TestGoodhartDeduplication:
             ),
         ]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-rule")
         )
         assert len(report.findings) == 2, f"Expected 2 findings (different rule_id), got {len(report.findings)}"
@@ -298,7 +298,7 @@ class TestGoodhartDeduplication:
             ),
         ]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-line")
         )
         assert len(report.findings) == 2, f"Expected 2 findings (different line_number), got {len(report.findings)}"
@@ -327,7 +327,7 @@ class TestGoodhartDeduplication:
             ),
         ]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-3rev")
         )
 
@@ -353,7 +353,7 @@ class TestGoodhartConfidenceBoost:
         ]
         trust_scores = [make_trust_score(reviewer_id="rev-1", stage="security", weight=1.0)]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, trust_scores, "req-cap")
         )
 
@@ -385,7 +385,7 @@ class TestGoodhartConfidenceBoost:
             make_trust_score(reviewer_id="rev-high", stage="correctness", weight=0.8),
         ]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, trust_scores, "req-maxtr")
         )
 
@@ -411,7 +411,7 @@ class TestGoodhartScoreCalculation:
         ]
         trust_scores = [make_trust_score(reviewer_id="rev-1", stage="security", weight=1.0)]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, trust_scores, "req-acc")
         )
 
@@ -434,7 +434,7 @@ class TestGoodhartScoreCalculation:
         trust_scores = [make_trust_score(reviewer_id="rev-1", stage="correctness", weight=1.0)]
 
         # Use custom merge context where 15.0 falls in warn range
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, trust_scores, "req-score")
         )
 
@@ -457,7 +457,7 @@ class TestGoodhartDecisionLogic:
             ),
         ]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-nooverride")
         )
 
@@ -476,7 +476,7 @@ class TestGoodhartDecisionLogic:
             ),
         ]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-secoverride")
         )
 
@@ -509,7 +509,7 @@ class TestGoodhartDecisionLogic:
             ),
         ]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-noconflict")
         )
 
@@ -540,7 +540,7 @@ class TestGoodhartTrustResolution:
         ]
 
         # Should not raise duplicate_assessment_reviewer_stage since stages differ
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, trust_scores, "req-multistage")
         )
 
@@ -565,7 +565,7 @@ class TestGoodhartTrustResolution:
             # No trust score for rev-uncovered - should use default 0.5
         ]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, trust_scores, "req-partial")
         )
 
@@ -581,7 +581,7 @@ class TestGoodhartTrustResolution:
             ),
         ]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-notr")
         )
 
@@ -596,7 +596,7 @@ class TestGoodhartBoundaryInputs:
     def test_goodhart_merge_review_request_id_exact_256_chars(self):
         """A review_request_id of exactly 256 characters is valid and should not raise an error"""
         long_id = "x" * 256
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments([], [], long_id)
         )
         assert report.review_request_id == long_id
@@ -607,13 +607,13 @@ class TestGoodhartBoundaryInputs:
         """A review_request_id of exactly 257 characters must be rejected"""
         long_id = "x" * 257
         with pytest.raises(Exception):
-            asyncio.get_event_loop().run_until_complete(
+            asyncio.run(
                 merge_assessments([], [], long_id)
             )
 
     def test_goodhart_merge_single_char_review_request_id(self):
         """A review_request_id of exactly 1 character is valid (minimum boundary)"""
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments([], [], "z")
         )
         assert report.review_request_id == "z"
@@ -628,7 +628,7 @@ class TestGoodhartBoundaryInputs:
                 findings=[],
             ),
         ]
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-longrev")
         )
         assert report is not None
@@ -636,7 +636,7 @@ class TestGoodhartBoundaryInputs:
     def test_goodhart_merge_nonascii_review_request_id(self):
         """A review_request_id containing non-ASCII unicode characters should be accepted"""
         unicode_id = "审查请求-🔍-αβγ"
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments([], [], unicode_id)
         )
         assert report.review_request_id == unicode_id
@@ -644,7 +644,7 @@ class TestGoodhartBoundaryInputs:
     def test_goodhart_merge_whitespace_only_review_request_id(self):
         """A review_request_id of whitespace should be valid since contract only requires non-empty and <= 256 chars"""
         ws_id = "   "
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments([], [], ws_id)
         )
         assert report.review_request_id == ws_id
@@ -669,7 +669,7 @@ class TestGoodhartDuplicateReviewerStage:
         ]
 
         # Should NOT raise
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-ok")
         )
         assert report is not None
@@ -689,7 +689,7 @@ class TestGoodhartDuplicateReviewerStage:
             ),
         ]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-diffstage")
         )
         assert report is not None
@@ -715,7 +715,7 @@ class TestGoodhartIntegration:
             ),
         ]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-allpass")
         )
         decision = report.decision if isinstance(report.decision, str) else report.decision.value
@@ -733,7 +733,7 @@ class TestGoodhartIntegration:
             for i, stage in enumerate(stages)
         ]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-4stage")
         )
 
@@ -772,7 +772,7 @@ class TestGoodhartIntegration:
             for i in range(5)
         ]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-count")
         )
 
@@ -799,7 +799,7 @@ class TestGoodhartIntegration:
             ),
         ]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-nofind")
         )
 
@@ -818,7 +818,7 @@ class TestGoodhartIntegration:
         ]
         trust_scores = [make_trust_score(reviewer_id="rev-frac", stage="correctness", weight=0.73)]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, trust_scores, "req-frac")
         )
 
@@ -846,7 +846,7 @@ class TestGoodhartIntegration:
             ),
         ]
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-multifile")
         )
 
@@ -873,7 +873,7 @@ class TestGoodhartIntegration:
                 )
             )
 
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-large")
         )
 
@@ -888,7 +888,7 @@ class TestGoodhartIntegration:
 
     def test_goodhart_pact_version_is_integer_one(self):
         """PACT version must be exactly integer 1"""
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments([], [], "req-pact")
         )
 
@@ -902,7 +902,7 @@ class TestGoodhartIntegration:
 
     def test_goodhart_merge_empty_yields_confidence_one(self):
         """Empty assessments should produce computed_confidence of 1.0"""
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments([], [], "req-empty-conf")
         )
 
@@ -931,7 +931,7 @@ class TestGoodhartIntegration:
 
         # The test verifies indirectly - the merge should complete successfully
         # which means the chronicler was invoked (or its failure was suppressed)
-        report = asyncio.get_event_loop().run_until_complete(
+        report = asyncio.run(
             merge_assessments(assessments, [], "req-evt")
         )
         assert report is not None
@@ -957,7 +957,7 @@ class TestGoodhartIntegration:
         ]
 
         with pytest.raises(Exception):
-            asyncio.get_event_loop().run_until_complete(
+            asyncio.run(
                 merge_assessments(assessments, [], "req-correct")
             )
 
@@ -977,7 +977,7 @@ class TestGoodhartIntegration:
         ]
 
         with pytest.raises(Exception):
-            asyncio.get_event_loop().run_until_complete(
+            asyncio.run(
                 merge_assessments(assessments, [], "req-dup2")
             )
 
@@ -993,6 +993,6 @@ class TestGoodhartIntegration:
         ]
 
         with pytest.raises(Exception):
-            asyncio.get_event_loop().run_until_complete(
+            asyncio.run(
                 merge_assessments(assessments, [], "req-dup3")
             )
